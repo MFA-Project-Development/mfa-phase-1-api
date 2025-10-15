@@ -8,6 +8,13 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/mfa
+          jwk-set-uri: http://localhost:8080/realms/mfa/protocol/openid-connect/certs
+
   jpa:
     database: postgresql
     show-sql: true
@@ -16,3 +23,61 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  cloud:
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: false
+      okhttp:
+        enabled: true
+      client:
+        config:
+          default:
+            connect-timeout: 1000
+            read-timeout: 2000
+            logger-level: none
+      compression:
+        request:
+          enabled: true
+          min-request-size: 1024
+          mime-types: application/json,application/xml,text/plain
+        response:
+          enabled: true
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+    instance-id: "${spring.application.name}:${server.port}"
+
+logging:
+  level:
+    kr.com.mfa.mfaphase1api: debug
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${KEYCLOAK_CLIENT_ID}
+      client-secret: ${KEYCLOAK_CLIENT_SECRET}
+
+server:
+  port: 8082
+  http2.enabled: true
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json,application/xml,text/plain,text/html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
