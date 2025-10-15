@@ -15,4 +15,5 @@ public interface SubSubjectRepository extends JpaRepository<SubSubject, UUID> {
 
     Optional<SubSubject> findByClassSubSubjects_Clazz_ClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID instructorId);
 
+    Optional<SubSubject> findByClassSubSubjects_Clazz_ClassId(UUID classId);
 }

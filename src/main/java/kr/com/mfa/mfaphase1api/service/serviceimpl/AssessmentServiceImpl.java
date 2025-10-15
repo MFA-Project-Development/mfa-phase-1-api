@@ -88,8 +88,8 @@ public class AssessmentServiceImpl implements AssessmentService {
             case "ROLE_INSTRUCTOR" ->
                     pageAssessments = assessmentRepository.findAllByCreatedBy(currentUserId, pageable);
 
-//            case "ROLE_STUDENT" ->
-//                    pageAssessments = assessmentRepository.findAllByStudentClassEnrollments_StudentId(currentUserId, pageable);
+            case "ROLE_STUDENT" ->
+                    pageAssessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(currentUserId, pageable);
 
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
 
@@ -100,17 +100,10 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .stream()
                 .map(assessment -> {
 
-                    AssessmentType assessmentType = assessmentTypeRepository.findById(assessment.getAssessmentType().getAssessmentTypeId()).orElseThrow(
-                            () -> new NotFoundException("AssessmentType not found")
-                    );
+                    AssessmentType assessmentType = assessment.getAssessmentType();
 
-                    Class clazz = classRepository.findByClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getClassId(), currentUserId).orElseThrow(
-                            () -> new NotFoundException("Class not found")
-                    );
-
-                    SubSubject subSubject = subSubjectRepository.findByClassSubSubjects_Clazz_ClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(clazz.getClassId(), currentUserId).orElseThrow(
-                            () -> new NotFoundException("SubSubject not found")
-                    );
+                    Class clazz = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz();
+                    SubSubject subSubject = assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject();
 
                     UserResponse userResponse = getUserOrThrow(assessment.getCreatedBy());
 
@@ -143,26 +136,22 @@ public class AssessmentServiceImpl implements AssessmentService {
                     assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
                             .orElseThrow(() -> new NotFoundException("Assessment not found"));
 
-//            case "ROLE_STUDENT" ->
-//                    pageAssessments = assessmentRepository.findAllByStudentClassEnrollments_StudentId(currentUserId, pageable);
+            case "ROLE_STUDENT" ->
+                    assessment = assessmentRepository.findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(assessmentId, currentUserId).orElseThrow(
+                            () -> new NotFoundException("Assessment not found")
+                    );
 
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
 
         }
 
-        AssessmentType assessmentType = assessmentTypeRepository.findById(assessment.getAssessmentType().getAssessmentTypeId()).orElseThrow(
-                () -> new NotFoundException("AssessmentType not found")
-        );
+        AssessmentType assessmentType = assessment.getAssessmentType();
 
-        Class clazz = classRepository.findByClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getClassId(), currentUserId).orElseThrow(
-                () -> new NotFoundException("Class not found")
-        );
+        Class clazz = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz();
 
-        SubSubject subSubject = subSubjectRepository.findByClassSubSubjects_Clazz_ClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(clazz.getClassId(), currentUserId).orElseThrow(
-                () -> new NotFoundException("SubSubject not found")
-        );
+        SubSubject subSubject = assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject();
 
-        UserResponse userResponse = getUserOrThrow(currentUserId);
+        UserResponse userResponse = getUserOrThrow(assessment.getCreatedBy());
 
         return assessment.toResponse(userResponse, assessmentType.toResponse(), subSubject.toResponse(), clazz.toResponse());
     }

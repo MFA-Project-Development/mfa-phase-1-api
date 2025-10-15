@@ -11,6 +11,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.UserIdsRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.entity.Class;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassSubSubjectProperty;
 import kr.com.mfa.mfaphase1api.repository.*;
@@ -47,6 +48,7 @@ public class ClassServiceImpl implements ClassService {
     private final SubSubjectRepository subSubjectRepository;
     private final ClassSubSubjectInstructorRepository classSubSubjectInstructorRepository;
     private final StudentClassEnrollmentRepository studentClassEnrollmentRepository;
+    private final AssessmentRepository assessmentRepository;
 
     private final UserClient userClient;
 
@@ -234,7 +236,7 @@ public class ClassServiceImpl implements ClassService {
                 () -> new NotFoundException("Instructor already unassigned to this class sub-subject")
         );
 
-        classSubSubjectInstructorRepository.deleteClassSubSubjectInstructorByClassSubSubject_AndInstructorId(classSubSubject, userResponse.getUserId());
+        classSubSubjectInstructorRepository.deleteClassSubSubjectInstructorByClassSubSubject_AndInstructorId(classSubSubjectInstructor.getClassSubSubject(), userResponse.getUserId());
     }
 
     @Override
@@ -516,6 +518,73 @@ public class ClassServiceImpl implements ClassService {
                 size,
                 pageClasses.getTotalPages()
         );
+    }
+
+    @Override
+    public PagedResponse<List<AssessmentResponse>> getAssessmentsByClassId(UUID classId, Integer page, Integer size, AssessmentProperty property, Sort.Direction direction) {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+        List<String> currentUserRole = JwtUtils.getJwt().getClaimAsStringList("roles");
+
+        Class clazz;
+
+        switch (currentUserRole.getFirst()) {
+            case "ROLE_ADMIN" -> clazz = getOrThrow(classId);
+
+            case "ROLE_INSTRUCTOR" ->
+                    clazz = classRepository.findByClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(classId, currentUserId)
+                            .orElseThrow(() -> new NotFoundException("Class not found"));
+
+            case "ROLE_STUDENT" ->
+                    clazz = classRepository.findByClassId_AndStudentClassEnrollments_StudentId(classId, currentUserId)
+                            .orElseThrow(() -> new NotFoundException("Class not found"));
+
+            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
+        }
+
+        int zeroBased = Math.max(page, 1) - 1;
+        Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
+
+        Page<Assessment> pageAssessments;
+
+        switch (currentUserRole.getFirst()) {
+            case "ROLE_ADMIN" ->
+                    pageAssessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(clazz.getClassId(), pageable);
+
+            case "ROLE_INSTRUCTOR" ->
+                    pageAssessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndCreatedBy(clazz.getClassId(), currentUserId, pageable);
+
+            case "ROLE_STUDENT" ->
+                    pageAssessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(clazz.getClassId(), currentUserId, pageable);
+
+            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
+
+        }
+
+        List<AssessmentResponse> items = pageAssessments
+                .getContent()
+                .stream()
+                .map(assessment -> {
+
+                    AssessmentType assessmentType = assessment.getAssessmentType();
+
+                    SubSubject subSubject = assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject();
+
+                    UserResponse userResponse = getUserOrThrow(assessment.getCreatedBy());
+
+                    return assessment.toResponse(userResponse, assessmentType.toResponse(), subSubject.toResponse(), clazz.toResponse());
+
+                })
+                .toList();
+
+        return pageResponse(
+                items,
+                pageAssessments.getTotalElements(),
+                page,
+                size,
+                pageAssessments.getTotalPages()
+        );
+
     }
 
 

@@ -19,4 +19,18 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     Optional<Assessment> findByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);
 
     void deleteByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);
+
+    Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID studentId, Pageable pageable);
+
+    Optional<Assessment> findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID assessmentId, UUID createdBy);
+
+    Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(UUID classId, Pageable pageable);
+
+    Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndCreatedBy(UUID classId, UUID instructorId, Pageable pageable);
+
+    Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID classId, UUID studentId, Pageable pageable);
+
+
+
+
 }

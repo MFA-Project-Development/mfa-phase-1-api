@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassSubSubjectProperty;
 import kr.com.mfa.mfaphase1api.service.ClassService;
@@ -443,6 +444,35 @@ public class ClassController {
     ) {
         return buildResponse("Instructor classes retrieved", classService.getClassesOfInstructor(instructorId, page, size, property, direction), HttpStatus.OK);
     }
+
+    @GetMapping("/{class-id}/assessments")
+    @Operation(
+            summary = "List assessments of a class",
+            description = "Returns a paginated list of all assessments assigned to a specific class. "
+                          + "Supports sorting and is accessible to Admin, Teacher, and Student roles.",
+            tags = {"Class"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Assessments retrieved successfully"),
+                    @ApiResponse(responseCode = "404", description = "Class not found")
+            }
+    )
+    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAssessmentsByClassId(
+            @PathVariable("class-id") UUID classId,
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "1") @Positive Integer page,
+
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "10") @Positive Integer size,
+
+            @Parameter(description = "Sort property", example = "CREATED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CREATED_AT") AssessmentProperty property,
+
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
+        return buildResponse("Assessments retrieved successfully", classService.getAssessmentsByClassId(classId, page, size, property, direction), HttpStatus.OK);
+    }
+
 
 
 }
