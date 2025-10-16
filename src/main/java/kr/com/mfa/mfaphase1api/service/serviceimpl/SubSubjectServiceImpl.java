@@ -32,11 +32,11 @@ public class SubSubjectServiceImpl implements SubSubjectService {
 
     @Override
     @Transactional
-    public SubSubjectResponse createSubSubject(SubSubjectRequest request) {
-        Subject subject = subjectRepository.findById(request.getSubjectId())
-                .orElseThrow(() -> new NotFoundException("Subject not " + request.getSubjectId() + " found"));
+    public SubSubjectResponse createSubSubject(UUID subjectId, SubSubjectRequest request) {
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new NotFoundException("Subject not " + subjectId + " found"));
 
-        if (subSubjectRepository.existsByNameIgnoreCaseAndSubject_SubjectId(request.getName(), subject.getSubjectId())) {
+        if (subSubjectRepository.existsByNameIgnoreCaseAndSubject_SubjectId(request.getName(), subjectId)) {
             throw new ConflictException("SubSubject name already exists for this subject");
         }
 
@@ -46,12 +46,15 @@ public class SubSubjectServiceImpl implements SubSubjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<List<SubSubjectResponse>> getAllSubSubjects(Integer page, Integer size, SubSubjectProperty property, Sort.Direction direction) {
+    public PagedResponse<List<SubSubjectResponse>> getAllSubSubjects(UUID subjectId, Integer page, Integer size, SubSubjectProperty property, Sort.Direction direction) {
+
+        if (!subjectRepository.existsById(subjectId)) {
+            throw new NotFoundException("Subject " + subjectId + " not found");
+        }
 
         int zeroBased = Math.max(page, 1) - 1;
         Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
-
-        Page<SubSubject> pageSubjects = subSubjectRepository.findAll(pageable);
+        Page<SubSubject> pageSubjects = subSubjectRepository.findAllBySubject_SubjectId(subjectId, pageable);
 
         List<SubSubjectResponse> items = pageSubjects
                 .getContent()
@@ -70,28 +73,31 @@ public class SubSubjectServiceImpl implements SubSubjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public SubSubjectResponse getSubSubjectById(UUID subSubjectId) {
-        SubSubject subSubject = subSubjectRepository.findById(subSubjectId)
-                .orElseThrow(() -> new NotFoundException("SubSubject not " + subSubjectId + " found"));
+    public SubSubjectResponse getSubSubjectById(UUID subjectId, UUID subSubjectId) {
+        SubSubject subSubject = subSubjectRepository.findBySubject_SubjectIdAndSubSubjectId(subjectId, subSubjectId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Sub-subject with ID " + subSubjectId + " not found for subject " + subjectId
+                ));
+
         return subSubject.toResponse();
     }
 
     @Override
     @Transactional
-    public SubSubjectResponse updateSubSubjectById(UUID subSubjectId, SubSubjectRequest request) {
-        SubSubject existing = subSubjectRepository.findById(subSubjectId)
-                .orElseThrow(() -> new NotFoundException("SubSubject not " + subSubjectId + " found"));
+    public SubSubjectResponse updateSubSubjectById(UUID subjectId, UUID subSubjectId, SubSubjectRequest request) {
+        SubSubject existing = subSubjectRepository
+                .findBySubject_SubjectIdAndSubSubjectId(subjectId, subSubjectId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Sub-subject " + subSubjectId + " not found under subject " + subjectId
+                ));
 
-        Subject subject = subjectRepository.findById(request.getSubjectId())
-                .orElseThrow(() -> new NotFoundException("Subject not " + request.getSubjectId() + " found"));
-
+        String newName = request.getName().trim();
         if (subSubjectRepository.existsByNameIgnoreCaseAndSubject_SubjectIdAndSubSubjectIdNot(
-                request.getName(), subject.getSubjectId(), subSubjectId)) {
-            throw new ConflictException("SubSubject name already exists for this subject");
+                newName, subjectId, subSubjectId)) {
+            throw new ConflictException("A sub-subject with the same name already exists under this subject.");
         }
 
-        existing.setName(request.getName());
-        existing.setSubject(subject);
+        existing.setName(newName);
 
         SubSubject updated = subSubjectRepository.save(existing);
         return updated.toResponse();
@@ -99,9 +105,12 @@ public class SubSubjectServiceImpl implements SubSubjectService {
 
     @Override
     @Transactional
-    public void deleteSubSubjectById(UUID subSubjectId) {
-        SubSubject existing = subSubjectRepository.findById(subSubjectId)
-                .orElseThrow(() -> new NotFoundException("SubSubject not " + subSubjectId + " found"));
+    public void deleteSubSubjectById(UUID subjectId, UUID subSubjectId) {
+        SubSubject existing = subSubjectRepository
+                .findBySubject_SubjectIdAndSubSubjectId(subjectId, subSubjectId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Sub-subject " + subSubjectId + " not found under subject " + subjectId
+                ));
         subSubjectRepository.delete(existing);
     }
 

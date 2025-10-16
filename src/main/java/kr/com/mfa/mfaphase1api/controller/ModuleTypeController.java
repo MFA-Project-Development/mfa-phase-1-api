@@ -79,7 +79,7 @@ public class ModuleTypeController {
         );
     }
 
-    @GetMapping("/{module-type-id}")
+    @GetMapping("/{moduleTypeId}")
     @Operation(
             summary = "Get module type",
             description = "Returns a module type by its ID.",
@@ -91,13 +91,13 @@ public class ModuleTypeController {
             }
     )
     public ResponseEntity<APIResponse<ModuleTypeResponse>> getModuleTypeById(
-            @PathVariable("module-type-id") UUID moduleTypeId
+            @PathVariable UUID moduleTypeId
     ) {
         return buildResponse("Module Type retrieved", moduleTypeService.getModuleTypeById(moduleTypeId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{module-type-id}")
+    @PutMapping("/{moduleTypeId}")
     @Operation(
             summary = "Update module type",
             description = "Updates a module type by ID. Module type must remain unique.",
@@ -110,14 +110,14 @@ public class ModuleTypeController {
             }
     )
     public ResponseEntity<APIResponse<ModuleTypeResponse>> updateModuleTypeById(
-            @PathVariable("module-type-id") UUID moduleTypeId,
+            @PathVariable UUID moduleTypeId,
             @RequestBody @Valid ModuleTypeRequest request
     ) {
         return buildResponse("Module Type updated", moduleTypeService.updateModuleTypeById(moduleTypeId, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{module-type-id}")
+    @DeleteMapping("/{moduleTypeId}")
     @Operation(
             summary = "Delete module type",
             description = "Deletes a module type by ID.",
@@ -128,7 +128,7 @@ public class ModuleTypeController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteModuleTypeById(
-            @PathVariable("module-type-id") UUID moduleTypeId
+            @PathVariable UUID moduleTypeId
     ) {
         moduleTypeService.deleteModuleTypeById(moduleTypeId);
         return buildResponse("Module Type deleted", null, HttpStatus.OK);

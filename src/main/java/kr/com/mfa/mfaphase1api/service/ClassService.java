@@ -3,7 +3,6 @@ package kr.com.mfa.mfaphase1api.service;
 import kr.com.mfa.mfaphase1api.model.dto.request.ClassRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MoveStudentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
-import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassSubSubjectProperty;
 import org.springframework.data.domain.Sort;
@@ -52,6 +51,4 @@ public interface ClassService {
     PagedResponse<List<ClassResponse>> getClassesOfStudent(UUID studentId, Integer page, Integer size, ClassProperty property, Sort.Direction direction);
 
     PagedResponse<List<ClassResponse>> getClassesOfInstructor(UUID instructorId, Integer page, Integer size, ClassProperty property, Sort.Direction direction);
-
-    PagedResponse<List<AssessmentResponse>> getAssessmentsByClassId(UUID classId, Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
 }

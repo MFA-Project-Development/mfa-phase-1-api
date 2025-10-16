@@ -22,19 +22,8 @@ public class SubSubjectRequest {
     @Size(max = 255)
     private String name;
 
-    @NotNull
-    private UUID subjectId;
-
     public SubSubject toEntity(Subject subject){
         return SubSubject.builder()
-                .name(this.name)
-                .subject(subject)
-                .build();
-    }
-
-    public SubSubject toEntity(UUID subSubjectId, Subject subject){
-        return SubSubject.builder()
-                .subSubjectId(subSubjectId)
                 .name(this.name)
                 .subject(subject)
                 .build();

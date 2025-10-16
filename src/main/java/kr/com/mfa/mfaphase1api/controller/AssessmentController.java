@@ -28,7 +28,7 @@ import java.util.UUID;
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
 
 @RestController
-@RequestMapping("/api/v1/assessments")
+@RequestMapping("/api/v1/classes/{classId}/assessments")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "mfa")
 public class AssessmentController {
@@ -49,10 +49,11 @@ public class AssessmentController {
             }
     )
     public ResponseEntity<APIResponse<AssessmentResponse>> createAssessment(
+            @PathVariable UUID classId,
             @RequestBody @Valid AssessmentRequest request
     ) {
         return buildResponse("Assessment created",
-                assessmentService.createAssessment(request),
+                assessmentService.createAssessment(classId, request),
                 HttpStatus.CREATED);
     }
 
@@ -62,27 +63,24 @@ public class AssessmentController {
             description = "Returns a paginated list of assessments with sorting.",
             tags = {"Assessment"}
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAllAssessments(
-            @Parameter(description = "1-based page index", in = ParameterIn.QUERY, example = "1")
+    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAssessmentsByClassId(
+            @PathVariable UUID classId,
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "1") @Positive Integer page,
 
-            @Parameter(description = "Page size", in = ParameterIn.QUERY, example = "10")
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "10") @Positive Integer size,
 
-            @Parameter(description = "Sort property", in = ParameterIn.QUERY, example = "TITLE")
-            @RequestParam(required = false, defaultValue = "TITLE") AssessmentProperty property,
+            @Parameter(description = "Sort property", example = "CREATED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CREATED_AT") AssessmentProperty property,
 
-            @Parameter(description = "Sort direction", in = ParameterIn.QUERY, example = "DESC")
-            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse(
-                "Assessments retrieved",
-                assessmentService.getAllAssessments(page, size, property, direction),
-                HttpStatus.OK
-        );
+        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessments(classId, page, size, property, direction), HttpStatus.OK);
     }
 
-    @GetMapping("/{assessment-id}")
+    @GetMapping("/{assessmentId}")
     @Operation(
             summary = "Get assessment",
             description = "Returns an assessment by its ID.",
@@ -94,17 +92,18 @@ public class AssessmentController {
             }
     )
     public ResponseEntity<APIResponse<AssessmentResponse>> getAssessmentById(
-            @PathVariable("assessment-id") UUID assessmentId
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId
     ) {
         return buildResponse(
                 "Assessment retrieved",
-                assessmentService.getAssessmentById(assessmentId),
+                assessmentService.getAssessmentById(classId, assessmentId),
                 HttpStatus.OK
         );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PutMapping("/{assessment-id}")
+    @PutMapping("/{assessmentId}")
     @Operation(
             summary = "Update assessment",
             description = "Updates an assessment by ID.",
@@ -117,18 +116,19 @@ public class AssessmentController {
             }
     )
     public ResponseEntity<APIResponse<AssessmentResponse>> updateAssessmentById(
-            @PathVariable("assessment-id") UUID assessmentId,
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId,
             @RequestBody @Valid AssessmentRequest request
     ) {
         return buildResponse(
                 "Assessment updated",
-                assessmentService.updateAssessmentById(assessmentId, request),
+                assessmentService.updateAssessmentById(classId, assessmentId, request),
                 HttpStatus.OK
         );
     }
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @DeleteMapping("/{assessment-id}")
+    @DeleteMapping("/{assessmentId}")
     @Operation(
             summary = "Delete assessment",
             description = "Deletes an assessment by ID.",
@@ -139,9 +139,10 @@ public class AssessmentController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteAssessmentById(
-            @PathVariable("assessment-id") UUID assessmentId
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId
     ) {
-        assessmentService.deleteAssessmentById(assessmentId);
+        assessmentService.deleteAssessmentById(classId, assessmentId);
         return buildResponse("Assessment deleted", null, HttpStatus.OK);
     }
 

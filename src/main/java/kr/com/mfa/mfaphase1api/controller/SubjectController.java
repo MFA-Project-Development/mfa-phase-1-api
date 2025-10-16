@@ -79,7 +79,7 @@ public class SubjectController {
         );
     }
 
-    @GetMapping("/{subject-id}")
+    @GetMapping("/{subjectId}")
     @Operation(
             summary = "Get subject",
             description = "Returns a subject by its ID.",
@@ -91,13 +91,13 @@ public class SubjectController {
             }
     )
     public ResponseEntity<APIResponse<SubjectResponse>> getSubjectById(
-            @PathVariable("subject-id") UUID subjectId
+            @PathVariable UUID subjectId
     ) {
         return buildResponse("Subject retrieved", subjectService.getSubjectById(subjectId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{subject-id}")
+    @PutMapping("/{subjectId}")
     @Operation(
             summary = "Update subject",
             description = "Updates a subject by ID. Subject name must remain unique.",
@@ -110,14 +110,14 @@ public class SubjectController {
             }
     )
     public ResponseEntity<APIResponse<SubjectResponse>> updateSubjectById(
-            @PathVariable("subject-id") UUID subjectId,
+            @PathVariable UUID subjectId,
             @RequestBody @Valid SubjectRequest request
     ) {
         return buildResponse("Subject updated", subjectService.updateSubjectById(subjectId, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{subject-id}")
+    @DeleteMapping("/{subjectId}")
     @Operation(
             summary = "Delete subject",
             description = "Deletes a subject by ID.",
@@ -128,7 +128,7 @@ public class SubjectController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteSubjectById(
-            @PathVariable("subject-id") UUID subjectId
+            @PathVariable UUID subjectId
     ) {
         subjectService.deleteSubjectById(subjectId);
         return buildResponse("Subject deleted", null, HttpStatus.OK);

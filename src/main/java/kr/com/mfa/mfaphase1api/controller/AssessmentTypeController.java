@@ -79,7 +79,7 @@ public class AssessmentTypeController {
         );
     }
 
-    @GetMapping("/{assessment-type-id}")
+    @GetMapping("/{assessmentTypeId}")
     @Operation(
             summary = "Get assessment type",
             description = "Returns a assessment type by its ID.",
@@ -91,13 +91,13 @@ public class AssessmentTypeController {
             }
     )
     public ResponseEntity<APIResponse<AssessmentTypeResponse>> getAssessmentTypeById(
-            @PathVariable("assessment-type-id") UUID assessmentTypeId
+            @PathVariable UUID assessmentTypeId
     ) {
         return buildResponse("Assessment Type retrieved", assessmentTypeService.getAssessmentTypeById(assessmentTypeId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{assessment-type-id}")
+    @PutMapping("/{assessmentTypeId}")
     @Operation(
             summary = "Update assessment type",
             description = "Updates a assessment type by ID. Assessment type must remain unique.",
@@ -110,14 +110,14 @@ public class AssessmentTypeController {
             }
     )
     public ResponseEntity<APIResponse<AssessmentTypeResponse>> updateAssessmentTypeById(
-            @PathVariable("assessment-type-id") UUID assessmentTypeId,
+            @PathVariable UUID assessmentTypeId,
             @RequestBody @Valid AssessmentTypeRequest request
     ) {
         return buildResponse("Assessment Type updated", assessmentTypeService.updateAssessmentTypeById(assessmentTypeId, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{assessment-type-id}")
+    @DeleteMapping("/{assessmentTypeId}")
     @Operation(
             summary = "Delete assessment type",
             description = "Deletes a assessment type by ID.",
@@ -128,7 +128,7 @@ public class AssessmentTypeController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteAssessmentTypeById(
-            @PathVariable("assessment-type-id") UUID assessmentTypeId
+            @PathVariable UUID assessmentTypeId
     ) {
         assessmentTypeService.deleteAssessmentTypeById(assessmentTypeId);
         return buildResponse("Assessment Type deleted", null, HttpStatus.OK);

@@ -96,7 +96,7 @@ public class SubjectServiceImpl implements SubjectService {
         boolean exists =  subjectRepository.existsByNameIgnoreCase(name);
 
         if (exists) {
-            throw new ConflictException("Subject already exists");
+            throw new ConflictException("Subject " + name + " already exists");
         }
     }
 

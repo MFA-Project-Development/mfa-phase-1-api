@@ -28,7 +28,7 @@ import java.util.UUID;
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
 
 @RestController
-@RequestMapping("/api/v1/sub-subjects")
+@RequestMapping("/api/v1/subjects/{subjectId}/sub-subjects")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "mfa")
 public class SubSubjectController {
@@ -49,9 +49,10 @@ public class SubSubjectController {
             }
     )
     public ResponseEntity<APIResponse<SubSubjectResponse>> createSubSubject(
+            @PathVariable UUID subjectId,
             @RequestBody @Valid SubSubjectRequest request
     ) {
-        return buildResponse("SubSubject created", subSubjectService.createSubSubject(request), HttpStatus.CREATED);
+        return buildResponse("SubSubject created", subSubjectService.createSubSubject(subjectId, request), HttpStatus.CREATED);
     }
 
     @GetMapping
@@ -61,6 +62,8 @@ public class SubSubjectController {
             tags = {"SubSubject"}
     )
     public ResponseEntity<APIResponse<PagedResponse<List<SubSubjectResponse>>>> getAllSubSubjects(
+            @PathVariable UUID subjectId,
+
             @Parameter(description = "1-based page index", in = ParameterIn.QUERY, example = "1")
             @RequestParam(defaultValue = "1") @Positive Integer page,
 
@@ -75,12 +78,12 @@ public class SubSubjectController {
     ) {
         return buildResponse(
                 "SubSubjects retrieved",
-                subSubjectService.getAllSubSubjects(page, size, property, direction),
+                subSubjectService.getAllSubSubjects(subjectId, page, size, property, direction),
                 HttpStatus.OK
         );
     }
 
-    @GetMapping("/{sub-subject-id}")
+    @GetMapping("/{subSubjectId}")
     @Operation(
             summary = "Get sub-subject",
             description = "Returns a sub-subject by its ID.",
@@ -92,13 +95,14 @@ public class SubSubjectController {
             }
     )
     public ResponseEntity<APIResponse<SubSubjectResponse>> getSubSubjectById(
-            @PathVariable("sub-subject-id") UUID subSubjectId
+            @PathVariable UUID subjectId,
+            @PathVariable UUID subSubjectId
     ) {
-        return buildResponse("SubSubject retrieved", subSubjectService.getSubSubjectById(subSubjectId), HttpStatus.OK);
+        return buildResponse("SubSubject retrieved", subSubjectService.getSubSubjectById(subjectId, subSubjectId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{sub-subject-id}")
+    @PutMapping("/{subSubjectId}")
     @Operation(
             summary = "Update sub-subject",
             description = "Updates a sub-subject by ID. Name must remain unique within the same subject.",
@@ -111,14 +115,15 @@ public class SubSubjectController {
             }
     )
     public ResponseEntity<APIResponse<SubSubjectResponse>> updateSubSubjectById(
-            @PathVariable("sub-subject-id") UUID subSubjectId,
+            @PathVariable UUID subjectId,
+            @PathVariable UUID subSubjectId,
             @RequestBody @Valid SubSubjectRequest request
     ) {
-        return buildResponse("SubSubject updated", subSubjectService.updateSubSubjectById(subSubjectId, request), HttpStatus.OK);
+        return buildResponse("SubSubject updated", subSubjectService.updateSubSubjectById(subjectId, subSubjectId, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{sub-subject-id}")
+    @DeleteMapping("/{subSubjectId}")
     @Operation(
             summary = "Delete sub-subject",
             description = "Deletes a sub-subject by ID.",
@@ -129,9 +134,10 @@ public class SubSubjectController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteSubSubjectById(
-            @PathVariable("sub-subject-id") UUID subSubjectId
+            @PathVariable UUID subjectId,
+            @PathVariable UUID subSubjectId
     ) {
-        subSubjectService.deleteSubSubjectById(subSubjectId);
+        subSubjectService.deleteSubSubjectById(subjectId, subSubjectId);
         return buildResponse("SubSubject deleted", null, HttpStatus.OK);
     }
 

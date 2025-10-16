@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AssessmentService {
-    AssessmentResponse createAssessment(AssessmentRequest request);
+    AssessmentResponse createAssessment(UUID classId, AssessmentRequest request);
 
-    PagedResponse<List<AssessmentResponse>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
+    PagedResponse<List<AssessmentResponse>> getAllAssessments(UUID classId, Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
 
-    AssessmentResponse getAssessmentById(UUID assessmentId);
+    AssessmentResponse getAssessmentById(UUID classId, UUID assessmentId);
 
-    AssessmentResponse updateAssessmentById(UUID assessmentId, AssessmentRequest request);
+    AssessmentResponse updateAssessmentById(UUID classId, UUID assessmentId, AssessmentRequest request);
 
-    void deleteAssessmentById(UUID assessmentId);
+    void deleteAssessmentById(UUID classId, UUID assessmentId);
 
 }

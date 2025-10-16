@@ -39,24 +39,8 @@ public class AssessmentRequest {
     @NotNull
     private UUID assessmentTypeId;
 
-    @NotNull
-    private UUID classId;
-
     public Assessment toEntity(UUID userId, AssessmentType assessmentType, ClassSubSubjectInstructor classSubSubjectInstructor){
         return Assessment.builder()
-                .title(this.title)
-                .description(this.description)
-                .timeLimit(this.timeLimit)
-                .status(this.status)
-                .assessmentType(assessmentType)
-                .classSubSubjectInstructor(classSubSubjectInstructor)
-                .createdBy(userId)
-                .build();
-    }
-
-    public Assessment toEntity(UUID assessmentId, UUID userId, AssessmentType assessmentType, ClassSubSubjectInstructor classSubSubjectInstructor){
-        return Assessment.builder()
-                .assessmentId(assessmentId)
                 .title(this.title)
                 .description(this.description)
                 .timeLimit(this.timeLimit)

@@ -91,10 +91,10 @@ public class ModuleTypeServiceImpl implements ModuleTypeService {
     }
 
     private void assertNameUnique(String type) {
-        boolean exists =  moduleTypeRepository.existsByTypeIgnoreCase(type);
+        boolean exists = moduleTypeRepository.existsByTypeIgnoreCase(type);
 
         if (exists) {
-            throw new ConflictException("ModuleType already exists");
+            throw new ConflictException("ModuleType " + type + " already exists");
         }
     }
 }

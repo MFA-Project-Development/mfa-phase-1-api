@@ -20,4 +20,8 @@ public interface ClassRepository extends JpaRepository<Class, UUID> {
     Optional<Class> findByClassId_AndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID instructorId);
 
     Optional<Class> findByClassId_AndStudentClassEnrollments_StudentId(UUID classId, UUID studentId);
+
+    boolean existsByClassIdAndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID instructorId);
+
+    boolean existsByClassIdAndStudentClassEnrollments_StudentId(UUID classId, UUID studentId);
 }

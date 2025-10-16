@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
-import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassSubSubjectProperty;
 import kr.com.mfa.mfaphase1api.service.ClassService;
@@ -79,7 +78,7 @@ public class ClassController {
         );
     }
 
-    @GetMapping("/{class-id}")
+    @GetMapping("/{classId}")
     @Operation(
             summary = "Get class",
             description = "Returns a class by its ID.",
@@ -91,13 +90,13 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<ClassResponse>> getClassById(
-            @PathVariable("class-id") UUID classId
+            @PathVariable UUID classId
     ) {
         return buildResponse("Class retrieved", classService.getClassById(classId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{class-id}")
+    @PutMapping("/{classId}")
     @Operation(
             summary = "Update class",
             description = "Updates a class by ID. Name must remain unique within the same scope.",
@@ -110,14 +109,14 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<ClassResponse>> updateClassById(
-            @PathVariable("class-id") UUID classId,
+            @PathVariable UUID classId,
             @RequestBody @Valid ClassRequest request
     ) {
         return buildResponse("Class updated", classService.updateClassById(classId, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{class-id}")
+    @DeleteMapping("/{classId}")
     @Operation(
             summary = "Delete class",
             description = "Deletes a class by ID.",
@@ -128,18 +127,18 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<Void>> deleteClassById(
-            @PathVariable("class-id") UUID classId
+            @PathVariable UUID classId
     ) {
         classService.deleteClassById(classId);
         return buildResponse("Class deleted", null, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{class-id}/sub-subjects/{sub-subject-id}")
+    @PutMapping("/{classId}/sub-subjects/{subSubjectId}")
     @Operation(
             summary = "Assign a sub-subject to a class",
             description = "Links an existing sub-subject to a class. Safe to call multiple times (idempotent).",
-            tags = {"Class"},
+            tags = {"SubSubject"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Sub-subject assigned to class"),
                     @ApiResponse(responseCode = "404", description = "Class or Sub-subject not found"),
@@ -147,39 +146,39 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<Void>> assignSubSubjectToClass(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("sub-subject-id") UUID subSubjectId
+            @PathVariable UUID classId,
+            @PathVariable UUID subSubjectId
     ) {
         classService.assignSubSubjectToClass(classId, subSubjectId);
         return buildResponse("Sub-subject assigned to class", null, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{class-id}/sub-subjects/{sub-subject-id}")
+    @DeleteMapping("/{classId}/sub-subjects/{subSubjectId}")
     @Operation(
             summary = "Unassign a sub-subject from a class",
             description = "Removes the link between the class and the sub-subject.",
-            tags = {"Class"},
+            tags = {"SubSubject"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Sub-subject unassigned from class"),
                     @ApiResponse(responseCode = "404", description = "Class or Sub-subject not found")
             }
     )
     public ResponseEntity<APIResponse<Void>> unassignSubSubjectFromClass(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("sub-subject-id") UUID subSubjectId
+            @PathVariable UUID classId,
+            @PathVariable UUID subSubjectId
     ) {
         classService.unassignSubSubjectFromClass(classId, subSubjectId);
         return buildResponse("Sub-subject unassigned from class", null, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{class-id}/sub-subjects/{sub-subject-id}/instructors/{instructor-id}")
+    @PutMapping("/{classId}/sub-subjects/{subSubjectId}/instructors/{instructorId}")
     @Operation(
             summary = "Assign instructor to a class–sub-subject",
             description = "Creates (or re-activates) an instructor assignment for the given Class/SubSubject. "
                           + "Idempotent: calling again with the same active assignment is OK.",
-            tags = {"Class"},
+            tags = {"Instructor"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Instructor assigned"),
                     @ApiResponse(responseCode = "404", description = "Class/SubSubject/Instructor not found"),
@@ -187,9 +186,9 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<Void>> assignInstructorToClassSubSubject(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("sub-subject-id") UUID subSubjectId,
-            @PathVariable("instructor-id") UUID instructorId,
+            @PathVariable UUID classId,
+            @PathVariable UUID subSubjectId,
+            @PathVariable UUID instructorId,
             @RequestBody @Valid AssignInstructorRequest request
     ) {
         classService.assignInstructorToClassSubSubject(
@@ -202,20 +201,20 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{class-id}/sub-subjects/{sub-subject-id}/instructors/{instructor-id}")
+    @DeleteMapping("/{classId}/sub-subjects/{subSubjectId}/instructors/{instructorId}")
     @Operation(
             summary = "Unassign instructor from a class–sub-subject",
             description = "Hard-removes the assignment link (use PATCH leave if you want to keep history via end_date).",
-            tags = {"Class"},
+            tags = {"Instructor"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Instructor unassigned"),
                     @ApiResponse(responseCode = "404", description = "Assignment not found")
             }
     )
     public ResponseEntity<APIResponse<Void>> unassignInstructorFromClassSubSubject(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("sub-subject-id") UUID subSubjectId,
-            @PathVariable("instructor-id") UUID instructorId
+            @PathVariable UUID classId,
+            @PathVariable UUID subSubjectId,
+            @PathVariable UUID instructorId
     ) {
         classService.unassignInstructorFromClassSubSubject(
                 classId,
@@ -226,21 +225,21 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{class-id}/sub-subjects/{sub-subject-id}/instructors/{instructor-id}/leave")
+    @PatchMapping("/{classId}/sub-subjects/{subSubjectId}/instructors/{instructorId}/leave")
     @Operation(
             summary = "Mark instructor as left from a class–sub-subject",
             description = "Sets end_date for the active assignment to the provided date (or today if using a default). "
                           + "Keeps historical record in class_sub_subject_instructors.",
-            tags = {"Class"},
+            tags = {"Instructor"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Instructor leave recorded"),
                     @ApiResponse(responseCode = "404", description = "Active assignment not found")
             }
     )
     public ResponseEntity<APIResponse<Void>> instructorLeaveClassSubSubject(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("sub-subject-id") UUID subSubjectId,
-            @PathVariable("instructor-id") UUID instructorId,
+            @PathVariable UUID classId,
+            @PathVariable UUID subSubjectId,
+            @PathVariable UUID instructorId,
             @RequestBody @Valid LeaveInstructorRequest request
     ) {
         classService.leaveInstructorFromClassSubSubject(
@@ -253,11 +252,11 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{class-id}/students/{student-id}")
+    @PutMapping("/{classId}/students/{studentId}")
     @Operation(
             summary = "Enroll student to class",
             description = "Creates (or re-activates) an enrollment for the student in the class. Idempotent if already active.",
-            tags = {"Class"},
+            tags = {"Student"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Student enrolled"),
                     @ApiResponse(responseCode = "404", description = "Class or Student not found"),
@@ -265,8 +264,8 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<Void>> enrollStudentToClass(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("student-id") UUID studentId,
+            @PathVariable UUID classId,
+            @PathVariable UUID studentId,
             @RequestBody @Valid EnrollStudentRequest request
     ) {
         classService.enrollStudentToClass(
@@ -278,38 +277,38 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{class-id}/students/{student-id}")
+    @DeleteMapping("/{classId}/students/{studentId}")
     @Operation(
             summary = "Unenroll student from class (hard remove)",
             description = "Removes the enrollment row. Use PATCH /leave to keep history with an end_date instead.",
-            tags = {"Class"},
+            tags = {"Student"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Student unenrolled"),
                     @ApiResponse(responseCode = "404", description = "Enrollment not found")
             }
     )
     public ResponseEntity<APIResponse<Void>> unenrollStudentFromClass(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("student-id") UUID studentId
+            @PathVariable UUID classId,
+            @PathVariable UUID studentId
     ) {
         classService.unenrollStudentFromClass(classId, studentId);
         return buildResponse("Student unenrolled from class", null, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{class-id}/students/{student-id}/leave")
+    @PatchMapping("/{classId}/students/{studentId}/leave")
     @Operation(
             summary = "Mark student as left/completed",
             description = "Sets end_date on the active enrollment to preserve history (recommended).",
-            tags = {"Class"},
+            tags = {"Student"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Student leave recorded"),
                     @ApiResponse(responseCode = "404", description = "Active enrollment not found")
             }
     )
     public ResponseEntity<APIResponse<Void>> studentLeaveClass(
-            @PathVariable("class-id") UUID classId,
-            @PathVariable("student-id") UUID studentId,
+            @PathVariable UUID classId,
+            @PathVariable UUID studentId,
             @RequestBody LeaveOrCompleteStudentRequest request
     ) {
         classService.leaveStudentFromClass(classId, studentId, request.getEndDate());
@@ -325,7 +324,7 @@ public class ClassController {
                 This operation closes the current enrollment (sets end date)
                 and creates a new active enrollment in the destination class.
                 """,
-            tags = {"Class"},
+            tags = {"Student"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Student moved successfully"),
                     @ApiResponse(responseCode = "404", description = "Class or Student not found"),
@@ -339,18 +338,18 @@ public class ClassController {
         return buildResponse("Student moved successfully", null, HttpStatus.OK);
     }
 
-    @GetMapping("/{class-id}/sub-subjects")
+    @GetMapping("/{classId}/sub-subjects")
     @Operation(
             summary = "List sub-subjects of a class",
             description = "Returns all sub-subjects assigned to the specified class, with pagination and sorting support.",
-            tags = {"Class"},
+            tags = {"SubSubject"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Sub-subjects retrieved successfully"),
                     @ApiResponse(responseCode = "404", description = "Class not found")
             }
     )
     public ResponseEntity<APIResponse<PagedResponse<List<SubSubjectResponse>>>> getSubSubjectsOfClass(
-            @PathVariable("class-id") UUID classId,
+            @PathVariable UUID classId,
             @RequestParam(defaultValue = "1") @Positive Integer page,
             @RequestParam(defaultValue = "10") @Positive Integer size,
             @RequestParam(required = false, defaultValue = "NAME") ClassSubSubjectProperty property,
@@ -363,7 +362,7 @@ public class ClassController {
         );
     }
 
-    @GetMapping("/{class-id}/students")
+    @GetMapping("/{classId}/students")
     @Operation(
             summary = "List students of a class",
             description = "Returns a paginated list of students currently enrolled in the specified class.",
@@ -374,7 +373,7 @@ public class ClassController {
             }
     )
     public ResponseEntity<APIResponse<PagedResponse<List<UserResponse>>>> getStudentsByClass(
-            @PathVariable("class-id") UUID classId,
+            @PathVariable UUID classId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "ASC") Sort.Direction direction
@@ -382,18 +381,18 @@ public class ClassController {
         return buildResponse("Students retrieved successfully", classService.getStudentsByClass(classId, page, size, direction), HttpStatus.OK);
     }
 
-    @GetMapping("/{class-id}/instructors")
+    @GetMapping("/{classId}/instructors")
     @Operation(
             summary = "List instructors of a class",
             description = "Returns a paginated list of instructors currently assigned to any sub-subject under the specified class.",
-            tags = {"Class"},
+            tags = {"Instructor"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Instructors retrieved successfully"),
                     @ApiResponse(responseCode = "404", description = "Class not found")
             }
     )
     public ResponseEntity<APIResponse<PagedResponse<List<UserResponse>>>> getInstructorsByClass(
-            @PathVariable("class-id") UUID classId,
+            @PathVariable UUID classId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "ASC") Sort.Direction direction
@@ -401,26 +400,26 @@ public class ClassController {
         return buildResponse("Instructors retrieved successfully", classService.getInstructorsByClass(classId, page, size, direction), HttpStatus.OK);
     }
 
-    @GetMapping("/{class-id}/summary")
+    @GetMapping("/{classId}/summary")
     @Operation(
             summary = "Get class summary",
             description = "Returns aggregate counts for a class: sub-subjects, active students, and active instructors.",
             tags = {"Class"}
     )
     public ResponseEntity<APIResponse<ClassSummaryResponse>> getClassSummary(
-            @PathVariable("class-id") UUID classId
+            @PathVariable UUID classId
     ) {
         return buildResponse("Class summary retrieved", classService.getClassSummary(classId), HttpStatus.OK);
     }
 
-    @GetMapping("/of-student/{student-id}")
+    @GetMapping("/of-student/{studentId}")
     @Operation(
             summary = "List classes of a student",
             description = "Paginated classes the student is enrolled in. Use activeOnly to include history.",
-            tags = {"Class"}
+            tags = {"Student"}
     )
     public ResponseEntity<APIResponse<PagedResponse<List<ClassResponse>>>> getClassesOfStudent(
-            @PathVariable("student-id") UUID studentId,
+            @PathVariable UUID studentId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "NAME") ClassProperty property,
@@ -429,48 +428,20 @@ public class ClassController {
         return buildResponse("Student classes retrieved", classService.getClassesOfStudent(studentId, page, size, property, direction), HttpStatus.OK);
     }
 
-    @GetMapping("/of-instructor/{instructor-id}")
+    @GetMapping("/of-instructor/{instructorId}")
     @Operation(
             summary = "List classes of an instructor",
             description = "Paginated classes where the instructor is assigned (defaults to active assignments).",
-            tags = {"Class"}
+            tags = {"Instructor"}
     )
     public ResponseEntity<APIResponse<PagedResponse<List<ClassResponse>>>> getClassesOfInstructor(
-            @PathVariable("instructor-id") UUID instructorId,
+            @PathVariable UUID instructorId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "NAME") ClassProperty property,
             @RequestParam(required = false, defaultValue = "ASC") Sort.Direction direction
     ) {
         return buildResponse("Instructor classes retrieved", classService.getClassesOfInstructor(instructorId, page, size, property, direction), HttpStatus.OK);
-    }
-
-    @GetMapping("/{class-id}/assessments")
-    @Operation(
-            summary = "List assessments of a class",
-            description = "Returns a paginated list of all assessments assigned to a specific class. "
-                          + "Supports sorting and is accessible to Admin, Teacher, and Student roles.",
-            tags = {"Class"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Assessments retrieved successfully"),
-                    @ApiResponse(responseCode = "404", description = "Class not found")
-            }
-    )
-    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAssessmentsByClassId(
-            @PathVariable("class-id") UUID classId,
-            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
-            @RequestParam(defaultValue = "1") @Positive Integer page,
-
-            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
-            @RequestParam(defaultValue = "10") @Positive Integer size,
-
-            @Parameter(description = "Sort property", example = "CREATED_AT", in = ParameterIn.QUERY)
-            @RequestParam(defaultValue = "CREATED_AT") AssessmentProperty property,
-
-            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction
-    ) {
-        return buildResponse("Assessments retrieved successfully", classService.getAssessmentsByClassId(classId, page, size, property, direction), HttpStatus.OK);
     }
 
 

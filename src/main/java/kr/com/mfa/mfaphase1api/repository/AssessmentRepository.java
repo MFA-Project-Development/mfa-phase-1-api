@@ -13,14 +13,7 @@ import java.util.UUID;
 @Repository
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
 
-
-    Page<Assessment> findAllByCreatedBy(UUID createdBy, Pageable pageable);
-
-    Optional<Assessment> findByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);
-
-    void deleteByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);
-
-    Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID studentId, Pageable pageable);
+    Optional<Assessment> findByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);;
 
     Optional<Assessment> findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID assessmentId, UUID createdBy);
 
@@ -30,7 +23,9 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
 
     Page<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID classId, UUID studentId, Pageable pageable);
 
+    Optional<Assessment> findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(UUID assessmentId, UUID classId);
 
+    Optional<Assessment> findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(UUID assessmentId, UUID classId, UUID currentUserId);
 
-
+    Optional<Assessment> findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID assessmentId, UUID classId, UUID currentUserId);
 }

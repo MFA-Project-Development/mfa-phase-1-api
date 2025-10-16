@@ -11,13 +11,13 @@ import java.util.UUID;
 
 public interface SubSubjectService {
 
-    SubSubjectResponse createSubSubject(SubSubjectRequest request);
+    SubSubjectResponse createSubSubject(UUID subjectId, SubSubjectRequest request);
 
-    PagedResponse<List<SubSubjectResponse>> getAllSubSubjects(Integer page, Integer size, SubSubjectProperty property, Sort.Direction direction);
+    PagedResponse<List<SubSubjectResponse>> getAllSubSubjects(UUID subjectId, Integer page, Integer size, SubSubjectProperty property, Sort.Direction direction);
 
-    SubSubjectResponse getSubSubjectById(UUID subSubjectId);
+    SubSubjectResponse getSubSubjectById(UUID subjectId, UUID subSubjectId);
 
-    SubSubjectResponse updateSubSubjectById(UUID subSubjectId, SubSubjectRequest request);
+    SubSubjectResponse updateSubSubjectById(UUID subjectId, UUID subSubjectId, SubSubjectRequest request);
 
-    void deleteSubSubjectById(UUID subSubjectId);
+    void deleteSubSubjectById(UUID subjectId, UUID subSubjectId);
 }

@@ -24,7 +24,7 @@ public interface ClassSubSubjectInstructorRepository extends JpaRepository<Class
 
     long countDistinctByClassSubSubject_Clazz(Class clazz);
 
+    Optional<ClassSubSubjectInstructor> findByClassSubSubject_Clazz_ClassIdAndInstructorId(UUID classId, UUID currentUserId);
 
-
-
+    boolean existsByClassSubSubject_Clazz_ClassIdAndInstructorId(UUID classId, UUID currentUserId);
 }
