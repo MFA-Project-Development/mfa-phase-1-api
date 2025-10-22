@@ -75,7 +75,7 @@ minio:
   bucket-name: ${MINIO_BUCKET_NAME}
 
 server:
-  port: 8082
+  port: 8003
   http2.enabled: true
   compression:
     enabled: true

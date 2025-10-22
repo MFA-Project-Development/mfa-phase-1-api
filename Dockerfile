@@ -23,6 +23,6 @@ FROM eclipse-temurin:21.0.7_6-jre-ubi9-minimal
 
 COPY --from=build /app/build/libs/*.jar /app/app.jar
 
-EXPOSE 8080
+EXPOSE 8003
 
 CMD ["java", "-jar", "/app/app.jar"]
