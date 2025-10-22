@@ -11,7 +11,7 @@ services:
     ports:
       - "5435:5432"
 
-  api:
+  mfa-phase1-api:
     build:
       context: .
       dockerfile: Dockerfile
