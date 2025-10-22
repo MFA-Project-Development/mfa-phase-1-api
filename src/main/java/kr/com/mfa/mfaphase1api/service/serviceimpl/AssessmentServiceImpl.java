@@ -1,15 +1,11 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
-import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.ClassResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.UserResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
-import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
@@ -37,14 +33,11 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final ClassRepository classRepository;
     private final ClassSubSubjectInstructorRepository classSubSubjectInstructorRepository;
 
-    private final UserClient userClient;
-
     @Override
     @Transactional
     public AssessmentResponse createAssessment(UUID classId, AssessmentRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
-        UserResponse userResponse = getUserOrThrow(currentUserId);
 
         AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
                 .orElseThrow(() -> new NotFoundException(
@@ -62,15 +55,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 request.toEntity(currentUserId, assessmentType, csi)
         );
 
-        Class clazz = csi.getClassSubSubject().getClazz();
-        SubSubject subSubject = csi.getClassSubSubject().getSubSubject();
-
-        return saved.toResponse(
-                userResponse,
-                assessmentType.toResponse(),
-                subSubject.toResponse(),
-                clazz.toResponse()
-        );
+        return saved.toResponse();
     }
 
     @Override
@@ -107,25 +92,8 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
         };
 
-        Class clazz = classRepository.findById(classId)
-                .orElseThrow(() -> new NotFoundException("Class " + classId + " not found."));
-        ClassResponse clazzResp = clazz.toResponse();
-
-        Map<UUID, UserResponse> creatorCache = new HashMap<>();
-
         List<AssessmentResponse> items = pageAssessments.stream()
-                .map(assessment -> {
-                    UUID creatorId = assessment.getCreatedBy();
-                    UserResponse creator = creatorCache.computeIfAbsent(creatorId, this::getUserOrThrow);
-
-                    var assessmentTypeResp = assessment.getAssessmentType().toResponse();
-                    var subSubjectResp = assessment.getClassSubSubjectInstructor()
-                            .getClassSubSubject()
-                            .getSubSubject()
-                            .toResponse();
-
-                    return assessment.toResponse(creator, assessmentTypeResp, subSubjectResp, clazzResp);
-                })
+                .map(Assessment::toResponse)
                 .toList();
 
         return pageResponse(
@@ -157,12 +125,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
         };
 
-        AssessmentType assessmentType = assessment.getAssessmentType();
-        Class clazz = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz();
-        SubSubject subSubject = assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject();
-        UserResponse creator = getUserOrThrow(assessment.getCreatedBy());
-
-        return assessment.toResponse(creator, assessmentType.toResponse(), subSubject.toResponse(), clazz.toResponse());
+        return assessment.toResponse();
     }
 
     @Override
@@ -170,7 +133,6 @@ public class AssessmentServiceImpl implements AssessmentService {
     public AssessmentResponse updateAssessmentById(UUID classId, UUID assessmentId, AssessmentRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
-        UserResponse creator = getUserOrThrow(currentUserId);
 
         Assessment assessment = assessmentRepository
                 .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(
@@ -196,15 +158,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
-        Class clazz = csi.getClassSubSubject().getClazz();
-        SubSubject subSubject = csi.getClassSubSubject().getSubSubject();
-
-        return saved.toResponse(
-                creator,
-                assessmentType.toResponse(),
-                subSubject.toResponse(),
-                clazz.toResponse()
-        );
+        return saved.toResponse();
 
     }
 
@@ -232,20 +186,11 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     }
 
-
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {
         return assessmentRepository
                 .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(
                         assessmentId, classId)
                 .orElseThrow(() -> new NotFoundException("Assessment " + assessmentId + " not found."));
-    }
-
-    private UserResponse getUserOrThrow(UUID userId) {
-        var response = userClient.getUserInfoById(userId);
-        if (response == null || response.getBody() == null || response.getBody().getPayload() == null) {
-            throw new NotFoundException("User " + userId + " not found");
-        }
-        return response.getBody().getPayload();
     }
 
 }

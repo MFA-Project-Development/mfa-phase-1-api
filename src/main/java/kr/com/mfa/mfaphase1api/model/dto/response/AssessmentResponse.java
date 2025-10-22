@@ -20,10 +20,10 @@ public class AssessmentResponse {
     private String description;
     private Integer timeLimit;
     private AssessmentStatus status;
-    private AssessmentTypeResponse assessmentTypeResponse;
-    private SubSubjectResponse subSubjectResponse;
-    private ClassResponse classResponse;
-    private UserResponse createdBy;
+    private UUID assessmentTypeId;
+    private UUID subSubjectId;
+    private UUID classId;
+    private UUID createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -366,7 +366,7 @@ public class ClassController {
     @Operation(
             summary = "List students of a class",
             description = "Returns a paginated list of students currently enrolled in the specified class.",
-            tags = {"Class"},
+            tags = {"Student"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Students retrieved successfully"),
                     @ApiResponse(responseCode = "404", description = "Class not found")

@@ -11,12 +11,11 @@ import java.util.UUID;
 @Builder
 public class ClassRequest {
     private String name;
-    private String code;
 
-    public Class toEntity(){
+    public Class toEntity(String code){
         return Class.builder()
                 .name(this.name)
-                .code(this.code)
+                .code(code)
                 .build();
     }
 

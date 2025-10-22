@@ -15,5 +15,4 @@ public class ClassResponse {
     private UUID classId;
     private String name;
     private String code;
-
 }

@@ -38,7 +38,7 @@ public class SubSubject {
         return SubSubjectResponse.builder()
                 .subSubjectId(this.subSubjectId)
                 .name(this.name)
-                .subjectResponse(this.subject.toResponse())
+                .subjectId(this.subject.getSubjectId())
                 .build();
     }
 

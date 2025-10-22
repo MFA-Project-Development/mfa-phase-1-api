@@ -12,6 +12,6 @@ public class SubSubjectResponse {
 
     private UUID subSubjectId;
     private String name;
-    private SubjectResponse subjectResponse;
+    private UUID subjectId;
 
 }

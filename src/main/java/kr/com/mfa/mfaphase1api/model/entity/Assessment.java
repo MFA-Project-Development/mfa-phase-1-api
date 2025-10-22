@@ -49,6 +49,11 @@ public class Assessment {
     @ToString.Exclude
     private List<Question> questions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Submission> submissions = new ArrayList<>();
+
+    @Column(nullable = false)
     private UUID createdBy;
 
     @CreationTimestamp
@@ -59,7 +64,7 @@ public class Assessment {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public AssessmentResponse toResponse(UserResponse userResponse, AssessmentTypeResponse assessmentTypeResponse, SubSubjectResponse subSubjectResponse, ClassResponse classResponse){
+    public AssessmentResponse toResponse(){
         return AssessmentResponse.builder()
                 .assessmentId(this.assessmentId)
                 .title(this.title)
@@ -68,10 +73,10 @@ public class Assessment {
                 .status(this.status)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
-                .assessmentTypeResponse(assessmentTypeResponse)
-                .subSubjectResponse(subSubjectResponse)
-                .classResponse(classResponse)
-                .createdBy(userResponse)
+                .assessmentTypeId(this.assessmentType.getAssessmentTypeId())
+                .subSubjectId(this.classSubSubjectInstructor.getClassSubSubject().getSubSubject().getSubSubjectId())
+                .classId(this.classSubSubjectInstructor.getClassSubSubject().getClazz().getClassId())
+                .createdBy(this.createdBy)
                 .build();
     }
 

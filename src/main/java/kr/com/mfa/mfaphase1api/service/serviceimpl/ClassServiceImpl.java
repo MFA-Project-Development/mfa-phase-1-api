@@ -55,8 +55,7 @@ public class ClassServiceImpl implements ClassService {
     public ClassResponse createClass(ClassRequest request) {
         assertClassNameUnique(request.getName());
         String code = generateClassCode();
-        request.setCode(code);
-        Class saved = classRepository.save(request.toEntity());
+        Class saved = classRepository.save(request.toEntity(code));
         return saved.toResponse();
     }
 
@@ -201,10 +200,15 @@ public class ClassServiceImpl implements ClassService {
 
         UserResponse userResponse = getUserOrThrow(instructorId);
 
-        boolean existsInstructorAndClassSubSubject = classSubSubjectInstructorRepository.existsClassSubSubjectInstructorByClassSubSubject_ClassSubSubjectId_AndInstructorId(classSubSubject.getClassSubSubjectId(), instructorId);
+        if (classSubSubjectInstructorRepository
+                .existsByClassSubSubject_ClassSubSubjectIdAndInstructorIdAndEndDateIsNull(
+                        classSubSubject.getClassSubSubjectId(), instructorId)) {
+            throw new ConflictException("This instructor is already actively assigned to this class sub-subject.");
+        }
 
-        if (existsInstructorAndClassSubSubject) {
-            throw new ConflictException("Instructor already assigned to this class sub-subject");
+        if (classSubSubjectInstructorRepository
+                .existsByClassSubSubject_ClassSubSubjectIdAndEndDateIsNull(classSubSubject.getClassSubSubjectId())) {
+            throw new ConflictException("Another instructor is currently assigned to this class sub-subject.");
         }
 
         ClassSubSubjectInstructor classSubSubjectInstructor = ClassSubSubjectInstructor.builder()

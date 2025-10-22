@@ -14,8 +14,6 @@ import java.util.UUID;
 @Repository
 public interface ClassSubSubjectInstructorRepository extends JpaRepository<ClassSubSubjectInstructor, UUID> {
 
-    boolean existsClassSubSubjectInstructorByClassSubSubject_ClassSubSubjectId_AndInstructorId(UUID classSubSubjectId, UUID instructorId);
-
     void deleteClassSubSubjectInstructorByClassSubSubject_AndInstructorId(ClassSubSubject classSubSubject, UUID instructorId);
 
     Optional<ClassSubSubjectInstructor> findClassSubSubjectInstructorByClassSubSubject_AndInstructorId(ClassSubSubject classSubSubject, UUID instructorId);
@@ -27,4 +25,8 @@ public interface ClassSubSubjectInstructorRepository extends JpaRepository<Class
     Optional<ClassSubSubjectInstructor> findByClassSubSubject_Clazz_ClassIdAndInstructorId(UUID classId, UUID currentUserId);
 
     boolean existsByClassSubSubject_Clazz_ClassIdAndInstructorId(UUID classId, UUID currentUserId);
+
+    boolean existsByClassSubSubject_ClassSubSubjectIdAndEndDateIsNull(UUID classSubSubjectId);
+
+    boolean existsByClassSubSubject_ClassSubSubjectIdAndInstructorIdAndEndDateIsNull(UUID classSubSubjectId, UUID instructorId);
 }

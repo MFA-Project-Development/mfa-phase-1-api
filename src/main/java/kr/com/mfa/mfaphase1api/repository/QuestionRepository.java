@@ -17,4 +17,8 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     Optional<Question> findByAssessment_AssessmentId_AndQuestionId(UUID assessmentId, UUID questionId);
 
     Page<Question> findAllByAssessment_AssessmentId(UUID assessmentId, Pageable pageable);
+
+    Optional<Question> findByQuestionId_AndAssessment_CreatedBy(UUID questionId, UUID instructorId);
+
+    Optional<Question> findByQuestionId_AndAssessment_ClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID questionId, UUID studentId);
 }

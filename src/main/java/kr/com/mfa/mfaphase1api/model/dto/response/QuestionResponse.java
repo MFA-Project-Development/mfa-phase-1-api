@@ -20,7 +20,7 @@ public class QuestionResponse {
     private GradingMode mode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private QuestionTypeResponse questionTypeResponse;
-    private AssessmentResponse assessmentResponse;
+    private UUID questionTypeId;
+    private UUID assessmentId;
 
 }

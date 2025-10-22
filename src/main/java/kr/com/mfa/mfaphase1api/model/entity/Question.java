@@ -1,9 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.QuestionTypeResponse;
 import kr.com.mfa.mfaphase1api.model.enums.GradingMode;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -58,7 +56,7 @@ public class Question {
     @ToString.Exclude
     private Assessment assessment;
 
-    public QuestionResponse toResponse(QuestionTypeResponse questionTypeResponse, AssessmentResponse assessmentResponse) {
+    public QuestionResponse toResponse() {
         return QuestionResponse.builder()
                 .questionId(this.questionId)
                 .text(this.text)
@@ -67,8 +65,8 @@ public class Question {
                 .questionOrder(this.questionOrder)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
-                .questionTypeResponse(questionTypeResponse)
-                .assessmentResponse(assessmentResponse)
+                .questionTypeId(this.questionType.getQuestionTypeId())
+                .assessmentId(this.assessment.getAssessmentId())
                 .build();
     }
 }
