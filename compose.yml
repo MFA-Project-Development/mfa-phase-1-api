@@ -10,6 +10,8 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5435:5432"
+    networks:
+      - mfa-net
 
   mfa-phase1-api:
     build:
@@ -27,10 +29,16 @@ services:
       EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS: "5"
       EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS: "10"
       EUREKA_INSTANCE_INSTANCE_ID: "${SPRING_APPLICATION_NAME}:${SERVER_PORT}"
+      MINIO_URL: http://storage:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
     ports:
       - "8003:8003"
     depends_on:
       - db
+    networks:
+      - mfa-net
 
   storage:
     image: minio/minio:latest
@@ -43,6 +51,12 @@ services:
       - "9001:9001"
     volumes:
       - storage:/var/lib/minio/data
+    networks:
+      - mfa-net
+
+networks:
+  mfa-net:
+    external: true
 
 volumes:
   db_data:
