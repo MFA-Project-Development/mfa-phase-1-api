@@ -12,8 +12,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://keycloak.dara-it.site/realms/mfa
-          jwk-set-uri: https://keycloak.dara-it.site/realms/mfa/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8080/realms/mfa
+          jwk-set-uri: http://localhost:8080/realms/mfa/protocol/openid-connect/certs
 
   jpa:
     database: postgresql
@@ -44,6 +44,18 @@ spring:
           mime-types: application/json,application/xml,text/plain
         response:
           enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 10MB
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
 
 eureka:
   client:

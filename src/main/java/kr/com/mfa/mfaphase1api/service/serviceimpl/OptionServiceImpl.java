@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +38,7 @@ public class OptionServiceImpl implements OptionService {
     private final AssessmentRepository assessmentRepository;
 
     @Override
+    @Transactional
     public OptionResponse createOption(UUID questionId, OptionRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
@@ -53,6 +55,7 @@ public class OptionServiceImpl implements OptionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PagedResponse<List<OptionResponse>> getAllOptions(UUID questionId, Integer page, Integer size, OptionProperty property, Sort.Direction direction) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
@@ -99,6 +102,7 @@ public class OptionServiceImpl implements OptionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OptionResponse getOptionById(UUID questionId, UUID optionId) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
@@ -130,6 +134,7 @@ public class OptionServiceImpl implements OptionService {
     }
 
     @Override
+    @Transactional
     public OptionResponse updateOptionById(UUID questionId, UUID optionId, OptionRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
@@ -148,6 +153,7 @@ public class OptionServiceImpl implements OptionService {
     }
 
     @Override
+    @Transactional
     public void deleteOptionById(UUID questionId, UUID optionId) {
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
 

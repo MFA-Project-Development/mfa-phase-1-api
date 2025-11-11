@@ -15,7 +15,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class SubmissionResponse {
-
     private UUID submissionId;
     private UUID assessmentId;
     private UUID studentId;

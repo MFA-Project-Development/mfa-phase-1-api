@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.AssessmentType;
 import kr.com.mfa.mfaphase1api.model.entity.ClassSubSubjectInstructor;
-import kr.com.mfa.mfaphase1api.model.entity.SubSubject;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

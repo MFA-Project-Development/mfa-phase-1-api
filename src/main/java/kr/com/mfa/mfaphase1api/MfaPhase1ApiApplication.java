@@ -32,13 +32,13 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
         type = SecuritySchemeType.OAUTH2,
         flows = @OAuthFlows(
                 clientCredentials = @OAuthFlow(
-                        tokenUrl = "https://keycloak.dara-it.site/realms/mfa/protocol/openid-connect/token",
+                        tokenUrl = "http://localhost:8080/realms/mfa/protocol/openid-connect/token",
                         scopes = {
                                 @OAuthScope(name = "openid", description = "OpenID Connect scope")
                         }
                 ),
                 password = @OAuthFlow(
-                        tokenUrl = "https://keycloak.dara-it.site/realms/mfa/protocol/openid-connect/token",
+                        tokenUrl = "http://localhost:8080/realms/mfa/protocol/openid-connect/token",
                         scopes = {
                                 @OAuthScope(name = "openid", description = "OpenID Connect scope")
                         }

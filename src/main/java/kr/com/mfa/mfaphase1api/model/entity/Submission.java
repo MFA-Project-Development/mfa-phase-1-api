@@ -18,7 +18,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "submissions")
+@Table(name = "submissions", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"assessment_id", "student_id"})
+})
 public class Submission {
 
     @Id
@@ -56,5 +58,8 @@ public class Submission {
     @ToString.Exclude
     private List<Answer> answers = new ArrayList<>();
 
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Paper> papers = new ArrayList<>();
 
 }

@@ -43,6 +43,11 @@ public class Answer {
     private Question question;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paper_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_paper"))
+    @ToString.Exclude
+    private Paper paper;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_submission"))
     @ToString.Exclude
     private Submission submission;
