@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,5 +14,6 @@ public class EnrollStudentRequest {
 
     @NotNull
     private LocalDate startDate;
+
 
 }

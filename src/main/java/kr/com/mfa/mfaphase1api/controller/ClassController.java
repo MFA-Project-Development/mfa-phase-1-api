@@ -154,6 +154,26 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{classId}/sub-subjects")
+    @Operation(
+            summary = "Assign multiple sub-subject to a class",
+            description = "Links an existing sub-subject to a class. Safe to call multiple times (idempotent).",
+            tags = {"SubSubject"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Sub-subject assigned to class"),
+                    @ApiResponse(responseCode = "404", description = "Class or Sub-subject not found"),
+                    @ApiResponse(responseCode = "409", description = "Conflict (e.g., duplicate constraint)"),
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> assignMultipleSubSubjectToClass(
+            @PathVariable UUID classId,
+            @RequestBody List<UUID> subSubjectIds
+    ) {
+        classService.assignMultipleSubSubjectToClass(classId, subSubjectIds);
+        return buildResponse("Multiple sub-subject assigned to class", null, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{classId}/sub-subjects/{subSubjectId}")
     @Operation(
             summary = "Unassign a sub-subject from a class",
@@ -277,6 +297,29 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{classId}/students")
+    @Operation(
+            summary = "Multiple enroll student to class",
+            description = "Creates (or re-activates) multiple enrollment for the student in the class. Idempotent if already active.",
+            tags = {"Student"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Student enrolled"),
+                    @ApiResponse(responseCode = "404", description = "Class or Student not found"),
+                    @ApiResponse(responseCode = "409", description = "Active enrollment already exists (overlap)")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> multipleEnrollStudentToClass(
+            @PathVariable UUID classId,
+            @RequestBody List<UUID> studentIds
+    ) {
+        classService.multipleEnrollStudentToClass(
+                classId,
+                studentIds
+        );
+        return buildResponse("Student enrolled to class", null, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{classId}/students/{studentId}")
     @Operation(
             summary = "Unenroll student from class (hard remove)",
@@ -372,7 +415,7 @@ public class ClassController {
                     @ApiResponse(responseCode = "404", description = "Class not found")
             }
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<UserResponse>>>> getStudentsByClass(
+    public ResponseEntity<APIResponse<PagedResponse<List<StudentResponse>>>> getStudentsByClass(
             @PathVariable UUID classId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
@@ -391,7 +434,7 @@ public class ClassController {
                     @ApiResponse(responseCode = "404", description = "Class not found")
             }
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<UserResponse>>>> getInstructorsByClass(
+    public ResponseEntity<APIResponse<PagedResponse<List<InstructorResponse>>>> getInstructorsByClass(
             @PathVariable UUID classId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
@@ -443,7 +486,5 @@ public class ClassController {
     ) {
         return buildResponse("Instructor classes retrieved", classService.getClassesOfInstructor(instructorId, page, size, property, direction), HttpStatus.OK);
     }
-
-
 
 }

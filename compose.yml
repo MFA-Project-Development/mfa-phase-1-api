@@ -54,6 +54,15 @@ services:
     networks:
       - mfa-net
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+    command: [ "redis-server", "--requirepass", "password" ]
+
 networks:
   mfa-net:
     external: true
@@ -61,3 +70,4 @@ networks:
 volumes:
   db_data:
   storage:
+  redis-data:

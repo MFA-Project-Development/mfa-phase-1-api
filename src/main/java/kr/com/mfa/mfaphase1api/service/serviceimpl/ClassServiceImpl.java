@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -131,9 +131,9 @@ public class ClassServiceImpl implements ClassService {
     @Override
     @Transactional
     public ClassResponse updateClassById(UUID classId, ClassRequest request) {
-        getOrThrow(classId);
+        Class clazz = getOrThrow(classId);
         assertClassNameUnique(request.getName());
-        Class saved = classRepository.save(request.toEntity(classId));
+        Class saved = classRepository.save(request.toEntity(classId, clazz.getCode()));
         return saved.toResponse();
     }
 
@@ -393,7 +393,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<List<UserResponse>> getStudentsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction) {
+    public PagedResponse<List<StudentResponse>> getStudentsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction) {
         Class clazz = getOrThrow(classId);
 
         int safePage = Math.max(page, 1) - 1;
@@ -413,12 +413,39 @@ public class ClassServiceImpl implements ClassService {
         UserIdsRequest request = UserIdsRequest.builder().userIds(studentIds).build();
         var response = userClient.getAllUserByUserIds(request);
 
-        List<UserResponse> students = (response != null && response.getBody() != null)
-                ? response.getBody().getPayload()
-                : List.of();
+        Map<UUID, UserResponse> userMap = (response != null && response.getBody() != null && response.getBody().getPayload() != null)
+                ? response.getBody().getPayload().stream()
+                .collect(Collectors.toMap(
+                        UserResponse::getUserId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ))
+                : Map.of();
+
+        List<StudentResponse> studentResponses = pageEnrollments.getContent().stream()
+                .map(student -> {
+                    UserResponse user = userMap.get(student.getStudentId());
+
+                    if (user == null) {
+                        log.warn("User not found for student ID: {}", student.getStudentId());
+                        return null;
+                    }
+
+                    String fullName = ((user.getFirstName() != null ? user.getFirstName() : "") + " " +
+                                       (user.getLastName() != null ? user.getLastName() : "")).trim();
+
+                    return StudentResponse.builder()
+                            .studentId(user.getUserId())
+                            .studentEmail(user.getEmail())
+                            .studentName(fullName)
+                            .profileImage(user.getProfileImage())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
         return pageResponse(
-                students,
+                studentResponses,
                 pageEnrollments.getTotalElements(),
                 page,
                 size,
@@ -428,7 +455,12 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<List<UserResponse>> getInstructorsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction) {
+    public PagedResponse<List<InstructorResponse>> getInstructorsByClass(
+            UUID classId,
+            Integer page,
+            Integer size,
+            Sort.Direction direction
+    ) {
         Class clazz = getOrThrow(classId);
 
         int safePage = Math.max(page, 1) - 1;
@@ -437,24 +469,52 @@ public class ClassServiceImpl implements ClassService {
         Page<ClassSubSubjectInstructor> pageInstructors =
                 classSubSubjectInstructorRepository.findDistinctByClassSubSubject_Clazz(clazz, pageable);
 
+        if (pageInstructors.isEmpty()) {
+            return pageResponse(List.of(), 0L, page, size, 0);
+        }
+
         List<UUID> instructorIds = pageInstructors.getContent().stream()
                 .map(ClassSubSubjectInstructor::getInstructorId)
                 .distinct()
                 .toList();
 
-        if (instructorIds.isEmpty()) {
-            return pageResponse(List.of(), 0L, page, size, 0);
-        }
-
         UserIdsRequest request = UserIdsRequest.builder().userIds(instructorIds).build();
         var response = userClient.getAllUserByUserIds(request);
 
-        List<UserResponse> instructors = (response != null && response.getBody() != null)
-                ? response.getBody().getPayload()
-                : List.of();
+        Map<UUID, UserResponse> userMap = (response != null && response.getBody() != null && response.getBody().getPayload() != null)
+                ? response.getBody().getPayload().stream()
+                .collect(Collectors.toMap(
+                        UserResponse::getUserId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ))
+                : Map.of();
+
+        List<InstructorResponse> instructorResponses = pageInstructors.getContent().stream()
+                .map(instructor -> {
+                    UserResponse user = userMap.get(instructor.getInstructorId());
+
+                    if (user == null) {
+                        log.warn("User not found for instructor ID: {}", instructor.getInstructorId());
+                        return null;
+                    }
+
+                    String fullName = ((user.getFirstName() != null ? user.getFirstName() : "") + " " +
+                                       (user.getLastName() != null ? user.getLastName() : "")).trim();
+
+                    return InstructorResponse.builder()
+                            .instructorId(user.getUserId())
+                            .instructorEmail(user.getEmail())
+                            .instructorName(fullName)
+                            .subSubjectResponse(instructor.getClassSubSubject().getSubSubject().toResponse())
+                            .profileImage(user.getProfileImage())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
         return pageResponse(
-                instructors,
+                instructorResponses,
                 pageInstructors.getTotalElements(),
                 page,
                 size,
@@ -520,6 +580,103 @@ public class ClassServiceImpl implements ClassService {
                 size,
                 pageClasses.getTotalPages()
         );
+    }
+
+    @Override
+    @Transactional
+    public void assignMultipleSubSubjectToClass(UUID classId, List<UUID> subSubjectIds) {
+        if (subSubjectIds == null || subSubjectIds.isEmpty()) {
+            return;
+        }
+
+        Class clazz = getOrThrow(classId);
+
+        List<SubSubject> subSubjects = subSubjectRepository.findAllById(subSubjectIds);
+
+        if (subSubjects.size() != subSubjectIds.size()) {
+            Set<UUID> foundIds = subSubjects.stream()
+                    .map(SubSubject::getSubSubjectId)
+                    .collect(Collectors.toSet());
+            List<UUID> missingIds = subSubjectIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new NotFoundException("SubSubjects not found: " + missingIds);
+        }
+
+        for (SubSubject subSubject : subSubjects) {
+            boolean exists = classSubSubjectRepository
+                    .existsClassSubSubjectByClazz_ClassId_AndSubSubject_SubSubjectId(
+                            classId,
+                            subSubject.getSubSubjectId()
+                    );
+
+            if (exists) {
+                throw new ConflictException(
+                        "SubSubject already assigned to this class: " +
+                        subSubject.getSubSubjectId()
+                );
+            }
+        }
+
+        List<ClassSubSubject> classSubSubjects = subSubjects.stream()
+                .map(subSubject -> ClassSubSubject.builder()
+                        .clazz(clazz)
+                        .subSubject(subSubject)
+                        .build())
+                .toList();
+
+        classSubSubjectRepository.saveAll(classSubSubjects);
+    }
+
+    @Override
+    @Transactional
+    public void multipleEnrollStudentToClass(UUID classId, List<UUID> studentIds) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return;
+        }
+
+        Class clazz = getOrThrow(classId);
+
+        UserIdsRequest request = UserIdsRequest.builder()
+                .userIds(studentIds)
+                .build();
+        var response = userClient.getAllUserByUserIds(request);
+
+        List<UserResponse> students = (response != null && response.getBody() != null && response.getBody().getPayload() != null)
+                ? response.getBody().getPayload()
+                : List.of();
+
+        if (students.size() != studentIds.size()) {
+            Set<UUID> foundIds = students.stream()
+                    .map(UserResponse::getUserId)
+                    .collect(Collectors.toSet());
+            List<UUID> missingIds = studentIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new NotFoundException("Students not found: " + missingIds);
+        }
+
+        for (UserResponse student : students) {
+            boolean exists = studentClassEnrollmentRepository
+                    .existsAllByStudentId_AndClazz(student.getUserId(), clazz);
+
+            if (exists) {
+                throw new ConflictException(
+                        "Student already enrolled in this class: " + student.getUserId()
+                );
+            }
+        }
+
+        LocalDate now = LocalDate.now();
+        List<StudentClassEnrollment> enrollments = students.stream()
+                .map(student -> StudentClassEnrollment.builder()
+                        .clazz(clazz)
+                        .studentId(student.getUserId())
+                        .startDate(now)
+                        .build())
+                .toList();
+
+        studentClassEnrollmentRepository.saveAll(enrollments);
     }
 
     private Class getOrThrow(UUID classId) {

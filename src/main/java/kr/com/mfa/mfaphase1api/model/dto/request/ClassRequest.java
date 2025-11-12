@@ -19,10 +19,11 @@ public class ClassRequest {
                 .build();
     }
 
-    public Class toEntity(UUID classId){
+    public Class toEntity(UUID classId, String code){
         return Class.builder()
                 .classId(classId)
                 .name(this.name)
+                .code(code)
                 .build();
     }
 }

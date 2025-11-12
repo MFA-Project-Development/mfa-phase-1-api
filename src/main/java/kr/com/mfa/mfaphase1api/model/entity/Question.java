@@ -9,6 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -55,6 +57,10 @@ public class Question {
     @JoinColumn(name = "assessment_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_assessment"))
     @ToString.Exclude
     private Assessment assessment;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Option> options = new ArrayList<>();
 
     public QuestionResponse toResponse() {
         return QuestionResponse.builder()

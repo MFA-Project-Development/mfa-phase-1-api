@@ -35,4 +35,8 @@ public class ClassSubSubjectInstructor {
     @ToString.Exclude
     private ClassSubSubject classSubSubject;
 
+    @OneToMany(mappedBy = "classSubSubjectInstructor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Assessment> assessments = new ArrayList<>();
+
 }

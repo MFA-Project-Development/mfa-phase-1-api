@@ -42,13 +42,17 @@ public interface ClassService {
 
     PagedResponse<List<SubSubjectResponse>> getSubSubjectsOfClass(UUID classId, Integer page, Integer size, ClassSubSubjectProperty property, Sort.Direction direction);
 
-    PagedResponse<List<UserResponse>> getStudentsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction);
+    PagedResponse<List<StudentResponse>> getStudentsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction);
 
-    PagedResponse<List<UserResponse>> getInstructorsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction);
+    PagedResponse<List<InstructorResponse>> getInstructorsByClass(UUID classId, Integer page, Integer size, Sort.Direction direction);
 
     ClassSummaryResponse getClassSummary(UUID classId);
 
     PagedResponse<List<ClassResponse>> getClassesOfStudent(UUID studentId, Integer page, Integer size, ClassProperty property, Sort.Direction direction);
 
     PagedResponse<List<ClassResponse>> getClassesOfInstructor(UUID instructorId, Integer page, Integer size, ClassProperty property, Sort.Direction direction);
+
+    void assignMultipleSubSubjectToClass(UUID classId, List<UUID> subSubjectIds);
+
+    void multipleEnrollStudentToClass(UUID classId, List<UUID> studentIds);
 }
