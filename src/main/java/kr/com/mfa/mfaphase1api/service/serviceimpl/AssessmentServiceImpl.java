@@ -8,6 +8,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
@@ -225,6 +226,23 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .toList();
 
         resourceRepository.saveAll(resources);
+    }
+
+    @Override
+    public List<ResourceResponse> getAssessmentResources(UUID classId, UUID assessmentId) {
+        UUID currentUserId = extractCurrentUserId();
+
+        Assessment assessment = assessmentRepository
+                .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(
+                        assessmentId, classId, currentUserId
+                )
+                .orElseThrow(() -> new NotFoundException(
+                        "Assessment " + assessmentId + " not found in class " + classId + "."
+                ));
+
+        List<Resource> resources = resourceRepository.findAllByAssessment(assessment);
+
+        return resources.stream().map(Resource::toResponse).toList();
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

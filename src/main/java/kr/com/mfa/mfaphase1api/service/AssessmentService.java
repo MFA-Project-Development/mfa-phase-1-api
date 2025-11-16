@@ -6,6 +6,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
@@ -25,4 +26,6 @@ public interface AssessmentService {
     void deleteAssessmentById(UUID classId, UUID assessmentId);
 
     void persistAssessmentResource(UUID classId, UUID assessmentId, ResourceKind kind, List<ResourceRequest> requests);
+
+    List<ResourceResponse> getAssessmentResources(UUID classId, UUID assessmentId);
 }

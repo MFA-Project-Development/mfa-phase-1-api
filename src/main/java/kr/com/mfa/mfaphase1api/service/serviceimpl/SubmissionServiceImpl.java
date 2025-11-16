@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Paper;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
@@ -78,6 +79,13 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .toList();
 
         paperRepository.saveAll(papers);
+    }
+
+    @Override
+    public List<PaperResponse> getSubmissionPapers(UUID assessmentId, UUID submissionId) {
+        Submission submission = getAndValidateSubmission(assessmentId, extractCurrentUserId());
+        List<Paper> papers = paperRepository.findAllBySubmission(submission);
+        return papers.stream().map(Paper::toResponse).toList();
     }
 
     @Override

@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
+import kr.com.mfa.mfaphase1api.model.entity.Paper;
 import kr.com.mfa.mfaphase1api.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -84,4 +86,25 @@ public class SubmissionController {
         submissionService.finalizeSubmission(assessmentId, submissionId);
         return buildResponse("Submission finalized", null, HttpStatus.OK);
     }
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/{submissionId}/papers")
+    @Operation(
+            summary = "Get submission papers",
+            description = "Retrieve all papers associated with the submission.",
+            tags = {"Submission"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Papers retrieved successfully",
+                            content = @Content(schema = @Schema(implementation = List.class)))
+            }
+    )
+    public ResponseEntity<APIResponse<List<PaperResponse>>> getSubmissionPapers(
+            @PathVariable @NotNull UUID assessmentId,
+            @PathVariable @NotNull UUID submissionId
+    ) {
+        List<PaperResponse> papers = submissionService.getSubmissionPapers(assessmentId, submissionId);
+        return buildResponse("Papers retrieved successfully", papers, HttpStatus.OK);
+    }
+
+
 }

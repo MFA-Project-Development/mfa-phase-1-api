@@ -15,6 +15,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
@@ -169,4 +170,28 @@ public class AssessmentController {
         assessmentService.persistAssessmentResource(classId, assessmentId, kind, requests);
         return buildResponse("Resources uploaded successfully", null, HttpStatus.OK);
     }
+
+    @GetMapping("/{assessmentId}/resources")
+    @Operation(
+            summary = "Get assessment resources",
+            description = "Returns all resources associated with the assessment.",
+            tags = {"Assessment"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Resources retrieved successfully",
+                            content = @Content(schema = @Schema(implementation = ResourceResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Assessment not found")
+            }
+    )
+    public ResponseEntity<APIResponse<List<ResourceResponse>>> getAssessmentResources(
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId
+    ) {
+        return buildResponse(
+                "Resources retrieved successfully",
+                assessmentService.getAssessmentResources(classId, assessmentId),
+                HttpStatus.OK
+        );
+    }
+
+
 }

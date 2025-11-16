@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
+import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import lombok.*;
 
@@ -34,5 +35,15 @@ public class Resource {
     @JoinColumn(name = "assessment_id", nullable = false, foreignKey = @ForeignKey(name = "fk_resource_assessment"))
     @ToString.Exclude
     private Assessment assessment;
+
+    public ResourceResponse toResponse() {
+        return ResourceResponse.builder()
+                .resourceId(this.resourceId)
+                .kind(this.kind)
+                .title(this.title)
+                .name(this.name)
+                .assessmentId(this.assessment.getAssessmentId())
+                .build();
+    }
 
 }
