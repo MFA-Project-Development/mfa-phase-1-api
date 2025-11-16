@@ -53,6 +53,10 @@ public class Assessment {
     @ToString.Exclude
     private List<Submission> submissions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Resource> resources = new ArrayList<>();
+
     @Column(nullable = false)
     private UUID createdBy;
 

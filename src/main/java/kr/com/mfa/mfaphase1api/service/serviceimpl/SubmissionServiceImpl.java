@@ -96,16 +96,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         submissionRepository.save(submission);
     }
 
-    private Submission createNewSubmission(Assessment assessment, UUID currentUserId) {
-        return Submission.builder()
-                .status(SubmissionStatus.NOT_SUBMITTED)
-                .maxScore(BigDecimal.valueOf(0.00))
-                .scoreEarned(BigDecimal.valueOf(0.00))
-                .assessment(assessment)
-                .studentId(currentUserId)
-                .build();
-    }
-
     private UUID extractCurrentUserId() {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
     }

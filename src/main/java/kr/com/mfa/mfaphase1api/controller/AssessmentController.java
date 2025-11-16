@@ -8,12 +8,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -146,4 +150,23 @@ public class AssessmentController {
         return buildResponse("Assessment deleted", null, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("/{assessmentId}/resources")
+    @Operation(
+            summary = "Upload assessment resource",
+            description = "Upload answer resources for the submission. Multiple files can be uploaded.",
+            tags = {"Assessment"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Resources uploaded successfully")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> persistAssessmentResource(
+            @PathVariable @NotNull UUID classId,
+            @PathVariable @NotNull UUID assessmentId,
+            @RequestParam(defaultValue = "FILE") ResourceKind kind,
+            @RequestBody @NotNull @NotEmpty List<@Valid ResourceRequest> requests
+    ) {
+        assessmentService.persistAssessmentResource(classId, assessmentId, kind, requests);
+        return buildResponse("Resources uploaded successfully", null, HttpStatus.OK);
+    }
 }

@@ -1,9 +1,13 @@
 package kr.com.mfa.mfaphase1api.service;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -20,4 +24,5 @@ public interface AssessmentService {
 
     void deleteAssessmentById(UUID classId, UUID assessmentId);
 
+    void persistAssessmentResource(UUID classId, UUID assessmentId, ResourceKind kind, List<ResourceRequest> requests);
 }

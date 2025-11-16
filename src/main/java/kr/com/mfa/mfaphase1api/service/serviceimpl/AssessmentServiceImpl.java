@@ -1,14 +1,19 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
+import kr.com.mfa.mfaphase1api.service.FileService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -32,6 +38,8 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final AssessmentTypeRepository assessmentTypeRepository;
     private final ClassRepository classRepository;
     private final ClassSubSubjectInstructorRepository classSubSubjectInstructorRepository;
+    private final ResourceRepository resourceRepository;
+    private final FileService fileService;
 
     @Override
     @Transactional
@@ -186,6 +194,39 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     }
 
+    @Override
+    @Transactional
+    public void persistAssessmentResource(UUID classId, UUID assessmentId, ResourceKind kind, List<ResourceRequest> requests) {
+        UUID currentUserId = extractCurrentUserId();
+
+        Assessment assessment = assessmentRepository
+                .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(
+                        assessmentId, classId, currentUserId
+                )
+                .orElseThrow(() -> new NotFoundException(
+                        "Assessment " + assessmentId + " not found in class " + classId + "."
+                ));
+
+        List<String> fileNames = requests.stream()
+                .map(ResourceRequest::getName)
+                .filter(Objects::nonNull)
+                .toList();
+
+        validateFilesExist(fileNames);
+
+        List<Resource> resources = requests.stream()
+                .filter(request -> request.getName() != null)
+                .map(request -> Resource.builder()
+                        .kind(kind)
+                        .title(request.getTitle())
+                        .name(request.getName())
+                        .assessment(assessment)
+                        .build())
+                .toList();
+
+        resourceRepository.saveAll(resources);
+    }
+
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {
         return assessmentRepository
                 .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(
@@ -193,4 +234,11 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .orElseThrow(() -> new NotFoundException("Assessment " + assessmentId + " not found."));
     }
 
+    private UUID extractCurrentUserId() {
+        return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+    }
+
+    private void validateFilesExist(List<String> fileNames) {
+        fileNames.forEach(fileService::getFileByFileName);
+    }
 }
