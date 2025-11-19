@@ -55,6 +55,26 @@ public class QuestionController {
         return buildResponse("Question created", questionService.createQuestion(assessmentId, request), HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PostMapping("/bulk")
+    @Operation(
+            summary = "Create multiple questions",
+            description = "Creates multiple questions. questionOrder will auto-increment within the target assessment.",
+            tags = {"Question"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Assessment/QuestionType not found"),
+                    @ApiResponse(responseCode = "409", description = "Unique constraint violation (e.g., order conflict)")
+            }
+    )
+    public ResponseEntity<APIResponse<List<QuestionResponse>>> createMultipleQuestions(
+            @PathVariable UUID assessmentId,
+            @RequestBody List<@Valid QuestionRequest> requests
+    ) {
+        return buildResponse("Questions created", questionService.createMultipleQuestions(assessmentId, requests), HttpStatus.CREATED);
+    }
+
     @GetMapping
     @Operation(
             summary = "List questions",

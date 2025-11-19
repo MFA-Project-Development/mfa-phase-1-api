@@ -48,10 +48,10 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
 
-        AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
-                .orElseThrow(() -> new NotFoundException(
-                        "Assessment type " + request.getAssessmentTypeId() + " not found."
-                ));
+//        AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
+//                .orElseThrow(() -> new NotFoundException(
+//                        "Assessment type " + request.getAssessmentTypeId() + " not found."
+//                ));
 
         ClassSubSubjectInstructor csi =
                 classSubSubjectInstructorRepository
@@ -61,7 +61,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                         ));
 
         Assessment saved = assessmentRepository.saveAndFlush(
-                request.toEntity(currentUserId, assessmentType, csi)
+                request.toEntity(currentUserId, csi)
         );
 
         return saved.toResponse();
@@ -149,14 +149,14 @@ public class AssessmentServiceImpl implements AssessmentService {
                 )
                 .orElseThrow(() -> new NotFoundException("Assessment " + assessmentId + " not found in class " + classId + "."));
 
-        AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
-                .orElseThrow(() -> new NotFoundException("Assessment type " + request.getAssessmentTypeId() + " not found."));
+//        AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
+//                .orElseThrow(() -> new NotFoundException("Assessment type " + request.getAssessmentTypeId() + " not found."));
 
         ClassSubSubjectInstructor csi = classSubSubjectInstructorRepository
                 .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
 
-        assessment.setAssessmentType(assessmentType);
+        assessment.setAssessmentType(request.getAssessmentType());
         assessment.setClassSubSubjectInstructor(csi);
         assessment.setTitle(request.getTitle().trim());
         assessment.setDescription(request.getDescription());

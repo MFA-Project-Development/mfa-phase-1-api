@@ -1,5 +1,6 @@
 package kr.com.mfa.mfaphase1api.service;
 
+import jakarta.validation.Valid;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
@@ -19,4 +20,6 @@ public interface QuestionService {
     QuestionResponse updateQuestionById(UUID assessmentId, UUID questionId, QuestionRequest request);
 
     void deleteQuestionById(UUID assessmentId, UUID questionId);
+
+    List<QuestionResponse> createMultipleQuestions(UUID assessmentId, List<QuestionRequest> requests);
 }

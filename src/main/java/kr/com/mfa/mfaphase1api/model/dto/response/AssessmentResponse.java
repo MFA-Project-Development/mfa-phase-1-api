@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.dto.response;
 
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,8 @@ public class AssessmentResponse {
     private String description;
     private Integer timeLimit;
     private AssessmentStatus status;
-    private UUID assessmentTypeId;
+    private AssessmentType assessmentType;
+//    private UUID assessmentTypeId;
     private UUID subSubjectId;
     private UUID classId;
     private UUID createdBy;

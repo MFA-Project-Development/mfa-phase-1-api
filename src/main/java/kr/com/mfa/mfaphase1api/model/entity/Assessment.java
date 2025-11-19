@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.model.entity;
 import jakarta.persistence.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -33,12 +34,17 @@ public class Assessment {
     private Integer timeLimit;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AssessmentStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assessment_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_assessment_type_assessment"))
-    @ToString.Exclude
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AssessmentType assessmentType;
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "assessment_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_assessment_type_assessment"))
+//    @ToString.Exclude
+//    private AssessmentType assessmentType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_sub_subject_id", nullable = false, foreignKey = @ForeignKey(name = "fk_class_sub_subject_assessment"))
@@ -75,9 +81,10 @@ public class Assessment {
                 .description(this.description)
                 .timeLimit(this.timeLimit)
                 .status(this.status)
+                .assessmentType(this.assessmentType)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
-                .assessmentTypeId(this.assessmentType.getAssessmentTypeId())
+//                .assessmentTypeId(this.assessmentType.getAssessmentTypeId())
                 .subSubjectId(this.classSubSubjectInstructor.getClassSubSubject().getSubSubject().getSubSubjectId())
                 .classId(this.classSubSubjectInstructor.getClassSubSubject().getClazz().getClassId())
                 .createdBy(this.createdBy)

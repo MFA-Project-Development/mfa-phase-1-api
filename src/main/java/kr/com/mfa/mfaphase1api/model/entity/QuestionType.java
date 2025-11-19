@@ -25,9 +25,9 @@ public class QuestionType {
     @Column(nullable = false, unique = true)
     private String type;
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "questionType", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Question> questions = new ArrayList<>();
+//    @ToString.Exclude
+//    @OneToMany(mappedBy = "questionType", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+//    private List<Question> questions = new ArrayList<>();
 
     public QuestionTypeResponse toResponse() {
         return QuestionTypeResponse.builder()

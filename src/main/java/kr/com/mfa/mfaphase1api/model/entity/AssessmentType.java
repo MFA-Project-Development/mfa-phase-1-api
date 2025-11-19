@@ -25,9 +25,9 @@ public class AssessmentType {
     @Column(nullable = false, unique = true)
     private String type;
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "assessmentType", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Assessment> assessments = new ArrayList<>();
+//    @ToString.Exclude
+//    @OneToMany(mappedBy = "assessmentType", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+//    private List<Assessment> assessments = new ArrayList<>();
 
     public AssessmentTypeResponse toResponse() {
         return AssessmentTypeResponse.builder()

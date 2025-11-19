@@ -57,6 +57,28 @@ public class OptionController {
                 HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("/bulk")
+    @Operation(
+            summary = "Create multiple options",
+            description = "Creates multiple new options under a question. Text/order should be unique per question as per business rule.",
+            tags = {"Option"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = OptionResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Question not found"),
+                    @ApiResponse(responseCode = "409", description = "Constraint violation for this question (e.g., duplicate text/order)")
+            }
+    )
+    public ResponseEntity<APIResponse<List<OptionResponse>>> createMultipleOptions(
+            @PathVariable UUID questionId,
+            @RequestBody List<@Valid OptionRequest> requests
+    ) {
+        return buildResponse("Options created",
+                optionService.createMultipleOptions(questionId, requests),
+                HttpStatus.CREATED);
+    }
+
     @GetMapping
     @Operation(
             summary = "List options",

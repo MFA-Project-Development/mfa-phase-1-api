@@ -4,9 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
-import kr.com.mfa.mfaphase1api.model.entity.AssessmentType;
 import kr.com.mfa.mfaphase1api.model.entity.ClassSubSubjectInstructor;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,22 +29,24 @@ public class AssessmentRequest {
     private LocalDate dueDate;
 
     @NotNull
-    @Positive
     private Integer timeLimit;
 
     @NotNull
     private AssessmentStatus status;
 
     @NotNull
-    private UUID assessmentTypeId;
+    private AssessmentType assessmentType;
 
-    public Assessment toEntity(UUID userId, AssessmentType assessmentType, ClassSubSubjectInstructor classSubSubjectInstructor){
+//    @NotNull
+//    private UUID assessmentTypeId;
+
+    public Assessment toEntity(UUID userId, ClassSubSubjectInstructor classSubSubjectInstructor){
         return Assessment.builder()
                 .title(this.title)
                 .description(this.description)
                 .timeLimit(this.timeLimit)
                 .status(this.status)
-                .assessmentType(assessmentType)
+                .assessmentType(this.assessmentType)
                 .classSubSubjectInstructor(classSubSubjectInstructor)
                 .createdBy(userId)
                 .build();

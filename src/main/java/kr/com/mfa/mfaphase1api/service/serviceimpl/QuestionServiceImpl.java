@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.exception.UnauthorizeException;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
@@ -9,7 +10,7 @@ import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.QuestionProperty;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
 import kr.com.mfa.mfaphase1api.repository.QuestionRepository;
-import kr.com.mfa.mfaphase1api.repository.QuestionTypeRepository;
+//import kr.com.mfa.mfaphase1api.repository.QuestionTypeRepository;
 import kr.com.mfa.mfaphase1api.service.QuestionService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -33,7 +37,7 @@ import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 public class QuestionServiceImpl implements QuestionService {
 
     private final QuestionRepository questionRepository;
-    private final QuestionTypeRepository questionTypeRepository;
+//    private final QuestionTypeRepository questionTypeRepository;
     private final AssessmentRepository assessmentRepository;
 
     @Override
@@ -45,12 +49,12 @@ public class QuestionServiceImpl implements QuestionService {
         Assessment assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not authorized to create question in this assessment"));
 
-        QuestionType questionType = questionTypeRepository.findById(request.getQuestionTypeId())
-                .orElseThrow(() -> new NotFoundException("QuestionType not found"));
+//        QuestionType questionType = questionTypeRepository.findById(request.getQuestionTypeId())
+//                .orElseThrow(() -> new NotFoundException("QuestionType not found"));
 
         int questionOrder = questionRepository.countByAssessment(assessment) + 1;
 
-        Question saved = questionRepository.saveAndFlush(request.toEntity(questionOrder, questionType, assessment));
+        Question saved = questionRepository.saveAndFlush(request.toEntity(questionOrder, assessment));
 
         return saved.toResponse();
     }
@@ -141,13 +145,13 @@ public class QuestionServiceImpl implements QuestionService {
 
         Question question = getOrThrow(assessment.getAssessmentId(), questionId);
 
-        QuestionType questionType = questionTypeRepository.findById(request.getQuestionTypeId())
-                .orElseThrow(() -> new NotFoundException("QuestionType not found"));
+//        QuestionType questionType = questionTypeRepository.findById(request.getQuestionTypeId())
+//                .orElseThrow(() -> new NotFoundException("QuestionType not found"));
 
         question.setText(request.getText());
         question.setPoints(request.getPoints());
         question.setMode(request.getMode());
-        question.setQuestionType(questionType);
+        question.setQuestionType(request.getQuestionType());
 
         return question.toResponse();
     }
@@ -163,6 +167,28 @@ public class QuestionServiceImpl implements QuestionService {
         Question question = getOrThrow(assessment.getAssessmentId(), questionId);
         questionRepository.delete(question);
 
+    }
+
+    @Override
+    @Transactional
+    public List<QuestionResponse> createMultipleQuestions(UUID assessmentId, List<QuestionRequest> requests) {
+        UUID currentUserId = UUID.fromString(
+                Optional.ofNullable(JwtUtils.getJwt())
+                        .map(JwtClaimAccessor::getSubject)
+                        .orElseThrow(() -> new UnauthorizeException("No authentication token found"))
+        );
+
+        Assessment assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to create questions in this assessment"));
+
+        AtomicInteger questionOrder = new AtomicInteger(questionRepository.countByAssessment(assessment) + 1);
+
+        return requests.stream()
+                .map(request -> {
+                    Question savedQuestion = questionRepository.saveAndFlush(request.toEntity(questionOrder.getAndIncrement(), assessment));
+                    return savedQuestion.toResponse();
+                })
+                .toList();
     }
 
     private Question getOrThrow(UUID assessmentId, UUID questionId) {

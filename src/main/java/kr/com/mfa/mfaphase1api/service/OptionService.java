@@ -1,5 +1,6 @@
 package kr.com.mfa.mfaphase1api.service;
 
+import jakarta.validation.Valid;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.OptionResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
@@ -19,4 +20,6 @@ public interface OptionService {
     OptionResponse updateOptionById(UUID questionId, UUID optionId, OptionRequest request);
 
     void deleteOptionById(UUID questionId, UUID optionId);
+
+    List<OptionResponse> createMultipleOptions(UUID questionId, List<OptionRequest> requests);
 }

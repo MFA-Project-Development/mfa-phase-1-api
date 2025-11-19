@@ -2,13 +2,13 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.exception.UnauthorizeException;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.OptionResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.entity.Option;
 import kr.com.mfa.mfaphase1api.model.entity.Question;
 import kr.com.mfa.mfaphase1api.model.enums.OptionProperty;
-import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
 import kr.com.mfa.mfaphase1api.repository.OptionRepository;
 import kr.com.mfa.mfaphase1api.repository.QuestionRepository;
 import kr.com.mfa.mfaphase1api.service.OptionService;
@@ -19,12 +19,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -35,7 +38,6 @@ public class OptionServiceImpl implements OptionService {
 
     private final OptionRepository optionRepository;
     private final QuestionRepository questionRepository;
-    private final AssessmentRepository assessmentRepository;
 
     @Override
     @Transactional
@@ -109,7 +111,7 @@ public class OptionServiceImpl implements OptionService {
         List<String> currentUserRole = JwtUtils.getJwt().getClaimAsStringList("roles");
 
         Question question;
-        
+
         switch (currentUserRole.getFirst()) {
             case "ROLE_ADMIN" -> question = questionRepository
                     .findById(questionId)
@@ -166,4 +168,28 @@ public class OptionServiceImpl implements OptionService {
 
         optionRepository.delete(option);
     }
+
+    @Override
+    @Transactional
+    public List<OptionResponse> createMultipleOptions(UUID questionId, List<OptionRequest> requests) {
+        UUID currentUserId = UUID.fromString(
+                Optional.ofNullable(JwtUtils.getJwt())
+                        .map(JwtClaimAccessor::getSubject)
+                        .orElseThrow(() -> new UnauthorizeException("No authentication token found"))
+        );
+
+        Question question = questionRepository.findByQuestionId_AndAssessment_CreatedBy(questionId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to create options in this question"));
+
+        AtomicInteger optionOrder = new AtomicInteger(optionRepository.countByQuestion(question) + 1);
+
+        return requests.stream()
+                .map(request -> {
+                    Option savedOption = optionRepository.saveAndFlush(request.toEntity(optionOrder.getAndIncrement(), question));
+                    return savedOption.toResponse();
+                })
+                .toList();
+    }
+
+
 }

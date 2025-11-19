@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.model.entity;
 import jakarta.persistence.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.GradingMode;
+import kr.com.mfa.mfaphase1api.model.enums.QuestionType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -40,6 +41,10 @@ public class Question {
     @Column(nullable = false)
     private GradingMode mode;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuestionType questionType;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -48,10 +53,10 @@ public class Question {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_question_type"))
-    @ToString.Exclude
-    private QuestionType questionType;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "question_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_question_type"))
+//    @ToString.Exclude
+//    private QuestionType questionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_assessment"))
@@ -68,10 +73,11 @@ public class Question {
                 .text(this.text)
                 .points(this.points)
                 .mode(this.mode)
+                .questionType(this.questionType)
                 .questionOrder(this.questionOrder)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
-                .questionTypeId(this.questionType.getQuestionTypeId())
+//                .questionTypeId(this.questionType.getQuestionTypeId())
                 .assessmentId(this.assessment.getAssessmentId())
                 .build();
     }

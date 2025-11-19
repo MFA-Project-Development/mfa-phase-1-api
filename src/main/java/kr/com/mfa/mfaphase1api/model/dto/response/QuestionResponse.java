@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.dto.response;
 
 import kr.com.mfa.mfaphase1api.model.enums.GradingMode;
+import kr.com.mfa.mfaphase1api.model.enums.QuestionType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -18,9 +19,10 @@ public class QuestionResponse {
     private BigDecimal points;
     private Integer questionOrder;
     private GradingMode mode;
+    private QuestionType questionType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private UUID questionTypeId;
+//    private UUID questionTypeId;
     private UUID assessmentId;
 
 }
