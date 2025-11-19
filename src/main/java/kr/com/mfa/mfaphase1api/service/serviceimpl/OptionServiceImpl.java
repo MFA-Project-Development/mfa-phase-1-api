@@ -51,7 +51,7 @@ public class OptionServiceImpl implements OptionService {
 
         int optionOrder = optionRepository.countByQuestion(question) + 1;
 
-        Option saved = optionRepository.save(request.toEntity(optionOrder, question));
+        Option saved = optionRepository.saveAndFlush(request.toEntity(optionOrder, question));
 
         return saved.toResponse();
     }
