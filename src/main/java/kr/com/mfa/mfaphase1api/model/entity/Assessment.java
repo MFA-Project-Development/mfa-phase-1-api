@@ -79,6 +79,8 @@ public class Assessment {
                 .assessmentId(this.assessmentId)
                 .title(this.title)
                 .description(this.description)
+                .startDate(this.startDate)
+                .dueDate(this.dueDate)
                 .timeLimit(this.timeLimit)
                 .status(this.status)
                 .assessmentType(this.assessmentType)
