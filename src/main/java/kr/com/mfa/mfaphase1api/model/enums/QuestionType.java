@@ -7,7 +7,8 @@ public enum QuestionType {
 
     SINGLE_CHOICE("single_choice"),
     MULTIPLE_CHOICE("multiple_choice"),
-    SHORT_ANSWER("short_answer");
+    TEXT("text"),
+    TRUE_FALSE("true_false");
 
     private final String type;
 
