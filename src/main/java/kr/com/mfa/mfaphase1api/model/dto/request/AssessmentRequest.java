@@ -44,6 +44,8 @@ public class AssessmentRequest {
         return Assessment.builder()
                 .title(this.title)
                 .description(this.description)
+                .startDate(this.startDate)
+                .dueDate(this.dueDate)
                 .timeLimit(this.timeLimit)
                 .status(this.status)
                 .assessmentType(this.assessmentType)
