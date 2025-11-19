@@ -30,6 +30,7 @@ public class QuestionRequest {
                 .text(this.text)
                 .points(this.points)
                 .mode(this.mode)
+                .questionType(this.questionType)
                 .questionOrder(questionOrder)
                 .assessment(assessment)
                 .build();
