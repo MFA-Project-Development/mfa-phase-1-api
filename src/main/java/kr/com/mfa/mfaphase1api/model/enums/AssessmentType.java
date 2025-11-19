@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum AssessmentType {
 
-    TEST("test"),
+    ASSIGNMENT("assignment"),
     EXAM("exam"),
     HOMEWORK("homework"),
     QUIZ("quiz");
