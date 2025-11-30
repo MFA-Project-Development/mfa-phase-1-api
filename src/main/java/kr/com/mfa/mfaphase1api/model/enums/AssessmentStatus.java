@@ -4,7 +4,11 @@ import lombok.Getter;
 
 @Getter
 public enum AssessmentStatus {
-    STARTED("started"), FINISHED("finished");
+
+    STARTED("started"),
+    FINISHED("finished"),
+    DRAFTED("drafted"),
+    SCHEDULED("scheduled");
 
     private final String property;
 

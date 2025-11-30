@@ -2,19 +2,23 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
 import kr.com.mfa.mfaphase1api.service.FileService;
+import kr.com.mfa.mfaphase1api.service.QuartzSchedulerService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,22 +40,18 @@ import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 public class AssessmentServiceImpl implements AssessmentService {
 
     private final AssessmentRepository assessmentRepository;
-    private final AssessmentTypeRepository assessmentTypeRepository;
+    //    private final AssessmentTypeRepository assessmentTypeRepository;
     private final ClassRepository classRepository;
     private final ClassSubSubjectInstructorRepository classSubSubjectInstructorRepository;
     private final ResourceRepository resourceRepository;
     private final FileService fileService;
+    private final QuartzSchedulerService quartzSchedulerService;
 
     @Override
     @Transactional
     public AssessmentResponse createAssessment(UUID classId, AssessmentRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
-
-//        AssessmentType assessmentType = assessmentTypeRepository.findById(request.getAssessmentTypeId())
-//                .orElseThrow(() -> new NotFoundException(
-//                        "Assessment type " + request.getAssessmentTypeId() + " not found."
-//                ));
 
         ClassSubSubjectInstructor csi =
                 classSubSubjectInstructorRepository
@@ -160,10 +160,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setClassSubSubjectInstructor(csi);
         assessment.setTitle(request.getTitle().trim());
         assessment.setDescription(request.getDescription());
-        assessment.setStartDate(request.getStartDate());
-        assessment.setDueDate(request.getDueDate());
         assessment.setTimeLimit(request.getTimeLimit() != null ? request.getTimeLimit() : assessment.getTimeLimit());
-        assessment.setStatus(request.getStatus());
 
         Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
@@ -243,6 +240,42 @@ public class AssessmentServiceImpl implements AssessmentService {
         List<Resource> resources = resourceRepository.findAllByAssessment(assessment);
 
         return resources.stream().map(Resource::toResponse).toList();
+    }
+
+    @Override
+    @Transactional
+    public AssessmentResponse scheduleAssessment(UUID classId, UUID assessmentId, AssessmentScheduleRequest request) {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        Assessment assessment = assessmentRepository
+                .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(
+                        assessmentId, classId, currentUserId
+                )
+                .orElseThrow(() -> new NotFoundException("Assessment " + assessmentId + " not found in class " + classId + "."));
+
+        ClassSubSubjectInstructor csi = classSubSubjectInstructorRepository
+                .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
+
+        if (assessment.getStatus() != AssessmentStatus.DRAFTED) {
+            throw new BadRequestException("Only drafted assessments can be scheduled.");
+        }
+
+        if (request.getStartDate().isAfter(request.getDueDate())) {
+            throw new BadRequestException("startAt must be before endAt.");
+        }
+
+        assessment.setStartDate(request.getStartDate());
+        assessment.setDueDate(request.getDueDate());
+        assessment.setClassSubSubjectInstructor(csi);
+        assessment.setStatus(AssessmentStatus.SCHEDULED);
+
+        Assessment saved = assessmentRepository.saveAndFlush(assessment);
+
+        quartzSchedulerService.scheduleStartAndFinishJobs(saved);
+
+        return assessment.toResponse();
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

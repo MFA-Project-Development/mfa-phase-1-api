@@ -2,7 +2,6 @@ package kr.com.mfa.mfaphase1api.model.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.ClassSubSubjectInstructor;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
@@ -12,7 +11,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -25,14 +23,9 @@ public class AssessmentRequest {
     @NotBlank
     private String title;
     private String description;
-    private LocalDate startDate;
-    private LocalDate dueDate;
 
     @NotNull
     private Integer timeLimit;
-
-    @NotNull
-    private AssessmentStatus status;
 
     @NotNull
     private AssessmentType assessmentType;
@@ -44,10 +37,8 @@ public class AssessmentRequest {
         return Assessment.builder()
                 .title(this.title)
                 .description(this.description)
-                .startDate(this.startDate)
-                .dueDate(this.dueDate)
                 .timeLimit(this.timeLimit)
-                .status(this.status)
+                .status(AssessmentStatus.DRAFTED)
                 .assessmentType(this.assessmentType)
                 .classSubSubjectInstructor(classSubSubjectInstructor)
                 .createdBy(userId)

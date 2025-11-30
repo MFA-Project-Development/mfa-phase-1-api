@@ -29,8 +29,8 @@ public class Assessment {
     private UUID assessmentId;
     private String title;
     private String description;
-    private LocalDate startDate;
-    private LocalDate dueDate;
+    private LocalDateTime startDate;
+    private LocalDateTime dueDate;
     private Integer timeLimit;
 
     @Enumerated(EnumType.STRING)

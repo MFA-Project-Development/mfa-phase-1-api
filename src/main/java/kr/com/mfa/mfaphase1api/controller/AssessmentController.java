@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
@@ -60,6 +61,29 @@ public class AssessmentController {
         return buildResponse("Assessment created",
                 assessmentService.createAssessment(classId, request),
                 HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PutMapping("/{assessmentId}/schedule")
+    @Operation(
+            summary = "Schedule assessment",
+            description = "Schedules an assessment. Title must be unique within its scope per your domain rules.",
+            tags = {"Assessment"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Scheduled",
+                            content = @Content(schema = @Schema(implementation = AssessmentResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Related entity not found (e.g., class/sub-subject/type)"),
+                    @ApiResponse(responseCode = "409", description = "Duplicate constraint violated")
+            }
+    )
+    public ResponseEntity<APIResponse<AssessmentResponse>> scheduleAssessment(
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId,
+            @RequestBody @Valid AssessmentScheduleRequest request
+    ) {
+        return buildResponse("Assessment scheduled",
+                assessmentService.scheduleAssessment(classId, assessmentId, request),
+                HttpStatus.OK);
     }
 
     @GetMapping

@@ -20,8 +20,8 @@ public class AssessmentResponse {
     private UUID assessmentId;
     private String title;
     private String description;
-    private LocalDate startDate;
-    private LocalDate dueDate;
+    private LocalDateTime startDate;
+    private LocalDateTime dueDate;
     private Integer timeLimit;
     private AssessmentStatus status;
     private AssessmentType assessmentType;

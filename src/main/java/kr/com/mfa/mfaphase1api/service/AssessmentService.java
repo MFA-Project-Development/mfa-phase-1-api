@@ -1,8 +1,7 @@
 package kr.com.mfa.mfaphase1api.service;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
@@ -28,4 +27,6 @@ public interface AssessmentService {
     void persistAssessmentResource(UUID classId, UUID assessmentId, ResourceKind kind, List<ResourceRequest> requests);
 
     List<ResourceResponse> getAssessmentResources(UUID classId, UUID assessmentId);
+
+    AssessmentResponse scheduleAssessment(UUID classId, UUID assessmentId, AssessmentScheduleRequest request);
 }
