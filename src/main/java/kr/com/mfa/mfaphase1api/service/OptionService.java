@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.service;
 
 import jakarta.validation.Valid;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateOptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.OptionResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.enums.OptionProperty;
@@ -22,4 +23,6 @@ public interface OptionService {
     void deleteOptionById(UUID questionId, UUID optionId);
 
     List<OptionResponse> createMultipleOptions(UUID questionId, List<OptionRequest> requests);
+
+    List<OptionResponse> updateMultipleOptions(UUID questionId, List<UpdateOptionRequest> requests);
 }

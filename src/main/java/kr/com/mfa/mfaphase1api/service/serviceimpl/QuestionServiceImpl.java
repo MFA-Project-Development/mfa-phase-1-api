@@ -4,6 +4,7 @@ import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.exception.UnauthorizeException;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateQuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
@@ -37,7 +38,7 @@ import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 public class QuestionServiceImpl implements QuestionService {
 
     private final QuestionRepository questionRepository;
-//    private final QuestionTypeRepository questionTypeRepository;
+    //    private final QuestionTypeRepository questionTypeRepository;
     private final AssessmentRepository assessmentRepository;
 
     @Override
@@ -187,6 +188,28 @@ public class QuestionServiceImpl implements QuestionService {
                 .map(request -> {
                     Question savedQuestion = questionRepository.saveAndFlush(request.toEntity(questionOrder.getAndIncrement(), assessment));
                     return savedQuestion.toResponse();
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<QuestionResponse> updateQuestionsBulk(UUID assessmentId, List<UpdateQuestionRequest> requests) {
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        Assessment assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to modify question in this assessment"));
+
+        return requests.stream()
+                .map(request -> {
+                    Question question = getOrThrow(assessment.getAssessmentId(), request.getQuestionId());
+
+                    question.setText(request.getText());
+                    question.setPoints(request.getPoints());
+                    question.setMode(request.getMode());
+                    question.setQuestionType(request.getQuestionType());
+
+                    return question.toResponse();
                 })
                 .toList();
     }

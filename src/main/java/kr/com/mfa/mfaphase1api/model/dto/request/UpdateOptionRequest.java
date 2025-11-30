@@ -9,11 +9,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OptionRequest {
+public class UpdateOptionRequest {
+
+    @NotNull
+    private UUID optionId;
 
     @NotNull
     @NotBlank
@@ -24,6 +29,7 @@ public class OptionRequest {
 
     public Option toEntity(Integer optionOrder, Question question){
         return Option.builder()
+                .optionId(this.optionId)
                 .text(this.text)
                 .isCorrect(this.isCorrect)
                 .optionOrder(optionOrder)

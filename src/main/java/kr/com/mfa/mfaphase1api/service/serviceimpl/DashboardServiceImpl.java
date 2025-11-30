@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AdminOverviewResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.StudentOverviewResponse;
 import kr.com.mfa.mfaphase1api.model.enums.BaseRole;
 import kr.com.mfa.mfaphase1api.repository.ClassRepository;
 import kr.com.mfa.mfaphase1api.repository.SubSubjectRepository;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +42,12 @@ public class DashboardServiceImpl implements DashboardService {
                 .totalClasses(totalClasses)
                 .totalSubSubjects(totalSubSubjects)
                 .build();
+    }
+
+    @Override
+    public StudentOverviewResponse getStudentOverview(Month month, String subSubjectName) {
+        
+        return null;
     }
 
     private long getUserCountByRole(BaseRole role) {

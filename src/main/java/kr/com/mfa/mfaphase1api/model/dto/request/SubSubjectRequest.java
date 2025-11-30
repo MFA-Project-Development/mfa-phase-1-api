@@ -1,9 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.dto.request;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import kr.com.mfa.mfaphase1api.model.entity.SubSubject;
 import kr.com.mfa.mfaphase1api.model.entity.Subject;
 import lombok.*;
@@ -19,7 +17,6 @@ public class SubSubjectRequest {
 
     @NotNull
     @NotBlank
-    @Size(max = 255)
     private String name;
 
     public SubSubject toEntity(Subject subject){

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateQuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
@@ -139,6 +140,25 @@ public class QuestionController {
             @RequestBody @Valid QuestionRequest request
     ) {
         return buildResponse("Question updated", questionService.updateQuestionById(assessmentId, questionId, request), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PutMapping("/bulk")
+    @Operation(
+            summary = "Update multiple questions",
+            description = "Updates multiple questions in bulk. questionOrder is unchanged unless you use the dedicated reorder endpoint.",
+            tags = {"Question"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Question/Assessment/QuestionType not found")
+            }
+    )
+    public ResponseEntity<APIResponse<List<QuestionResponse>>> updateQuestionsBulk(
+            @PathVariable UUID assessmentId,
+            @RequestBody List<@Valid UpdateQuestionRequest> requests
+    ) {
+        return buildResponse("Questions updated", questionService.updateQuestionsBulk(assessmentId, requests), HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")

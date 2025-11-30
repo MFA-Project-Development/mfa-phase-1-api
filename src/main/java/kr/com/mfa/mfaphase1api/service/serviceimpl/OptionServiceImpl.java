@@ -4,6 +4,7 @@ import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.exception.UnauthorizeException;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateOptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.OptionResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.entity.Option;
@@ -47,7 +48,7 @@ public class OptionServiceImpl implements OptionService {
 
         Question question = questionRepository
                 .findByQuestionId_AndAssessment_CreatedBy(questionId, currentUserId)
-                .orElseThrow(() -> new NotFoundException("You are not authorized to create option in this question"));
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to create option in this question"));
 
         int optionOrder = optionRepository.countByQuestion(question) + 1;
 
@@ -143,7 +144,7 @@ public class OptionServiceImpl implements OptionService {
 
         Question question = questionRepository
                 .findByQuestionId_AndAssessment_CreatedBy(questionId, currentUserId)
-                .orElseThrow(() -> new NotFoundException("You are not authorized to update option in this question"));
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to update option in this question"));
 
         Option option = optionRepository.findAllByQuestion_QuestionId_AndOptionId(question.getQuestionId(), optionId)
                 .orElseThrow(() -> new NotFoundException("Option " + optionId + " not found"));
@@ -161,7 +162,7 @@ public class OptionServiceImpl implements OptionService {
 
         Question question = questionRepository
                 .findByQuestionId_AndAssessment_CreatedBy(questionId, currentUserId)
-                .orElseThrow(() -> new NotFoundException("You are not authorized to delete option in this question"));
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to delete option in this question"));
 
         Option option = optionRepository.findAllByQuestion_QuestionId_AndOptionId(question.getQuestionId(), optionId)
                 .orElseThrow(() -> new NotFoundException("Option " + optionId + " not found"));
@@ -187,6 +188,29 @@ public class OptionServiceImpl implements OptionService {
                 .map(request -> {
                     Option savedOption = optionRepository.saveAndFlush(request.toEntity(optionOrder.getAndIncrement(), question));
                     return savedOption.toResponse();
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<OptionResponse> updateMultipleOptions(UUID questionId, List<UpdateOptionRequest> requests) {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        Question question = questionRepository
+                .findByQuestionId_AndAssessment_CreatedBy(questionId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not authorized to update option in this question"));
+
+        return requests.stream()
+                .map(request -> {
+                    Option option = optionRepository.findAllByQuestion_QuestionId_AndOptionId(question.getQuestionId(), request.getOptionId())
+                            .orElseThrow(() -> new NotFoundException("Option " + request.getOptionId() + " not found"));
+
+                    option.setText(request.getText());
+                    option.setIsCorrect(request.getIsCorrect());
+
+                    return option.toResponse();
                 })
                 .toList();
     }

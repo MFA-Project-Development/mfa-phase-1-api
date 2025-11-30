@@ -2,8 +2,6 @@ package kr.com.mfa.mfaphase1api.model.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Question;
 import kr.com.mfa.mfaphase1api.model.enums.GradingMode;
@@ -20,18 +18,20 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QuestionRequest {
+public class UpdateQuestionRequest {
+
+    @NotBlank
+    private UUID questionId;
 
     @NotNull
     @NotBlank
     private String title;
 
-    @NotBlank
     @NotNull
+    @NotBlank
     private String text;
 
     @NotNull
-    @PositiveOrZero
     private BigDecimal points;
 
     @NotNull
@@ -43,6 +43,7 @@ public class QuestionRequest {
 
     public Question toEntity(Integer questionOrder, Assessment assessment){
         return Question.builder()
+                .questionId(this.questionId)
                 .text(this.text)
                 .points(this.points)
                 .mode(this.mode)

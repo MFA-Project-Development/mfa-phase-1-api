@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateOptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.OptionResponse;
@@ -150,6 +151,30 @@ public class OptionController {
         return buildResponse(
                 "Option updated",
                 optionService.updateOptionById(questionId, optionId, request),
+                HttpStatus.OK
+        );
+    }
+
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PutMapping("/bulk")
+    @Operation(
+            summary = "Update multiple options",
+            description = "Updates multiple options by their IDs. Text/order must remain valid/unique within the same question.",
+            tags = {"Option"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = OptionResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Option/Question not found"),
+                    @ApiResponse(responseCode = "409", description = "Constraint violation for this question (e.g., duplicate text/order)")
+            }
+    )
+    public ResponseEntity<APIResponse<List<OptionResponse>>> updateMultipleOptions(
+            @PathVariable UUID questionId,
+            @RequestBody List<@Valid UpdateOptionRequest> requests
+    ) {
+        return buildResponse(
+                "Options updated",
+                optionService.updateMultipleOptions(questionId, requests),
                 HttpStatus.OK
         );
     }

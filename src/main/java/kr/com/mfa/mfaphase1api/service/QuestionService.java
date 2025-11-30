@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.service;
 
 import jakarta.validation.Valid;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateQuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.QuestionProperty;
@@ -22,4 +23,6 @@ public interface QuestionService {
     void deleteQuestionById(UUID assessmentId, UUID questionId);
 
     List<QuestionResponse> createMultipleQuestions(UUID assessmentId, List<QuestionRequest> requests);
+
+    List<QuestionResponse> updateQuestionsBulk(UUID assessmentId, List<UpdateQuestionRequest> requests);
 }
