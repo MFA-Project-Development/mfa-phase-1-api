@@ -1,7 +1,5 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -258,22 +255,31 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
 
-        if (assessment.getStatus() != AssessmentStatus.DRAFTED) {
-            throw new BadRequestException("Only drafted assessments can be scheduled.");
-        }
-
         if (request.getStartDate().isAfter(request.getDueDate())) {
             throw new BadRequestException("startAt must be before endAt.");
         }
 
-        assessment.setStartDate(request.getStartDate());
-        assessment.setDueDate(request.getDueDate());
-        assessment.setClassSubSubjectInstructor(csi);
-        assessment.setStatus(AssessmentStatus.SCHEDULED);
+        switch (assessment.getStatus()) {
+            case AssessmentStatus.DRAFTED -> {
+                assessment.setStartDate(request.getStartDate());
+                assessment.setDueDate(request.getDueDate());
+                assessment.setClassSubSubjectInstructor(csi);
+                assessment.setStatus(AssessmentStatus.SCHEDULED);
 
-        Assessment saved = assessmentRepository.saveAndFlush(assessment);
+                Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
-        quartzSchedulerService.scheduleStartAndFinishJobs(saved);
+                quartzSchedulerService.scheduleStartAndFinishJobs(saved);
+            }
+            case AssessmentStatus.SCHEDULED -> {
+                assessment.setStartDate(request.getStartDate());
+                assessment.setDueDate(request.getDueDate());
+
+                Assessment saved = assessmentRepository.saveAndFlush(assessment);
+
+                quartzSchedulerService.scheduleStartAndFinishJobs(saved);
+            }
+        }
+
 
         return assessment.toResponse();
     }
