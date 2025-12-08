@@ -39,7 +39,8 @@ public class AssessmentStartJob implements org.quartz.Job {
                     saved.getDueDate().toString(),
                     saved.getTimeLimit().toString(),
                     saved.getStatus().toString(),
-                    saved.getAssessmentType().toString()
+                    saved.getAssessmentType().toString(),
+                    saved.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getClassId().toString()
             );
             socketIoClientService.emitAssessmentStatus(message);
         }

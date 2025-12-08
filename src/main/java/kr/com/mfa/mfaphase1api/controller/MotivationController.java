@@ -56,7 +56,7 @@ public class MotivationController {
                 HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @GetMapping("/content")
     @Operation(
             summary = "Get all motivations",
@@ -93,5 +93,70 @@ public class MotivationController {
                 motivationService.getAllMotivations(page, size, property, direction, type, createdBy, isDefault),
                 HttpStatus.OK);
     }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @GetMapping("/content/{motivationContentId}")
+    @Operation(
+            summary = "Get motivation by ID",
+            description = "Retrieves a single motivation content by its unique identifier.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success",
+                            content = @Content(schema = @Schema(implementation = MotivationContentResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Motivation not found")
+            }
+    )
+    public ResponseEntity<APIResponse<MotivationContentResponse>> getMotivationById(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId
+    ) {
+        return buildResponse("Motivation retrieved successfully",
+                motivationService.getMotivationById(motivationContentId),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PutMapping("/content/{motivationContentId}")
+    @Operation(
+            summary = "Update motivation",
+            description = "Updates an existing motivation content by its unique identifier.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success",
+                            content = @Content(schema = @Schema(implementation = MotivationContentResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Motivation not found")
+            }
+    )
+    public ResponseEntity<APIResponse<MotivationContentResponse>> updateMotivation(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId,
+            @RequestBody @Valid MotivationContentRequest request
+    ) {
+        return buildResponse("Motivation updated successfully",
+                motivationService.updateMotivation(motivationContentId, request),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @DeleteMapping("/content/{motivationContentId}")
+    @Operation(
+            summary = "Delete motivation",
+            description = "Deletes an existing motivation content by its unique identifier.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "404", description = "Motivation not found")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> deleteMotivation(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId
+    ) {
+        motivationService.deleteMotivation(motivationContentId);
+        return buildResponse("Motivation deleted successfully",
+                null,
+                HttpStatus.OK);
+    }
+
 
 }

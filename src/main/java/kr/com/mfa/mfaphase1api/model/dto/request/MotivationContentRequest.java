@@ -33,4 +33,14 @@ public class MotivationContentRequest {
                 .createdBy(userId)
                 .build();
     }
+
+    public MotivationContent toEntity(UUID userId, UUID motivationContentId){
+        return MotivationContent.builder()
+                .motivationContentId(motivationContentId)
+                .type(this.type)
+                .isDefault(this.isDefault)
+                .contentJson(this.contentJson)
+                .createdBy(userId)
+                .build();
+    }
 }

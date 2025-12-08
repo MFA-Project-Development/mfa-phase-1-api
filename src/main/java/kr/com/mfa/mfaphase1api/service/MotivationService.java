@@ -15,4 +15,10 @@ public interface MotivationService {
     MotivationContentResponse createMotivation(MotivationContentRequest request);
 
     PagedResponse<List<MotivationContentResponse>> getAllMotivations(Integer page, Integer size, MotivationContentProperty property, Sort.Direction direction, MotivationContentType type, UUID createdBy, Boolean isDefault);
+
+    MotivationContentResponse getMotivationById(UUID motivationContentId);
+
+    MotivationContentResponse updateMotivation(UUID motivationContentId, MotivationContentRequest request);
+
+    void deleteMotivation(UUID motivationContentId);
 }

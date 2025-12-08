@@ -20,5 +20,6 @@ public class AssessmentMessage {
     private String timeLimit;
     private String status;
     private String assessmentType;
+    private String classId;
 
 }

@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
+import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
@@ -74,6 +75,51 @@ public class MotivationServiceImpl implements MotivationService {
                 size,
                 pageMotivationContents.getTotalPages()
         );
+    }
+
+    @Override
+    public MotivationContentResponse getMotivationById(UUID motivationContentId) {
+        UUID currentUserId = extractCurrentUserId();
+
+        String currentUserRole = extractCurrentRole();
+
+        MotivationContent motivationContent = switch (currentUserRole) {
+            case "ROLE_ADMIN" -> motivationContentRepository.findById(motivationContentId).orElseThrow(
+                    () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+            );
+            case "ROLE_INSTRUCTOR" ->
+                    motivationContentRepository.findByCreatedByAndMotivationContentId(currentUserId, motivationContentId).orElseThrow(
+                            () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+                    );
+            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole);
+        };
+
+        return motivationContent.toResponse();
+    }
+
+    @Override
+    public MotivationContentResponse updateMotivation(UUID motivationContentId, MotivationContentRequest request) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        motivationContentRepository.findByCreatedByAndMotivationContentId(currentUserId, motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+        );
+
+        MotivationContent saved = motivationContentRepository.saveAndFlush(request.toEntity(currentUserId, motivationContentId));
+
+        return saved.toResponse();
+    }
+
+    @Override
+    public void deleteMotivation(UUID motivationContentId) {
+        UUID currentUserId = extractCurrentUserId();
+
+        MotivationContent motivationContent = motivationContentRepository.findByCreatedByAndMotivationContentId(currentUserId, motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+        );
+
+        motivationContentRepository.delete(motivationContent);
     }
 
     private UUID extractCurrentUserId() {
