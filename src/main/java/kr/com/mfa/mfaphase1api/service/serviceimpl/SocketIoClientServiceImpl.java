@@ -66,7 +66,6 @@ public class SocketIoClientServiceImpl implements SocketIoClientService {
 
         try {
             String json = objectMapper.writeValueAsString(message);
-            System.out.println(json);
             socket.emit("assessment-status", json);
         } catch (JsonProcessingException e) {
             throw new InternalException("Failed to serialize assessment status: " + message);
