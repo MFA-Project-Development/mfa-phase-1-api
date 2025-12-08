@@ -278,8 +278,8 @@ public class AssessmentServiceImpl implements AssessmentService {
 
                 quartzSchedulerService.scheduleStartAndFinishJobs(saved);
             }
+            default -> throw new BadRequestException("Assessment is not in drafted and scheduled status.");
         }
-
 
         return assessment.toResponse();
     }
