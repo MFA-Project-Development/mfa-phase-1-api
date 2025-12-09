@@ -27,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
@@ -282,6 +283,34 @@ public class AssessmentServiceImpl implements AssessmentService {
         }
 
         return assessment.toResponse();
+    }
+
+    @Override
+    @Transactional
+    public AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, LocalDateTime dueDate) {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        Assessment assessment = assessmentRepository
+                .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassIdAndCreatedBy(
+                        assessmentId, classId, currentUserId
+                )
+                .orElseThrow(() -> new NotFoundException("Assessment " + assessmentId + " not found in class " + classId + "."));
+
+        ClassSubSubjectInstructor csi = classSubSubjectInstructorRepository
+                .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
+                .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
+
+        assessment.setStartDate(LocalDateTime.now());
+        assessment.setDueDate(dueDate);
+        assessment.setClassSubSubjectInstructor(csi);
+        assessment.setStatus(AssessmentStatus.STARTED);
+
+        Assessment saved = assessmentRepository.saveAndFlush(assessment);
+
+        quartzSchedulerService.scheduleStartAndFinishJobs(saved);
+
+        return saved.toResponse();
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

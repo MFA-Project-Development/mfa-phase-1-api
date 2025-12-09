@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,6 +84,29 @@ public class AssessmentController {
     ) {
         return buildResponse("Assessment scheduled",
                 assessmentService.scheduleAssessment(classId, assessmentId, request),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PutMapping("/{assessmentId}/publish")
+    @Operation(
+            summary = "Publish assessment",
+            description = "Publishes an assessment, making it visible to students.",
+            tags = {"Assessment"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Published",
+                            content = @Content(schema = @Schema(implementation = AssessmentResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Assessment not found"),
+                    @ApiResponse(responseCode = "400", description = "Assessment cannot be published")
+            }
+    )
+    public ResponseEntity<APIResponse<AssessmentResponse>> publishAssessment(
+            @PathVariable UUID classId,
+            @PathVariable UUID assessmentId,
+            @RequestBody LocalDateTime dueDate
+    ) {
+        return buildResponse("Assessment published",
+                assessmentService.publishAssessment(classId, assessmentId, dueDate),
                 HttpStatus.OK);
     }
 

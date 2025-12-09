@@ -10,6 +10,7 @@ import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,4 +30,6 @@ public interface AssessmentService {
     List<ResourceResponse> getAssessmentResources(UUID classId, UUID assessmentId);
 
     AssessmentResponse scheduleAssessment(UUID classId, UUID assessmentId, AssessmentScheduleRequest request);
+
+    AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, LocalDateTime dueDate);
 }
