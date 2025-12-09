@@ -256,10 +256,6 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
 
-        if (request.getStartDate().isAfter(request.getDueDate())) {
-            throw new BadRequestException("startAt must be before endAt.");
-        }
-
         switch (assessment.getStatus()) {
             case AssessmentStatus.DRAFTED -> {
                 assessment.setStartDate(request.getStartDate());
