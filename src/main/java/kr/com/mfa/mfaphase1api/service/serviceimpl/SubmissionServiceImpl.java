@@ -44,10 +44,6 @@ public class SubmissionServiceImpl implements SubmissionService {
                 () -> new NotFoundException("Assessment not found")
         );
 
-        if (submissionRepository.existsByAssessment_AssessmentIdAndStudentId(assessmentId, currentUserId)) {
-            throw new ConflictException("You have already started submission for this assessment");
-        }
-
         Submission submission = Submission.builder()
                 .status(SubmissionStatus.NOT_SUBMITTED)
                 .maxScore(BigDecimal.valueOf(0.00))
@@ -82,10 +78,33 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PaperResponse> getSubmissionPapers(UUID assessmentId, UUID submissionId) {
         Submission submission = getAndValidateSubmission(assessmentId, extractCurrentUserId());
         List<Paper> papers = paperRepository.findAllBySubmission(submission);
         return papers.stream().map(Paper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteSubmission(UUID assessmentId, UUID submissionId) {
+        UUID currentUserId = extractCurrentUserId();
+
+        Submission submission = getAndValidateSubmission(assessmentId, currentUserId);
+
+        submissionRepository.delete(submission);
+    }
+
+    @Override
+    @Transactional
+    public void saveSubmission(UUID assessmentId, UUID submissionId) {
+        UUID currentUserId = extractCurrentUserId();
+
+        Submission submission = getAndValidateSubmission(assessmentId, currentUserId);
+
+        submission.setStatus(SubmissionStatus.NOT_SUBMITTED);
+
+        submissionRepository.save(submission);
     }
 
     @Override

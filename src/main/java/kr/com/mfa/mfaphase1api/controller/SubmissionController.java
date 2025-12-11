@@ -106,5 +106,41 @@ public class SubmissionController {
         return buildResponse("Papers retrieved successfully", papers, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('STUDENT')")
+    @DeleteMapping("/{submissionId}")
+    @Operation(
+            summary = "Delete submission",
+            description = "Delete a submission. Only draft submissions can be deleted.",
+            tags = {"Submission"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Submission deleted successfully")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> deleteSubmission(
+            @PathVariable @NotNull UUID assessmentId,
+            @PathVariable @NotNull UUID submissionId
+    ) {
+        submissionService.deleteSubmission(assessmentId, submissionId);
+        return buildResponse("Submission deleted successfully", null, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @PostMapping("/{submissionId}/save")
+    @Operation(
+            summary = "Save submission progress",
+            description = "Save the current submission progress as a draft without finalizing it.",
+            tags = {"Submission"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Submission saved successfully")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> saveSubmission(
+            @PathVariable @NotNull UUID assessmentId,
+            @PathVariable @NotNull UUID submissionId
+    ) {
+        submissionService.saveSubmission(assessmentId, submissionId);
+        return buildResponse("Submission saved successfully", null, HttpStatus.OK);
+    }
+
 
 }

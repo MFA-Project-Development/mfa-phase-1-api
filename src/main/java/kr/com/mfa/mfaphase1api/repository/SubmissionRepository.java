@@ -11,7 +11,5 @@ import java.util.UUID;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
-    boolean existsByAssessment_AssessmentIdAndStudentId(UUID assessmentId, UUID studentId);
-
     Optional<Submission> findSubmissionByAssessmentAndStudentId(Assessment assessment, UUID studentId);
 }

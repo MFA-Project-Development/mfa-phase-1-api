@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SubmissionService {
+    
     UUID startSubmission(UUID assessmentId);
 
     void finalizeSubmission(UUID assessmentId, UUID submissionId);
@@ -14,4 +15,7 @@ public interface SubmissionService {
 
     List<PaperResponse> getSubmissionPapers(UUID assessmentId, UUID submissionId);
 
+    void deleteSubmission(UUID assessmentId,UUID submissionId);
+
+    void saveSubmission(UUID assessmentId, UUID submissionId);
 }
