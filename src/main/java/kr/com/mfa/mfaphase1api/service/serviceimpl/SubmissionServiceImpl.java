@@ -1,11 +1,16 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
+import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Paper;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
 import kr.com.mfa.mfaphase1api.repository.PaperRepository;
@@ -15,6 +20,10 @@ import kr.com.mfa.mfaphase1api.service.SubmissionService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +33,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.IntStream;
+
+import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -108,6 +119,52 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
+    public PagedResponse<List<SubmissionResponse>> getAllSubmissions(UUID assessmentId, Integer page, Integer size, SubmissionProperty property, Sort.Direction direction) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        String currentUserRole = extractCurrentRole();
+
+        boolean authorized = switch (currentUserRole) {
+            case "ROLE_ADMIN" -> assessmentRepository.existsById(assessmentId);
+            case "ROLE_INSTRUCTOR" -> assessmentRepository.existsAssessmentsByAssessmentId_AndCreatedBy(assessmentId, currentUserId);
+            case "ROLE_STUDENT" -> assessmentRepository
+                    .existsAssessmentsByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(assessmentId, currentUserId);
+            default -> false;
+        };
+
+        if (!authorized) {
+            throw new NotFoundException("Assessment " + assessmentId + " not found.");
+        }
+
+        int zeroBased = Math.max(page, 1) - 1;
+        Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
+
+        Page<Submission> pageSubmissions = switch (currentUserRole) {
+            case "ROLE_ADMIN" -> submissionRepository
+                    .findAll(pageable);
+            case "ROLE_INSTRUCTOR" -> submissionRepository
+                    .findAllByAssessment_AssessmentIdAndAssessment_CreatedBy(assessmentId, currentUserId, pageable);
+            case "ROLE_STUDENT" -> submissionRepository
+                    .findAllByAssessment_AssessmentIdAndStudentId(
+                            assessmentId, currentUserId, pageable);
+            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole);
+        };
+
+        List<SubmissionResponse> items = pageSubmissions.stream()
+                .map(Submission::toResponse)
+                .toList();
+
+        return pageResponse(
+                items,
+                pageSubmissions.getTotalElements(),
+                page,
+                size,
+                pageSubmissions.getTotalPages()
+        );
+    }
+
+    @Override
     @Transactional
     public void finalizeSubmission(UUID assessmentId, UUID submissionId) {
         UUID currentUserId = extractCurrentUserId();
@@ -137,6 +194,11 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         return submissionRepository.findSubmissionByAssessmentAndStudentId(assessment, currentUserId)
                 .orElseThrow(() -> new NotFoundException("Submission not found"));
+    }
+
+    private String extractCurrentRole() {
+        List<String> currentUserRole = Objects.requireNonNull(JwtUtils.getJwt()).getClaimAsStringList("roles");
+        return currentUserRole.getFirst();
     }
 
 }

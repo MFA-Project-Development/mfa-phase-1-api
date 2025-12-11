@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
+import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -61,5 +62,20 @@ public class Submission {
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<Paper> papers = new ArrayList<>();
+
+    public SubmissionResponse toResponse(){
+        return SubmissionResponse.builder()
+                .submissionId(this.submissionId)
+                .status(this.status)
+                .maxScore(this.maxScore)
+                .scoreEarned(this.scoreEarned)
+                .startedAt(this.startedAt)
+                .submittedAt(this.submittedAt)
+                .gradedAt(this.gradedAt)
+                .studentId(this.studentId)
+                .gradedBy(this.gradedBy)
+                .assessmentId(this.assessment.getAssessmentId())
+                .build();
+    }
 
 }

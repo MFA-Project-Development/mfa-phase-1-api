@@ -1,17 +1,22 @@
 package kr.com.mfa.mfaphase1api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
+import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.Paper;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
 import kr.com.mfa.mfaphase1api.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -142,5 +147,27 @@ public class SubmissionController {
         return buildResponse("Submission saved successfully", null, HttpStatus.OK);
     }
 
+    @GetMapping
+    @Operation(
+            summary = "Get all submissions by assessment",
+            description = "Returns a paginated list of submissions for a specific assessment with sorting.",
+            tags = {"Submission"}
+    )
+    public ResponseEntity<APIResponse<PagedResponse<List<SubmissionResponse>>>> getSubmissionsByAssessmentId(
+            @PathVariable UUID assessmentId,
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "1") @Positive Integer page,
+
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "10") @Positive Integer size,
+
+            @Parameter(description = "Sort property", example = "STARTED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "STARTED_AT") SubmissionProperty property,
+
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
+        return buildResponse("Submissions retrieved successfully", submissionService.getAllSubmissions(assessmentId, page, size, property, direction), HttpStatus.OK);
+    }
 
 }
