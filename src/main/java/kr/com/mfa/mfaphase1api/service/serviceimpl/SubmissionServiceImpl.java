@@ -1,12 +1,10 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
+import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Paper;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
@@ -45,6 +43,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final AssessmentRepository assessmentRepository;
     private final PaperRepository paperRepository;
     private final FileService fileService;
+    private final UserClient userClient;
 
     @Override
     @Transactional
@@ -159,7 +158,16 @@ public class SubmissionServiceImpl implements SubmissionService {
         };
 
         List<SubmissionResponse> items = pageSubmissions.stream()
-                .map(Submission::toResponse)
+                .map(submission -> {
+                    UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(submission.getStudentId()).getBody()).getPayload();
+                    StudentResponse studentResponse = StudentResponse.builder()
+                            .studentId(userResponse.getUserId())
+                            .studentEmail(userResponse.getEmail())
+                            .studentName(buildFullName(userResponse))
+                            .profileImage(userResponse.getProfileImage())
+                            .build();
+                    return submission.toResponse(studentResponse);
+                })
                 .toList();
 
         return pageResponse(
@@ -207,5 +215,12 @@ public class SubmissionServiceImpl implements SubmissionService {
         List<String> currentUserRole = Objects.requireNonNull(JwtUtils.getJwt()).getClaimAsStringList("roles");
         return currentUserRole.getFirst();
     }
+
+    private String buildFullName(UserResponse userResponse) {
+        String firstName = userResponse.getFirstName() != null ? userResponse.getFirstName() : "";
+        String lastName = userResponse.getLastName() != null ? userResponse.getLastName() : "";
+        return (firstName + " " + lastName).trim();
+    }
+
 
 }

@@ -7,6 +7,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponseForGrading;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
@@ -44,6 +45,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final ResourceRepository resourceRepository;
     private final FileService fileService;
     private final QuartzSchedulerService quartzSchedulerService;
+    private final SubmissionRepository submissionRepository;
 
     @Override
     @Transactional
@@ -67,7 +69,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<List<AssessmentResponse>> getAllAssessments(UUID classId, Integer page, Integer size, AssessmentProperty property, Sort.Direction direction) {
+    public PagedResponse<List<AssessmentResponse>> getAllAssessmentsByClassId(UUID classId, Integer page, Integer size, AssessmentProperty property, Sort.Direction direction) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
         List<String> currentUserRole = JwtUtils.getJwt().getClaimAsStringList("roles");
@@ -307,6 +309,54 @@ public class AssessmentServiceImpl implements AssessmentService {
         quartzSchedulerService.scheduleStartAndFinishJobs(saved);
 
         return saved.toResponse();
+    }
+
+    @Override
+    public PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction) {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+        List<String> currentUserRole = JwtUtils.getJwt().getClaimAsStringList("roles");
+
+        int zeroBased = Math.max(page, 1) - 1;
+        Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
+
+        Page<Assessment> pageAssessments = switch (currentUserRole.getFirst()) {
+            case "ROLE_ADMIN" -> assessmentRepository
+                    .findAllByStatus(AssessmentStatus.FINISHED, pageable);
+            case "ROLE_INSTRUCTOR" -> assessmentRepository
+                    .findAllByStatusAndCreatedBy(AssessmentStatus.FINISHED, currentUserId, pageable);
+            case "ROLE_STUDENT" -> assessmentRepository
+                    .findAllByStatusAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(AssessmentStatus.FINISHED, currentUserId, pageable);
+            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
+        };
+
+        List<AssessmentResponseForGrading> items = pageAssessments.stream()
+                .map(assessment -> {
+
+                    Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
+
+                    AssessmentResponseForGrading assessmentResponseForGrading = AssessmentResponseForGrading.builder()
+                            .assessmentId(assessment.getAssessmentId())
+                            .title(assessment.getTitle())
+                            .dueDate(assessment.getDueDate())
+                            .assessmentType(assessment.getAssessmentType())
+                            .subSubjectName(assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject().getName())
+                            .className(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getName())
+                            .totalSubmitted(totalSubmitted)
+                            .build();
+                    ;
+
+                    return assessmentResponseForGrading;
+                })
+                .toList();
+
+        return pageResponse(
+                items,
+                pageAssessments.getTotalElements(),
+                page,
+                size,
+                pageAssessments.getTotalPages()
+        );
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

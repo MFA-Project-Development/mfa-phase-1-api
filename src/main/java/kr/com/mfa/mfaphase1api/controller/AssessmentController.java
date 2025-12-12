@@ -14,10 +14,7 @@ import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
-import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
@@ -35,7 +32,7 @@ import java.util.UUID;
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
 
 @RestController
-@RequestMapping("/api/v1/classes/{classId}/assessments")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "mfa")
 public class AssessmentController {
@@ -43,7 +40,7 @@ public class AssessmentController {
     private final AssessmentService assessmentService;
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PostMapping
+    @PostMapping("/classes/{classId}/assessments")
     @Operation(
             summary = "Create assessment",
             description = "Creates a new assessment. Title must be unique within its scope per your domain rules.",
@@ -65,7 +62,7 @@ public class AssessmentController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PutMapping("/{assessmentId}/schedule")
+    @PutMapping("/classes/{classId}/assessments/{assessmentId}/schedule")
     @Operation(
             summary = "Schedule assessment",
             description = "Schedules an assessment. Title must be unique within its scope per your domain rules.",
@@ -88,7 +85,7 @@ public class AssessmentController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PutMapping("/{assessmentId}/publish")
+    @PutMapping("/classes/{classId}/assessments/{assessmentId}/publish")
     @Operation(
             summary = "Publish assessment",
             description = "Publishes an assessment, making it visible to students.",
@@ -110,13 +107,13 @@ public class AssessmentController {
                 HttpStatus.OK);
     }
 
-    @GetMapping
+    @GetMapping("/classes/{classId}/assessments")
     @Operation(
             summary = "List assessments",
             description = "Returns a paginated list of assessments with sorting.",
             tags = {"Assessment"}
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAssessmentsByClassId(
+    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponse>>>> getAllAssessmentsByClassId(
             @PathVariable UUID classId,
             @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "1") @Positive Integer page,
@@ -130,10 +127,10 @@ public class AssessmentController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessments(classId, page, size, property, direction), HttpStatus.OK);
+        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessmentsByClassId(classId, page, size, property, direction), HttpStatus.OK);
     }
 
-    @GetMapping("/{assessmentId}")
+    @GetMapping("/classes/{classId}/assessments/{assessmentId}")
     @Operation(
             summary = "Get assessment",
             description = "Returns an assessment by its ID.",
@@ -156,7 +153,7 @@ public class AssessmentController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PutMapping("/{assessmentId}")
+    @PutMapping("/classes/{classId}/assessments/{assessmentId}")
     @Operation(
             summary = "Update assessment",
             description = "Updates an assessment by ID.",
@@ -181,7 +178,7 @@ public class AssessmentController {
     }
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @DeleteMapping("/{assessmentId}")
+    @DeleteMapping("/classes/{classId}/assessments/{assessmentId}")
     @Operation(
             summary = "Delete assessment",
             description = "Deletes an assessment by ID.",
@@ -200,7 +197,7 @@ public class AssessmentController {
     }
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @PostMapping("/{assessmentId}/resources")
+    @PostMapping("/classes/{classId}/assessments/{assessmentId}/resources")
     @Operation(
             summary = "Upload assessment resource",
             description = "Upload answer resources for the submission. Multiple files can be uploaded.",
@@ -219,7 +216,7 @@ public class AssessmentController {
         return buildResponse("Resources uploaded successfully", null, HttpStatus.OK);
     }
 
-    @GetMapping("/{assessmentId}/resources")
+    @GetMapping("/classes/{classId}/assessments/{assessmentId}/resources")
     @Operation(
             summary = "Get assessment resources",
             description = "Returns all resources associated with the assessment.",
@@ -241,5 +238,26 @@ public class AssessmentController {
         );
     }
 
+    @GetMapping("/assessments")
+    @Operation(
+            summary = "List assessments without class",
+            description = "Returns a paginated list of assessments with sorting without class.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<PagedResponse<List<AssessmentResponseForGrading>>>> getAllAssessments(
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "1") @Positive Integer page,
+
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "10") @Positive Integer size,
+
+            @Parameter(description = "Sort property", example = "CREATED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CREATED_AT") AssessmentProperty property,
+
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
+        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessments(page, size, property, direction), HttpStatus.OK);
+    }
 
 }

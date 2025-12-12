@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.repository;
 
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.SubSubject;
+import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,10 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     boolean existsAssessmentsByAssessmentId_AndCreatedBy(UUID assessmentId, UUID createdBy);
 
     boolean existsAssessmentsByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID assessmentId, UUID studentId);
+
+    Page<Assessment> findAllByStatus(AssessmentStatus status, Pageable pageable);
+
+    Page<Assessment> findAllByStatusAndCreatedBy(AssessmentStatus status, UUID createdBy, Pageable pageable);
+
+    Page<Assessment> findAllByStatusAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(AssessmentStatus status, UUID studentId, Pageable pageable);
 }

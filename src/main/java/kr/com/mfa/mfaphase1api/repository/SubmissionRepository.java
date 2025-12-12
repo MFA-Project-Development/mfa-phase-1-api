@@ -18,4 +18,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     Page<Submission> findAllByAssessment_AssessmentIdAndAssessment_CreatedBy(UUID assessmentId, UUID createdBy, Pageable pageable);
 
     Page<Submission> findAllByAssessment_AssessmentIdAndStudentId(UUID assessmentId, UUID studentId, Pageable pageable);
+
+    Integer countByAssessment(Assessment assessment);
 }

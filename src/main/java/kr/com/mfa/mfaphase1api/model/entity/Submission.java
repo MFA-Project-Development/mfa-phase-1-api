@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
+import kr.com.mfa.mfaphase1api.model.dto.response.StudentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import lombok.*;
@@ -63,7 +64,7 @@ public class Submission {
     @ToString.Exclude
     private List<Paper> papers = new ArrayList<>();
 
-    public SubmissionResponse toResponse(){
+    public SubmissionResponse toResponse(StudentResponse studentResponse){
         return SubmissionResponse.builder()
                 .submissionId(this.submissionId)
                 .status(this.status)
@@ -72,7 +73,7 @@ public class Submission {
                 .startedAt(this.startedAt)
                 .submittedAt(this.submittedAt)
                 .gradedAt(this.gradedAt)
-                .studentId(this.studentId)
+                .studentResponse(studentResponse)
                 .gradedBy(this.gradedBy)
                 .assessmentId(this.assessment.getAssessmentId())
                 .build();

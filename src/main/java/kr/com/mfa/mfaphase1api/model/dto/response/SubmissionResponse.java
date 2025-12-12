@@ -17,7 +17,7 @@ import java.util.UUID;
 public class SubmissionResponse {
     private UUID submissionId;
     private UUID assessmentId;
-    private UUID studentId;
+    private StudentResponse studentResponse;
     private UUID gradedBy;
     private SubmissionStatus status;
     private LocalDateTime startedAt;
