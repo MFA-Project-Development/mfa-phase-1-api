@@ -334,6 +334,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .map(assessment -> {
 
                     Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
+                    Integer totalStudents = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getStudentClassEnrollments().size();
 
                     AssessmentResponseForGrading assessmentResponseForGrading = AssessmentResponseForGrading.builder()
                             .assessmentId(assessment.getAssessmentId())
@@ -343,6 +344,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .subSubjectName(assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject().getName())
                             .className(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getName())
                             .totalSubmitted(totalSubmitted)
+                            .totalStudents(totalStudents)
                             .build();
                     ;
 

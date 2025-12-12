@@ -22,5 +22,6 @@ public class AssessmentResponseForGrading {
     private String subSubjectName;
     private String className;
     private Integer totalSubmitted;
+    private Integer totalStudents;
 
 }
