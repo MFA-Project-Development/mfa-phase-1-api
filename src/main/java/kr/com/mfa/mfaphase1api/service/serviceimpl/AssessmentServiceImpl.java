@@ -336,7 +336,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                     Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
                     Integer totalStudents = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getStudentClassEnrollments().size();
 
-                    AssessmentResponseForGrading assessmentResponseForGrading = AssessmentResponseForGrading.builder()
+                    return AssessmentResponseForGrading.builder()
                             .assessmentId(assessment.getAssessmentId())
                             .title(assessment.getTitle())
                             .dueDate(assessment.getDueDate())
@@ -346,8 +346,6 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .totalSubmitted(totalSubmitted)
                             .totalStudents(totalStudents)
                             .build();
-
-                    return assessmentResponseForGrading;
                 })
                 .toList();
 
