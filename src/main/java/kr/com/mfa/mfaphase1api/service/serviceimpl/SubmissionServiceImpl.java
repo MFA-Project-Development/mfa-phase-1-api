@@ -55,6 +55,12 @@ public class SubmissionServiceImpl implements SubmissionService {
                 () -> new NotFoundException("Assessment not found")
         );
 
+        Submission existSubmission = getAndValidateSubmission(assessmentId, currentUserId);
+
+        if (existSubmission != null) {
+            return existSubmission.getSubmissionId();
+        }
+
         Submission submission = Submission.builder()
                 .status(SubmissionStatus.NOT_SUBMITTED)
                 .maxScore(BigDecimal.valueOf(0.00))
@@ -127,7 +133,8 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         boolean authorized = switch (currentUserRole) {
             case "ROLE_ADMIN" -> assessmentRepository.existsById(assessmentId);
-            case "ROLE_INSTRUCTOR" -> assessmentRepository.existsAssessmentsByAssessmentId_AndCreatedBy(assessmentId, currentUserId);
+            case "ROLE_INSTRUCTOR" ->
+                    assessmentRepository.existsAssessmentsByAssessmentId_AndCreatedBy(assessmentId, currentUserId);
             case "ROLE_STUDENT" -> assessmentRepository
                     .existsAssessmentsByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(assessmentId, currentUserId);
             default -> false;
