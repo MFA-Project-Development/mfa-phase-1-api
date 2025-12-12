@@ -346,7 +346,6 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .totalSubmitted(totalSubmitted)
                             .totalStudents(totalStudents)
                             .build();
-                    ;
 
                     return assessmentResponseForGrading;
                 })
