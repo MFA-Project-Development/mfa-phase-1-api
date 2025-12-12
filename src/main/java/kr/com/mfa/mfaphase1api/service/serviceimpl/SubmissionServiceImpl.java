@@ -96,7 +96,9 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     @Transactional(readOnly = true)
     public List<PaperResponse> getSubmissionPapers(UUID assessmentId, UUID submissionId) {
-        Submission submission = getAndValidateSubmission(assessmentId, extractCurrentUserId());
+        Submission submission = submissionRepository.findBySubmissionId_AndAssessment_AssessmentId(submissionId, assessmentId).orElseThrow(
+                () -> new NotFoundException("Submission " + submissionId + " found")
+        );
         List<Paper> papers = paperRepository.findAllBySubmission(submission);
         return papers.stream().map(Paper::toResponse).toList();
     }
