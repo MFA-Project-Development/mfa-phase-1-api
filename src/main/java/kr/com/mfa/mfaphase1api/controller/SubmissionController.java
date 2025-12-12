@@ -92,7 +92,7 @@ public class SubmissionController {
         return buildResponse("Submission finalized", null, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
     @GetMapping("/{submissionId}/papers")
     @Operation(
             summary = "Get submission papers",
