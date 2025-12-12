@@ -126,6 +126,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PagedResponse<List<SubmissionResponse>> getAllSubmissions(UUID assessmentId, Integer page, Integer size, SubmissionProperty property, Sort.Direction direction) {
 
         UUID currentUserId = extractCurrentUserId();
