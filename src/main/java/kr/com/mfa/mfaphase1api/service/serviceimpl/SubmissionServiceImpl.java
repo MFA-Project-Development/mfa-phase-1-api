@@ -74,9 +74,18 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     @Transactional
     public void persistSubmissionPapers(UUID assessmentId, UUID submissionId, List<String> fileNames) {
+
         UUID currentUserId = extractCurrentUserId();
 
         Submission submission = getAndValidateSubmission(assessmentId, currentUserId);
+
+        List<Paper> existingPapers = paperRepository.findAllBySubmission(submission);
+
+        for (Paper paper : existingPapers) {
+            fileService.deleteFileByFileName(paper.getName());
+        }
+
+        paperRepository.deleteAllBySubmission(submission);
 
         validateFilesExist(fileNames);
 

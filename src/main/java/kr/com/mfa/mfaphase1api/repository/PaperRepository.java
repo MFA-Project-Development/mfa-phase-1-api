@@ -13,4 +13,6 @@ public interface PaperRepository extends JpaRepository<Paper, UUID> {
     int countPaperBySubmission(Submission submission);
 
     List<Paper> findAllBySubmission(Submission submission);
+
+    void deleteAllBySubmission(Submission submission);
 }
