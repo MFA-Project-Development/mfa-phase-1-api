@@ -196,7 +196,7 @@ public class AssessmentController {
         return buildResponse("Assessment deleted", null, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('x')")
     @PostMapping("/classes/{classId}/assessments/{assessmentId}/resources")
     @Operation(
             summary = "Upload assessment resource",

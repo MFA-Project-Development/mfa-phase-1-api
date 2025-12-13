@@ -54,7 +54,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 () -> new NotFoundException("Assessment not found")
         );
 
-        Submission existSubmission = getAndValidateSubmission(assessmentId, currentUserId);
+        Submission existSubmission = submissionRepository.findSubmissionByAssessmentAndStudentId(assessment, currentUserId).orElse(null);
 
         if (existSubmission != null) {
             return existSubmission.getSubmissionId();
