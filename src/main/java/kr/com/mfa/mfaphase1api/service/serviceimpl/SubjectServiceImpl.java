@@ -30,7 +30,7 @@ public class SubjectServiceImpl implements SubjectService {
     public SubjectResponse createSubject(SubjectRequest request) {
 
         assertNameUnique(request.getName());
-        Subject saved = subjectRepository.save(request.toEntity());
+        Subject saved = subjectRepository.saveAndFlush(request.toEntity());
 
         return saved.toResponse();
     }
@@ -75,7 +75,7 @@ public class SubjectServiceImpl implements SubjectService {
     public SubjectResponse updateSubjectById(UUID subjectId, SubjectRequest request) {
         getOrThrow(subjectId);
         assertNameUnique(request.getName());
-        Subject saved = subjectRepository.save(request.toEntity(subjectId));
+        Subject saved = subjectRepository.saveAndFlush(request.toEntity(subjectId));
         return saved.toResponse();
     }
 

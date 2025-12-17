@@ -40,7 +40,7 @@ public class SubSubjectServiceImpl implements SubSubjectService {
             throw new ConflictException("SubSubject name already exists for this subject");
         }
 
-        SubSubject saved = subSubjectRepository.save(request.toEntity(subject));
+        SubSubject saved = subSubjectRepository.saveAndFlush(request.toEntity(subject));
         return saved.toResponse();
     }
 
@@ -99,7 +99,7 @@ public class SubSubjectServiceImpl implements SubSubjectService {
 
         existing.setName(newName);
 
-        SubSubject updated = subSubjectRepository.save(existing);
+        SubSubject updated = subSubjectRepository.saveAndFlush(existing);
         return updated.toResponse();
     }
 

@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.model.dto.response;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -13,5 +14,7 @@ public class SubSubjectResponse {
     private UUID subSubjectId;
     private String name;
     private UUID subjectId;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }

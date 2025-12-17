@@ -174,6 +174,25 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{classId}/sub-subjects")
+    @Operation(
+            summary = "Unassign multiple sub-subjects from a class",
+            description = "Removes the links between the class and multiple sub-subjects.",
+            tags = {"SubSubject"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Multiple sub-subjects unassigned from class"),
+                    @ApiResponse(responseCode = "404", description = "Class or one or more sub-subjects not found"),
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> unassignMultipleSubSubjectsFromClass(
+            @PathVariable UUID classId,
+            @RequestBody List<UUID> subSubjectIds
+    ) {
+        classService.unassignMultipleSubSubjectsFromClass(classId, subSubjectIds);
+        return buildResponse("Multiple sub-subjects unassigned from class", null, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{classId}/sub-subjects/{subSubjectId}")
     @Operation(
             summary = "Unassign a sub-subject from a class",

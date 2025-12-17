@@ -28,6 +28,7 @@ public class SubjectRequest {
 
     public Subject toEntity(UUID subjectId){
         return Subject.builder()
+                .subjectId(subjectId)
                 .name(this.name)
                 .build();
     }

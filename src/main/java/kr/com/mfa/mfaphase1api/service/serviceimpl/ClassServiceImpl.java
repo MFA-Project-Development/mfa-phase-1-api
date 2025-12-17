@@ -366,6 +366,8 @@ public class ClassServiceImpl implements ClassService {
 
         studentClassEnrollmentRepository.save(newStudentClassEnrollment);
 
+        studentClassEnrollmentRepository.deleteByStudentId_AndClazz(userResponse.getUserId(), fromClazz);
+
     }
 
     @Override
@@ -677,6 +679,43 @@ public class ClassServiceImpl implements ClassService {
                 .toList();
 
         studentClassEnrollmentRepository.saveAll(enrollments);
+    }
+
+    @Override
+    @Transactional
+    public void unassignMultipleSubSubjectsFromClass(UUID classId, List<UUID> subSubjectIds) {
+        Class clazz = getOrThrow(classId);
+
+        List<SubSubject> subSubjects = subSubjectRepository.findAllById(subSubjectIds);
+
+        if (subSubjects.size() != subSubjectIds.size()) {
+            Set<UUID> foundIds = subSubjects.stream()
+                    .map(SubSubject::getSubSubjectId)
+                    .collect(Collectors.toSet());
+            List<UUID> missingIds = subSubjectIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new NotFoundException("SubSubjects not found: " + missingIds);
+        }
+
+        for (SubSubject subSubject : subSubjects) {
+            boolean exists = classSubSubjectRepository
+                    .existsClassSubSubjectByClazz_ClassId_AndSubSubject_SubSubjectId(
+                            classId,
+                            subSubject.getSubSubjectId()
+                    );
+
+            if (!exists) {
+                throw new BadRequestException(
+                        "SubSubject not assigned to this class: " +
+                        subSubject.getSubSubjectId()
+                );
+            }
+        }
+
+        for (SubSubject subSubject : subSubjects) {
+            classSubSubjectRepository.deleteClassSubSubjectByClazz_AndSubSubject(clazz, subSubject);
+        }
     }
 
     private Class getOrThrow(UUID classId) {

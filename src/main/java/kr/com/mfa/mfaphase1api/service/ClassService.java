@@ -55,4 +55,6 @@ public interface ClassService {
     void assignMultipleSubSubjectToClass(UUID classId, List<UUID> subSubjectIds);
 
     void multipleEnrollStudentToClass(UUID classId, List<UUID> studentIds);
+
+    void unassignMultipleSubSubjectsFromClass(UUID classId, List<UUID> subSubjectIds);
 }

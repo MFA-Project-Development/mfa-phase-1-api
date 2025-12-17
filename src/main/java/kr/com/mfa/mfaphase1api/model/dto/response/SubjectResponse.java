@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -15,5 +16,6 @@ public class SubjectResponse {
 
     private UUID subjectId;
     private String name;
-
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
