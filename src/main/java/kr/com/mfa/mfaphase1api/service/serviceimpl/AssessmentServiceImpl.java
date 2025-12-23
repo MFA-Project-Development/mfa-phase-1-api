@@ -6,10 +6,7 @@ import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponseForGrading;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
@@ -28,7 +25,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.*;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
@@ -186,6 +185,28 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .existsByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId);
         if (!hasAssignment) {
             throw new ForbiddenException("You are not assigned to this class.");
+        }
+
+        if (assessment.getResources() != null) {
+            for (Resource resource : assessment.getResources()) {
+                fileService.deleteFileByFileName(resource.getName());
+            }
+        }
+
+        for (Question question : assessment.getQuestions()) {
+            if (question.getQuestionImages() != null) {
+                for (QuestionImage questionImage : question.getQuestionImages()) {
+                    fileService.deleteFileByFileName(questionImage.getImageUrl());
+                }
+            }
+        }
+
+        for (Submission submission : assessment.getSubmissions()) {
+            if (submission.getPapers() != null) {
+                for (Paper paper : submission.getPapers()) {
+                    fileService.deleteFileByFileName(paper.getName());
+                }
+            }
         }
 
         assessmentRepository.delete(assessment);
@@ -356,6 +377,50 @@ public class AssessmentServiceImpl implements AssessmentService {
                 size,
                 pageAssessments.getTotalPages()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AssessmentSummary getAssessmentsSummary(Integer month) {
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        List<Assessment> assessments;
+
+        if (month == null) {
+            assessments = assessmentRepository
+                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(currentUserId, AssessmentStatus.STARTED);
+        } else {
+            int year = LocalDate.now().getYear();
+            YearMonth ym = YearMonth.of(year, month);
+
+            LocalDateTime startDate = ym.atDay(1).atStartOfDay();
+            LocalDateTime dueDate = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+            assessments = assessmentRepository
+                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(
+                            currentUserId, AssessmentStatus.STARTED, startDate, dueDate);
+        }
+
+        int exams = 0;
+        int quizzes = 0;
+        int assignments = 0;
+        int homeworks = 0;
+
+        for (Assessment assessment : assessments) {
+            switch (assessment.getAssessmentType()) {
+                case EXAM -> exams++;
+                case QUIZ -> quizzes++;
+                case ASSIGNMENT -> assignments++;
+                case HOMEWORK -> homeworks++;
+            }
+        }
+
+        return AssessmentSummary.builder()
+                .exams(exams)
+                .quizzes(quizzes)
+                .assignments(assignments)
+                .homeworks(homeworks)
+                .build();
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

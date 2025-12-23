@@ -4,10 +4,7 @@ import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentResponseForGrading;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.ResourceResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
@@ -36,4 +33,6 @@ public interface AssessmentService {
     AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, LocalDateTime dueDate);
 
     PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
+
+    AssessmentSummary getAssessmentsSummary(Integer month);
 }

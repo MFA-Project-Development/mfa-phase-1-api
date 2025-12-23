@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,4 +41,8 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     Page<Assessment> findAllByStatusAndCreatedBy(AssessmentStatus status, UUID createdBy, Pageable pageable);
 
     Page<Assessment> findAllByStatusAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(AssessmentStatus status, UUID studentId, Pageable pageable);
+
+    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, LocalDateTime startDate, LocalDateTime dueDate);
+
+    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(UUID studentId, AssessmentStatus status);
 }

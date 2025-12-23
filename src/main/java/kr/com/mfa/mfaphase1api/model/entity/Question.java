@@ -67,6 +67,10 @@ public class Question {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Option> options = new ArrayList<>();
 
+    @ToString.Exclude
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<QuestionImage> questionImages = new ArrayList<>();
+
     public QuestionResponse toResponse() {
         return QuestionResponse.builder()
                 .questionId(this.questionId)

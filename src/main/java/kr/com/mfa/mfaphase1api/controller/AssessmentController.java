@@ -8,9 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
@@ -196,7 +194,7 @@ public class AssessmentController {
         return buildResponse("Assessment deleted", null, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('x')")
+    @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/classes/{classId}/assessments/{assessmentId}/resources")
     @Operation(
             summary = "Upload assessment resource",
@@ -258,6 +256,20 @@ public class AssessmentController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
         return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessments(page, size, property, direction), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/assessments/summary")
+    @Operation(
+            summary = "Get assessments summary",
+            description = "Returns summary statistics of assessments, optionally filtered by month.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<AssessmentSummary>> getAssessmentsSummary(
+            @Parameter(description = "Filter by month (1-12)", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(required = false) @Min(1) @Max(12) Integer month
+    ) {
+        return buildResponse("Assessments summary retrieved successfully", assessmentService.getAssessmentsSummary(month), HttpStatus.OK);
     }
 
 }

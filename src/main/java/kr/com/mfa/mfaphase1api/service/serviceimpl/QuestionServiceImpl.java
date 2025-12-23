@@ -10,8 +10,10 @@ import kr.com.mfa.mfaphase1api.model.dto.response.QuestionResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.QuestionProperty;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
+import kr.com.mfa.mfaphase1api.repository.QuestionImageRepository;
 import kr.com.mfa.mfaphase1api.repository.QuestionRepository;
 //import kr.com.mfa.mfaphase1api.repository.QuestionTypeRepository;
+import kr.com.mfa.mfaphase1api.service.FileService;
 import kr.com.mfa.mfaphase1api.service.QuestionService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuestionRepository questionRepository;
     //    private final QuestionTypeRepository questionTypeRepository;
     private final AssessmentRepository assessmentRepository;
+    private final QuestionImageRepository questionImageRepository;
+    private final FileService fileService;
 
     @Override
     @Transactional
@@ -56,6 +60,17 @@ public class QuestionServiceImpl implements QuestionService {
         int questionOrder = questionRepository.countByAssessment(assessment) + 1;
 
         Question saved = questionRepository.saveAndFlush(request.toEntity(questionOrder, assessment));
+
+        if (request.getQuestionImages() != null) {
+            int imageOrder = 1;
+            for (String imageUrl : request.getQuestionImages()) {
+                QuestionImage questionImage = new QuestionImage();
+                questionImage.setImageUrl(imageUrl);
+                questionImage.setImageOrder(imageOrder++);
+                questionImage.setQuestion(saved);
+                questionImageRepository.save(questionImage);
+            }
+        }
 
         return saved.toResponse();
     }
@@ -166,6 +181,13 @@ public class QuestionServiceImpl implements QuestionService {
                 .orElseThrow(() -> new ForbiddenException("You are not authorized to delete question in this assessment"));
 
         Question question = getOrThrow(assessment.getAssessmentId(), questionId);
+
+        if (question.getQuestionImages() != null) {
+            for (QuestionImage questionImage : question.getQuestionImages()) {
+                fileService.deleteFileByFileName(questionImage.getImageUrl());
+            }
+        }
+
         questionRepository.delete(question);
 
     }
@@ -187,6 +209,18 @@ public class QuestionServiceImpl implements QuestionService {
         return requests.stream()
                 .map(request -> {
                     Question savedQuestion = questionRepository.saveAndFlush(request.toEntity(questionOrder.getAndIncrement(), assessment));
+
+                    if (request.getQuestionImages() != null) {
+                        int imageOrder = 1;
+                        for (String imageUrl : request.getQuestionImages()) {
+                            QuestionImage questionImage = new QuestionImage();
+                            questionImage.setImageUrl(imageUrl);
+                            questionImage.setImageOrder(imageOrder++);
+                            questionImage.setQuestion(savedQuestion);
+                            questionImageRepository.save(questionImage);
+                        }
+                    }
+
                     return savedQuestion.toResponse();
                 })
                 .toList();
