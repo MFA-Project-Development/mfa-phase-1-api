@@ -2,10 +2,7 @@ package kr.com.mfa.mfaphase1api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.AdminOverviewResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.ClassSummaryResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.StudentOverviewResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -50,6 +47,20 @@ public class DashboardController {
             @RequestParam(required = false) String subSubjectName
     ) {
         return buildResponse("Student dashboard overview retrieved", dashboardService.getStudentOverview(month, subSubjectName), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @GetMapping("/instructor/overview")
+    @Operation(
+            summary = "Get instructor dashboard overview",
+            description = "Returns aggregate counts for instructor dashboard: summary, students, and instructors.",
+            tags = {"Dashboard"}
+    )
+    public ResponseEntity<APIResponse<TeacherOverviewResponse>> getInstructorOverview(
+            @RequestParam(required = false) Month month,
+            @RequestParam(required = false) UUID classId
+    ) {
+        return buildResponse("Instructor dashboard overview retrieved", dashboardService.getInstructorOverview(month, classId), HttpStatus.OK);
     }
 
 }

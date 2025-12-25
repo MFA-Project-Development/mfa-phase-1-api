@@ -48,11 +48,11 @@ public class SubmissionController {
                             content = @Content(schema = @Schema(implementation = UUID.class)))
             }
     )
-    public ResponseEntity<APIResponse<UUID>> startSubmission(
+    public ResponseEntity<APIResponse<Object>> startSubmission(
             @PathVariable @NotNull UUID assessmentId
     ) {
-        UUID submissionId = submissionService.startSubmission(assessmentId);
-        return buildResponse("Submission ready", submissionId, HttpStatus.CREATED);
+        Object submission = submissionService.startSubmission(assessmentId);
+        return buildResponse("Submission ready", submission, HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('STUDENT')")

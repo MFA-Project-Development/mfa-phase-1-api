@@ -45,4 +45,12 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, LocalDateTime startDate, LocalDateTime dueDate);
 
     List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(UUID studentId, AssessmentStatus status);
+
+    List<Assessment> findAllByCreatedBy_AndStatus(UUID instructorId, AssessmentStatus status);
+
+    List<Assessment> findAllByCreatedBy_AndStatus_AndStartDateBetween(UUID instructorId, AssessmentStatus status, LocalDateTime startDate, LocalDateTime dueDate);
+
+    List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId);
+
+    List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId, LocalDateTime startDate, LocalDateTime endDate);
 }

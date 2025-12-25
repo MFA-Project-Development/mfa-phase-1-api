@@ -10,6 +10,7 @@ import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,5 +35,5 @@ public interface AssessmentService {
 
     PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
 
-    AssessmentSummary getAssessmentsSummary(Integer month);
+    AssessmentSummary getAssessmentsSummary(Month month);
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +25,8 @@ public interface ClassRepository extends JpaRepository<Class, UUID> {
     boolean existsByClassIdAndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID instructorId);
 
     boolean existsByClassIdAndStudentClassEnrollments_StudentId(UUID classId, UUID studentId);
+
+    List<Class> findAllByClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID instructorId);
+
+    List<Class> findAllByClassIdAndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID currentUserId);
 }

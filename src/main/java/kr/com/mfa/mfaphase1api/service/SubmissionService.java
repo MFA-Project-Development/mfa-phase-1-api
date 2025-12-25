@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface SubmissionService {
     
-    UUID startSubmission(UUID assessmentId);
+    Object startSubmission(UUID assessmentId);
 
     void finalizeSubmission(UUID assessmentId, UUID submissionId);
 

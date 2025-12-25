@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.YearMonth;
 import java.util.*;
 
@@ -381,7 +382,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public AssessmentSummary getAssessmentsSummary(Integer month) {
+    public AssessmentSummary getAssessmentsSummary(Month month) {
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
 
         List<Assessment> assessments;

@@ -24,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -267,7 +268,7 @@ public class AssessmentController {
     )
     public ResponseEntity<APIResponse<AssessmentSummary>> getAssessmentsSummary(
             @Parameter(description = "Filter by month (1-12)", example = "1", in = ParameterIn.QUERY)
-            @RequestParam(required = false) @Min(1) @Max(12) Integer month
+            @RequestParam(required = false) Month month
     ) {
         return buildResponse("Assessments summary retrieved successfully", assessmentService.getAssessmentsSummary(month), HttpStatus.OK);
     }

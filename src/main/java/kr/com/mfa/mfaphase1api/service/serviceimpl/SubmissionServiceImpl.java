@@ -47,7 +47,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public UUID startSubmission(UUID assessmentId) {
+    public Object startSubmission(UUID assessmentId) {
         UUID currentUserId = extractCurrentUserId();
 
         Assessment assessment = assessmentRepository.findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(assessmentId, currentUserId).orElseThrow(
@@ -57,7 +57,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         Submission existSubmission = submissionRepository.findSubmissionByAssessmentAndStudentId(assessment, currentUserId).orElse(null);
 
         if (existSubmission != null) {
-            return existSubmission.getSubmissionId();
+            return existSubmission;
         }
 
         Submission submission = Submission.builder()
