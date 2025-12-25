@@ -57,7 +57,14 @@ public class SubmissionServiceImpl implements SubmissionService {
         Submission existSubmission = submissionRepository.findSubmissionByAssessmentAndStudentId(assessment, currentUserId).orElse(null);
 
         if (existSubmission != null) {
-            return existSubmission;
+            UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(existSubmission.getStudentId()).getBody()).getPayload();
+            StudentResponse studentResponse = StudentResponse.builder()
+                    .studentId(userResponse.getUserId())
+                    .studentEmail(userResponse.getEmail())
+                    .studentName(buildFullName(userResponse))
+                    .profileImage(userResponse.getProfileImage())
+                    .build();
+            return existSubmission.toResponse(studentResponse);
         }
 
         Submission submission = Submission.builder()
