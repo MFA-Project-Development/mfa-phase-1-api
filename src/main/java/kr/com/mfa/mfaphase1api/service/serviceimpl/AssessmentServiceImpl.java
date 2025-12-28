@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentPublishRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
@@ -25,10 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.YearMonth;
+import java.time.*;
 import java.util.*;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
@@ -280,10 +278,29 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
 
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+
+        Instant startDate = request.getStartDate()
+                .atZone(zone)
+                .toInstant();
+
+        Instant dueDate = request.getDueDate()
+                .atZone(zone)
+                .toInstant();
+
         switch (assessment.getStatus()) {
             case AssessmentStatus.DRAFTED -> {
-                assessment.setStartDate(request.getStartDate());
-                assessment.setDueDate(request.getDueDate());
+                assessment.setStartDate(startDate);
+                assessment.setDueDate(dueDate);
                 assessment.setClassSubSubjectInstructor(csi);
                 assessment.setStatus(AssessmentStatus.SCHEDULED);
 
@@ -292,8 +309,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                 quartzSchedulerService.scheduleStartAndFinishJobs(saved);
             }
             case AssessmentStatus.SCHEDULED -> {
-                assessment.setStartDate(request.getStartDate());
-                assessment.setDueDate(request.getDueDate());
+                assessment.setStartDate(dueDate);
+                assessment.setDueDate(dueDate);
 
                 Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
@@ -307,7 +324,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Override
     @Transactional
-    public AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, LocalDateTime dueDate) {
+    public AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, AssessmentPublishRequest request) {
 
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
 
@@ -321,8 +338,27 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .findByClassSubSubject_Clazz_ClassIdAndInstructorId(classId, currentUserId)
                 .orElseThrow(() -> new ForbiddenException("You are not assigned to any sub-subject in class " + classId + "."));
 
-        assessment.setStartDate(LocalDateTime.now());
-        assessment.setDueDate(dueDate);
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant startDate = Instant.now()
+                .atZone(zone)
+                .toInstant();
+
+        Instant newDueDate = request.getDueDate()
+                .atZone(zone)
+                .toInstant();
+
+        assessment.setStartDate(startDate);
+        assessment.setDueDate(newDueDate);
+        assessment.setTimeZone(request.getTimeZone());
         assessment.setClassSubSubjectInstructor(csi);
         assessment.setStatus(AssessmentStatus.STARTED);
 
@@ -358,10 +394,13 @@ public class AssessmentServiceImpl implements AssessmentService {
                     Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
                     Integer totalStudents = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getStudentClassEnrollments().size();
 
+                    ZoneId zone = ZoneId.of(assessment.getTimeZone());
+
                     return AssessmentResponseForGrading.builder()
                             .assessmentId(assessment.getAssessmentId())
                             .title(assessment.getTitle())
-                            .dueDate(assessment.getDueDate())
+                            .startDate(LocalDateTime.ofInstant(assessment.getStartDate(), zone))
+                            .dueDate(LocalDateTime.ofInstant(assessment.getDueDate(), zone))
                             .assessmentType(assessment.getAssessmentType())
                             .subSubjectName(assessment.getClassSubSubjectInstructor().getClassSubSubject().getSubSubject().getName())
                             .className(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getName())

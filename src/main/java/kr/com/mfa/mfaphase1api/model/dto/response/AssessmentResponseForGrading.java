@@ -17,6 +17,7 @@ public class AssessmentResponseForGrading {
 
     private UUID assessmentId;
     private String title;
+    private LocalDateTime startDate;
     private LocalDateTime dueDate;
     private AssessmentType assessmentType;
     private String subSubjectName;

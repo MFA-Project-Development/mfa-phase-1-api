@@ -8,8 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,8 +28,9 @@ public class Assessment {
     private UUID assessmentId;
     private String title;
     private String description;
-    private LocalDateTime startDate;
-    private LocalDateTime dueDate;
+    private Instant startDate;
+    private Instant dueDate;
+    private String timeZone;
     private Integer timeLimit;
 
     @Enumerated(EnumType.STRING)
@@ -68,27 +68,63 @@ public class Assessment {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
-    public AssessmentResponse toResponse(){
+    public AssessmentResponse toResponse() {
+
+        ZoneId zone;
+        try {
+            zone = this.timeZone != null
+                    ? ZoneId.of(this.timeZone)
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            zone = ZoneId.of("UTC");
+        }
+
         return AssessmentResponse.builder()
                 .assessmentId(this.assessmentId)
                 .title(this.title)
                 .description(this.description)
-                .startDate(this.startDate)
-                .dueDate(this.dueDate)
+                .startDate(
+                        this.startDate != null
+                                ? LocalDateTime.ofInstant(this.startDate, zone)
+                                : null
+                )
+                .dueDate(
+                        this.dueDate != null
+                                ? LocalDateTime.ofInstant(this.dueDate, zone)
+                                : null
+                )
+                .timeZone(zone.getId())
                 .timeLimit(this.timeLimit)
                 .status(this.status)
                 .assessmentType(this.assessmentType)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
-//                .assessmentTypeId(this.assessmentType.getAssessmentTypeId())
-                .subSubjectId(this.classSubSubjectInstructor.getClassSubSubject().getSubSubject().getSubSubjectId())
-                .classId(this.classSubSubjectInstructor.getClassSubSubject().getClazz().getClassId())
+                .createdAt(
+                        this.createdAt != null
+                                ? LocalDateTime.ofInstant(this.createdAt, zone)
+                                : null
+                )
+                .updatedAt(
+                        this.updatedAt != null
+                                ? LocalDateTime.ofInstant(this.updatedAt, zone)
+                                : null
+                )
+                .subSubjectId(
+                        this.classSubSubjectInstructor
+                                .getClassSubSubject()
+                                .getSubSubject()
+                                .getSubSubjectId()
+                )
+                .classId(
+                        this.classSubSubjectInstructor
+                                .getClassSubSubject()
+                                .getClazz()
+                                .getClassId()
+                )
                 .createdBy(this.createdBy)
                 .build();
     }

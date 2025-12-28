@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentPublishRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
@@ -99,10 +100,10 @@ public class AssessmentController {
     public ResponseEntity<APIResponse<AssessmentResponse>> publishAssessment(
             @PathVariable UUID classId,
             @PathVariable UUID assessmentId,
-            @RequestBody LocalDateTime dueDate
+            @RequestBody AssessmentPublishRequest request
     ) {
         return buildResponse("Assessment published",
-                assessmentService.publishAssessment(classId, assessmentId, dueDate),
+                assessmentService.publishAssessment(classId, assessmentId, request),
                 HttpStatus.OK);
     }
 

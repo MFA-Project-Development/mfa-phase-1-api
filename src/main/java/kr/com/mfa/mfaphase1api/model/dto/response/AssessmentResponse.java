@@ -22,6 +22,7 @@ public class AssessmentResponse {
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime dueDate;
+    private String timeZone;
     private Integer timeLimit;
     private AssessmentStatus status;
     private AssessmentType assessmentType;

@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.service;
 
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentPublishRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
@@ -31,7 +32,7 @@ public interface AssessmentService {
 
     AssessmentResponse scheduleAssessment(UUID classId, UUID assessmentId, AssessmentScheduleRequest request);
 
-    AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, LocalDateTime dueDate);
+    AssessmentResponse publishAssessment(UUID classId, UUID assessmentId, AssessmentPublishRequest request);
 
     PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
 

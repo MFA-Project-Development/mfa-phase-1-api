@@ -8,7 +8,8 @@ public enum MotivationContentType {
 
     QUOTE("quote"),
     VIDEO("video"),
-    MESSAGE("message");
+    MESSAGE("message"),
+    BOOK("book");
 
     private final String type;
 
