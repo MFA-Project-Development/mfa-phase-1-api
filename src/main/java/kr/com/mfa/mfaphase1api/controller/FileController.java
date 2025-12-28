@@ -73,10 +73,10 @@ public class FileController {
         return buildResponse("File uploaded successfully", saved, HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/preview/{file-name}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
+    @GetMapping(value = "/preview/{file-name}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @Operation(
-            summary = "Preview or download file",
-            description = "Fetches the file content by its name. Supports image preview or file download.",
+            summary = "Preview",
+            description = "Fetches the file content by its name. Supports image preview",
             tags = {"File"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "File retrieved successfully"),
@@ -89,6 +89,26 @@ public class FileController {
         InputStream inputStream = fileService.getFileByFileName(fileName);
         return ResponseEntity.status(HttpStatus.OK)
                 .contentType(MediaType.IMAGE_PNG)
+                .body(inputStream.readAllBytes());
+    }
+
+    @GetMapping(value = "/download/{file-name}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(
+            summary = "Download file",
+            description = "Downloads a file by its name with Content-Disposition header set to attachment.",
+            tags = {"File"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "File downloaded successfully"),
+                    @ApiResponse(responseCode = "404", description = "File not found")
+            }
+    )
+    public ResponseEntity<byte[]> downloadFile(
+            @PathVariable("file-name") @NotNull String fileName
+    ) throws IOException {
+        InputStream inputStream = fileService.getFileByFileName(fileName);
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
                 .body(inputStream.readAllBytes());
     }
 
