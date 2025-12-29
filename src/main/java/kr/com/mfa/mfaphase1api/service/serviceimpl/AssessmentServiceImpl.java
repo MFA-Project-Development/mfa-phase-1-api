@@ -288,7 +288,6 @@ public class AssessmentServiceImpl implements AssessmentService {
             throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
         }
 
-
         Instant startDate = request.getStartDate()
                 .atZone(zone)
                 .toInstant();
@@ -301,6 +300,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             case AssessmentStatus.DRAFTED -> {
                 assessment.setStartDate(startDate);
                 assessment.setDueDate(dueDate);
+                assessment.setTimeZone(request.getTimeZone());
                 assessment.setClassSubSubjectInstructor(csi);
                 assessment.setStatus(AssessmentStatus.SCHEDULED);
 
@@ -311,6 +311,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             case AssessmentStatus.SCHEDULED -> {
                 assessment.setStartDate(dueDate);
                 assessment.setDueDate(dueDate);
+                assessment.setTimeZone(request.getTimeZone());
 
                 Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
