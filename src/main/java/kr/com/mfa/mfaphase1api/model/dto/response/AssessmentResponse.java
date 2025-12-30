@@ -1,5 +1,6 @@
 package kr.com.mfa.mfaphase1api.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
 import lombok.AllArgsConstructor;
@@ -32,5 +33,8 @@ public class AssessmentResponse {
     private UUID createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer totalSubmitted;
 
 }

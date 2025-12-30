@@ -62,7 +62,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 request.toEntity(currentUserId, csi)
         );
 
-        return saved.toResponse();
+        return saved.toResponse(null);
     }
 
     @Override
@@ -100,7 +100,12 @@ public class AssessmentServiceImpl implements AssessmentService {
         };
 
         List<AssessmentResponse> items = pageAssessments.stream()
-                .map(Assessment::toResponse)
+                .map(
+                        assessment -> {
+                            Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
+                            return assessment.toResponse(totalSubmitted);
+                        }
+                )
                 .toList();
 
         return pageResponse(
@@ -132,7 +137,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
         };
 
-        return assessment.toResponse();
+        return assessment.toResponse(null);
     }
 
     @Override
@@ -162,7 +167,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
-        return saved.toResponse();
+        return saved.toResponse(null);
 
     }
 
@@ -320,7 +325,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new BadRequestException("Assessment is not in drafted and scheduled status.");
         }
 
-        return assessment.toResponse();
+        return assessment.toResponse(null);
     }
 
     @Override
@@ -367,7 +372,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         quartzSchedulerService.scheduleStartAndFinishJobs(saved);
 
-        return saved.toResponse();
+        return saved.toResponse(null);
     }
 
     @Override
