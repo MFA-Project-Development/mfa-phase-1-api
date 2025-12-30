@@ -8,7 +8,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,10 +44,13 @@ public class Submission {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
-    private LocalDateTime submittedAt;
-    private LocalDateTime gradedAt;
+    private Instant submittedAt;
+    private Instant gradedAt;
+
+    @Column(nullable = false)
+    private String timeZone;
 
     @Column(nullable = false)
     private UUID studentId;
@@ -64,15 +70,31 @@ public class Submission {
     @ToString.Exclude
     private List<Paper> papers = new ArrayList<>();
 
-    public SubmissionResponse toResponse(StudentResponse studentResponse){
+    public SubmissionResponse toResponse(StudentResponse studentResponse) {
+
+        ZoneId zone;
+        try {
+            zone = this.timeZone != null
+                    ? ZoneId.of(this.timeZone)
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            zone = ZoneId.of("UTC");
+        }
+
         return SubmissionResponse.builder()
                 .submissionId(this.submissionId)
                 .status(this.status)
                 .maxScore(this.maxScore)
                 .scoreEarned(this.scoreEarned)
-                .startedAt(this.startedAt)
-                .submittedAt(this.submittedAt)
-                .gradedAt(this.gradedAt)
+                .startedAt(this.startedAt != null
+                        ? LocalDateTime.ofInstant(this.startedAt, zone)
+                        : null)
+                .submittedAt(this.submittedAt != null
+                        ? LocalDateTime.ofInstant(this.submittedAt, zone)
+                        : null)
+                .gradedAt(this.gradedAt != null
+                        ? LocalDateTime.ofInstant(this.gradedAt, zone)
+                        : null)
                 .studentResponse(studentResponse)
                 .gradedBy(this.gradedBy)
                 .assessmentId(this.assessment.getAssessmentId())

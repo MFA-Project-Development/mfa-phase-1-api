@@ -5,9 +5,7 @@ import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
-import kr.com.mfa.mfaphase1api.model.dto.request.ClassRequest;
-import kr.com.mfa.mfaphase1api.model.dto.request.MoveStudentRequest;
-import kr.com.mfa.mfaphase1api.model.dto.request.UserIdsRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.entity.Class;
@@ -26,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -188,7 +188,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void assignInstructorToClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LocalDate startDate) {
+    public void assignInstructorToClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, AssignInstructorRequest request) {
 
         Class clazz = getOrThrow(classId);
 
@@ -211,10 +211,25 @@ public class ClassServiceImpl implements ClassService {
             throw new ConflictException("Another instructor is currently assigned to this class sub-subject.");
         }
 
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant startDate = request.getStartDate()
+                .atZone(zone)
+                .toInstant();
+
         ClassSubSubjectInstructor classSubSubjectInstructor = ClassSubSubjectInstructor.builder()
                 .classSubSubject(classSubSubject)
                 .instructorId(userResponse.getUserId())
-                .startDate(startDate != null ? startDate : LocalDate.now())
+                .startDate(startDate != null ? startDate : Instant.now())
+                .timeZone(request.getTimeZone())
                 .build();
 
         classSubSubjectInstructorRepository.save(classSubSubjectInstructor);
@@ -243,7 +258,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void leaveInstructorFromClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LocalDate endDate) {
+    public void leaveInstructorFromClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LeaveInstructorRequest request) {
 
         Class clazz = getOrThrow(classId);
 
@@ -259,7 +274,22 @@ public class ClassServiceImpl implements ClassService {
                 () -> new NotFoundException("Instructor already leave to this class sub-subject")
         );
 
-        classSubSubjectInstructor.setEndDate(endDate != null ? endDate : LocalDate.now());
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant endDate = request.getEndDate()
+                .atZone(zone)
+                .toInstant();
+
+        classSubSubjectInstructor.setEndDate(endDate != null ? endDate : Instant.now());
+        classSubSubjectInstructor.setTimeZone(request.getTimeZone());
 
         classSubSubjectInstructorRepository.save(classSubSubjectInstructor);
 
@@ -267,7 +297,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void enrollStudentToClass(UUID classId, UUID studentId, LocalDate startDate) {
+    public void enrollStudentToClass(UUID classId, UUID studentId, EnrollStudentRequest request) {
         Class clazz = getOrThrow(classId);
 
         UserResponse userResponse = getUserOrThrow(studentId);
@@ -278,10 +308,25 @@ public class ClassServiceImpl implements ClassService {
             throw new ConflictException("Student already enrolled to this class");
         }
 
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant startDate = request.getStartDate()
+                .atZone(zone)
+                .toInstant();
+
         StudentClassEnrollment studentClassEnrollment = StudentClassEnrollment.builder()
                 .clazz(clazz)
                 .studentId(userResponse.getUserId())
-                .startDate(startDate != null ? startDate : LocalDate.now())
+                .startDate(startDate != null ? startDate : Instant.now())
+                .timeZone(request.getTimeZone())
                 .build();
 
         studentClassEnrollmentRepository.save(studentClassEnrollment);
@@ -305,7 +350,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void leaveStudentFromClass(UUID classId, UUID studentId, LocalDate endDate) {
+    public void leaveStudentFromClass(UUID classId, UUID studentId, LeaveOrCompleteStudentRequest request) {
         Class clazz = getOrThrow(classId);
 
         UserResponse userResponse = getUserOrThrow(studentId);
@@ -316,7 +361,22 @@ public class ClassServiceImpl implements ClassService {
             throw new NotFoundException("Student already leave to this class");
         }
 
-        studentClassEnrollment.setEndDate(endDate != null ? endDate : LocalDate.now());
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant endDate = request.getEndDate()
+                .atZone(zone)
+                .toInstant();
+
+        studentClassEnrollment.setEndDate(endDate != null ? endDate : Instant.now());
+        studentClassEnrollment.setTimeZone(request.getTimeZone());
 
         studentClassEnrollmentRepository.save(studentClassEnrollment);
     }
@@ -327,7 +387,19 @@ public class ClassServiceImpl implements ClassService {
         UUID fromClassId = request.getFromClassId();
         UUID toClassId = request.getToClassId();
         UUID studentId = request.getStudentId();
-        LocalDate moveDate = request.getEffectiveDate() != null ? request.getEffectiveDate() : LocalDate.now();
+
+        ZoneId zone;
+
+        try {
+            zone = request.getTimeZone() != null
+                    ? ZoneId.of(request.getTimeZone())
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            throw new BadRequestException("Invalid time zone: " + request.getTimeZone());
+        }
+
+        Instant moveDate = request.getEffectiveDate() != null ? request.getEffectiveDate().atZone(zone)
+                .toInstant() : Instant.now();
         String moveReason = request.getMoveReason();
 
         if (request.getFromClassId().equals(request.getToClassId())) {
@@ -362,6 +434,7 @@ public class ClassServiceImpl implements ClassService {
                 .clazz(toClazz)
                 .studentId(userResponse.getUserId())
                 .startDate(moveDate)
+                .timeZone(request.getTimeZone())
                 .build();
 
         studentClassEnrollmentRepository.save(newStudentClassEnrollment);
@@ -669,7 +742,7 @@ public class ClassServiceImpl implements ClassService {
             }
         }
 
-        LocalDate now = LocalDate.now();
+        Instant now = Instant.now();
         List<StudentClassEnrollment> enrollments = students.stream()
                 .map(student -> StudentClassEnrollment.builder()
                         .clazz(clazz)

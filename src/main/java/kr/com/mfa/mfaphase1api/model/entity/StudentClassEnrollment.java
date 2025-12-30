@@ -3,7 +3,7 @@ package kr.com.mfa.mfaphase1api.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -22,8 +22,12 @@ public class StudentClassEnrollment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID studentClassEnrollmentId;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private Instant startDate;
+    private Instant endDate;
+
+    @Column(nullable = false)
+    private String timeZone;
+
     private String moveReason;
 
     @Column(nullable = false)

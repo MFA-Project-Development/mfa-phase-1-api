@@ -212,7 +212,7 @@ public class ClassController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{classId}/sub-subjects/{subSubjectId}/instructors/{instructorId}")
+        @PutMapping("/{classId}/sub-subjects/{subSubjectId}/instructors/{instructorId}")
     @Operation(
             summary = "Assign instructor to a class–sub-subject",
             description = "Creates (or re-activates) an instructor assignment for the given Class/SubSubject. "
@@ -234,7 +234,7 @@ public class ClassController {
                 classId,
                 subSubjectId,
                 instructorId,
-                request.getStartDate()
+                request
         );
         return buildResponse("Instructor assigned to class sub-subject", null, HttpStatus.OK);
     }
@@ -285,7 +285,7 @@ public class ClassController {
                 classId,
                 subSubjectId,
                 instructorId,
-                request.getEndDate()
+                request
         );
         return buildResponse("Instructor leave recorded", null, HttpStatus.OK);
     }
@@ -310,7 +310,7 @@ public class ClassController {
         classService.enrollStudentToClass(
                 classId,
                 studentId,
-                request.getStartDate()
+                request
         );
         return buildResponse("Student enrolled to class", null, HttpStatus.OK);
     }
@@ -373,7 +373,7 @@ public class ClassController {
             @PathVariable UUID studentId,
             @RequestBody LeaveOrCompleteStudentRequest request
     ) {
-        classService.leaveStudentFromClass(classId, studentId, request.getEndDate());
+        classService.leaveStudentFromClass(classId, studentId, request);
         return buildResponse("Student leave recorded", null, HttpStatus.OK);
     }
 

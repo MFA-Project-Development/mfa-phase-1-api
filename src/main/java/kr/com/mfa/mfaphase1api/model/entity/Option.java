@@ -6,7 +6,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Getter
@@ -34,11 +37,14 @@ public class Option {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+    @Column(nullable = false)
+    private String timeZone;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false, foreignKey = @ForeignKey(name = "fk_option_question"))
@@ -46,14 +52,32 @@ public class Option {
     private Question question;
 
     public OptionResponse toResponse() {
+
+        ZoneId zone;
+        try {
+            zone = this.timeZone != null
+                    ? ZoneId.of(this.timeZone)
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            zone = ZoneId.of("UTC");
+        }
+
         return OptionResponse.builder()
                 .optionId(this.optionId)
                 .text(this.text)
                 .isCorrect(this.isCorrect)
                 .optionOrder(this.optionOrder)
                 .questionId(this.question.getQuestionId())
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
+                .createdAt(
+                        this.createdAt != null
+                                ? LocalDateTime.ofInstant(this.createdAt, zone)
+                                : null
+                )
+                .updatedAt(
+                        this.updatedAt != null
+                                ? LocalDateTime.ofInstant(this.updatedAt, zone)
+                                : null
+                )
                 .build();
     }
 

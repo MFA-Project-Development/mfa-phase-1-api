@@ -1,9 +1,10 @@
 package kr.com.mfa.mfaphase1api.model.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Data
@@ -13,7 +14,11 @@ import java.time.LocalDate;
 public class EnrollStudentRequest {
 
     @NotNull
-    private LocalDate startDate;
+    private LocalDateTime startDate;
+
+    @NotNull
+    @NotBlank
+    private String timeZone;
 
 
 }

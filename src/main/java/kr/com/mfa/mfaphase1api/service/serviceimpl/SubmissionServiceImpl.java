@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -210,7 +210,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         submission.setStatus(SubmissionStatus.SUBMITTED);
-        submission.setSubmittedAt(LocalDateTime.now());
+        submission.setSubmittedAt(Instant.now());
         submissionRepository.save(submission);
     }
 

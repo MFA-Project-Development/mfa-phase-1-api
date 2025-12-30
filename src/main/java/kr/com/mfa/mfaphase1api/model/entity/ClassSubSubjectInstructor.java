@@ -3,7 +3,7 @@ package kr.com.mfa.mfaphase1api.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +24,11 @@ public class ClassSubSubjectInstructor {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID classSubSubjectInstructorId;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private Instant startDate;
+    private Instant endDate;
+
+    @Column(nullable = false)
+    private String timeZone;
 
     @Column(nullable = false)
     private UUID instructorId;

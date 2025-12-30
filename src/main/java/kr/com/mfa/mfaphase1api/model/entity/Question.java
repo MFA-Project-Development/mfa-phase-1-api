@@ -9,7 +9,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,11 +50,14 @@ public class Question {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+    @Column(nullable = false)
+    private String timeZone;
 
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "question_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_question_type"))
@@ -72,6 +78,16 @@ public class Question {
     private List<QuestionImage> questionImages = new ArrayList<>();
 
     public QuestionResponse toResponse() {
+
+        ZoneId zone;
+        try {
+            zone = this.timeZone != null
+                    ? ZoneId.of(this.timeZone)
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            zone = ZoneId.of("UTC");
+        }
+
         return QuestionResponse.builder()
                 .questionId(this.questionId)
                 .text(this.text)
@@ -79,8 +95,16 @@ public class Question {
                 .mode(this.mode)
                 .questionType(this.questionType)
                 .questionOrder(this.questionOrder)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
+                .createdAt(
+                        this.createdAt != null
+                                ? LocalDateTime.ofInstant(this.createdAt, zone)
+                                : null
+                )
+                .updatedAt(
+                        this.updatedAt != null
+                                ? LocalDateTime.ofInstant(this.updatedAt, zone)
+                                : null
+                )
 //                .questionTypeId(this.questionType.getQuestionTypeId())
                 .assessmentId(this.assessment.getAssessmentId())
                 .build();

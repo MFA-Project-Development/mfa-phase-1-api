@@ -30,7 +30,10 @@ public class Assessment {
     private String description;
     private Instant startDate;
     private Instant dueDate;
+
+    @Column(nullable = false)
     private String timeZone;
+
     private Integer timeLimit;
 
     @Enumerated(EnumType.STRING)

@@ -1,13 +1,11 @@
 package kr.com.mfa.mfaphase1api.service;
 
-import kr.com.mfa.mfaphase1api.model.dto.request.ClassRequest;
-import kr.com.mfa.mfaphase1api.model.dto.request.MoveStudentRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.ClassProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ClassSubSubjectProperty;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,17 +24,17 @@ public interface ClassService {
 
     void unassignSubSubjectFromClass(UUID classId, UUID subSubjectId);
 
-    void assignInstructorToClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LocalDate startDate);
+    void assignInstructorToClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, AssignInstructorRequest request);
 
     void unassignInstructorFromClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId);
 
-    void leaveInstructorFromClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LocalDate endDate);
+    void leaveInstructorFromClassSubSubject(UUID classId, UUID subSubjectId, UUID instructorId, LeaveInstructorRequest request);
 
-    void enrollStudentToClass(UUID classId, UUID studentId, LocalDate startDate);
+    void enrollStudentToClass(UUID classId, UUID studentId, EnrollStudentRequest request);
 
     void unenrollStudentFromClass(UUID classId, UUID studentId);
 
-    void leaveStudentFromClass(UUID classId, UUID studentId, LocalDate endDate);
+    void leaveStudentFromClass(UUID classId, UUID studentId, LeaveOrCompleteStudentRequest request);
 
     void moveStudentToAnotherClass(MoveStudentRequest request);
 
