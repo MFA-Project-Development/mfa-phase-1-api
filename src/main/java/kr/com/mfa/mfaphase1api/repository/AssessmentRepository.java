@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,15 +43,15 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
 
     Page<Assessment> findAllByStatusAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(AssessmentStatus status, UUID studentId, Pageable pageable);
 
-    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, LocalDateTime startDate, LocalDateTime dueDate);
+    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, Instant startDate, Instant dueDate);
 
     List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(UUID studentId, AssessmentStatus status);
 
     List<Assessment> findAllByCreatedBy_AndStatus(UUID instructorId, AssessmentStatus status);
 
-    List<Assessment> findAllByCreatedBy_AndStatus_AndStartDateBetween(UUID instructorId, AssessmentStatus status, LocalDateTime startDate, LocalDateTime dueDate);
+    List<Assessment> findAllByCreatedBy_AndStatus_AndStartDateBetween(UUID instructorId, AssessmentStatus status, Instant startDate, Instant dueDate);
 
     List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId);
 
-    List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId, LocalDateTime startDate, LocalDateTime endDate);
+    List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId, Instant startDate, Instant endDate);
 }

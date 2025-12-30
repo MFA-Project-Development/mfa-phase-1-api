@@ -1,11 +1,11 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.client.UserClient;
+import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
-import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
 import kr.com.mfa.mfaphase1api.model.enums.BaseRole;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
 import kr.com.mfa.mfaphase1api.repository.ClassRepository;
@@ -18,12 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.YearMonth;
+import java.time.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,7 +84,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             for (Class c : classes) {
                 int count = c.getStudentClassEnrollments().size();
-                int percent = (int) ((double) count * 100 / totalStudents); // floor
+                int percent = (int) ((double) count * 100 / totalStudents);
 
                 used += percent;
 
@@ -112,10 +108,10 @@ public class DashboardServiceImpl implements DashboardService {
         if (month == null) {
             assessments = (classId == null)
                     ? assessmentRepository.findAllByCreatedBy_AndStatus(
-                    currentUserId, AssessmentStatus.STARTED
+                    currentUserId, AssessmentStatus.FINISHED
             )
                     : assessmentRepository.findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(
-                    currentUserId, AssessmentStatus.STARTED, classId
+                    currentUserId, AssessmentStatus.FINISHED, classId
             );
         } else {
             int year = LocalDate.now().getYear();
@@ -124,12 +120,22 @@ public class DashboardServiceImpl implements DashboardService {
             LocalDateTime startDate = ym.atDay(1).atStartOfDay();
             LocalDateTime endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
 
+            ZoneId zone = ZoneId.of("UTC");
+
+            Instant newStartDate = startDate
+                    .atZone(zone)
+                    .toInstant();
+
+            Instant newEndDate = endDate
+                    .atZone(zone)
+                    .toInstant();
+
             assessments = (classId == null)
                     ? assessmentRepository.findAllByCreatedBy_AndStatus_AndStartDateBetween(
-                    currentUserId, AssessmentStatus.STARTED, startDate, endDate
+                    currentUserId, AssessmentStatus.FINISHED, newStartDate, newEndDate
             )
                     : assessmentRepository.findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(
-                    currentUserId, AssessmentStatus.STARTED, classId, startDate, endDate
+                    currentUserId, AssessmentStatus.FINISHED, classId, newStartDate, newEndDate
             );
         }
 
@@ -144,6 +150,61 @@ public class DashboardServiceImpl implements DashboardService {
             }
         }
 
+        List<AssessmentSummaryByClass> assessmentSummaryByClasses = new ArrayList<>();
+
+        for (Class clazz : classes) {
+
+            List<Assessment> assessmentsByClass;
+
+            if (month == null) {
+                assessmentsByClass = assessmentRepository.findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(
+                        currentUserId, AssessmentStatus.FINISHED, clazz.getClassId()
+                );
+            } else {
+                int year = LocalDate.now().getYear();
+                YearMonth ym = YearMonth.of(year, month);
+
+                LocalDateTime startDate = ym.atDay(1).atStartOfDay();
+                LocalDateTime endDate = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+                ZoneId zone = ZoneId.of("UTC");
+
+                Instant newStartDate = startDate
+                        .atZone(zone)
+                        .toInstant();
+
+                Instant newEndDate = endDate
+                        .atZone(zone)
+                        .toInstant();
+
+                assessmentsByClass = assessmentRepository.findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(
+                        currentUserId, AssessmentStatus.FINISHED, clazz.getClassId(), newStartDate, newEndDate);
+            }
+
+            int examsByClass = 0, quizzesByClass = 0, assignmentsByClass = 0, homeworksByClass = 0;
+
+            for (Assessment assessment : assessmentsByClass) {
+                switch (assessment.getAssessmentType()) {
+                    case EXAM -> examsByClass++;
+                    case QUIZ -> quizzesByClass++;
+                    case ASSIGNMENT -> assignmentsByClass++;
+                    case HOMEWORK -> homeworksByClass++;
+                }
+            }
+
+            AssessmentSummaryByClass assessmentSummaryByClass = AssessmentSummaryByClass.builder()
+                    .classId(clazz.getClassId())
+                    .className(clazz.getName())
+                    .exams(examsByClass)
+                    .assignments(assignmentsByClass)
+                    .quizzes(quizzesByClass)
+                    .homeworks(homeworksByClass)
+                    .build();
+
+            assessmentSummaryByClasses.add(assessmentSummaryByClass);
+        }
+
+
         return TeacherOverviewResponse.builder()
                 .totalStudentSummary(TotalStudentSummary.builder()
                         .total(totalStudents)
@@ -155,6 +216,7 @@ public class DashboardServiceImpl implements DashboardService {
                         .quizzes(quizzes)
                         .homeworks(homeworks)
                         .build())
+                .assessmentSummaryByClasses(assessmentSummaryByClasses)
                 .build();
     }
 

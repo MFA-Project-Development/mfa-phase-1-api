@@ -442,9 +442,19 @@ public class AssessmentServiceImpl implements AssessmentService {
             LocalDateTime startDate = ym.atDay(1).atStartOfDay();
             LocalDateTime dueDate = ym.plusMonths(1).atDay(1).atStartOfDay();
 
+            ZoneId zone = ZoneId.of("UTC");
+
+            Instant newStartDate = startDate
+                    .atZone(zone)
+                    .toInstant();
+
+            Instant newDueDate = dueDate
+                    .atZone(zone)
+                    .toInstant();
+
             assessments = assessmentRepository
                     .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(
-                            currentUserId, AssessmentStatus.STARTED, startDate, dueDate);
+                            currentUserId, AssessmentStatus.STARTED, newStartDate, newDueDate);
         }
 
         int exams = 0;
