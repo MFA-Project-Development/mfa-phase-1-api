@@ -27,7 +27,6 @@ public class ClassSubSubjectInstructor {
     private Instant startDate;
     private Instant endDate;
 
-    @Column(nullable = false)
     private String timeZone;
 
     @Column(nullable = false)

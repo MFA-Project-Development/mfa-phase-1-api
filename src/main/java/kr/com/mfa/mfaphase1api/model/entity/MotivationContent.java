@@ -53,7 +53,6 @@ public class MotivationContent {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    @Column(nullable = false)
     private String timeZone;
 
 

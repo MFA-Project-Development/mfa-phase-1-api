@@ -49,7 +49,6 @@ public class Submission {
     private Instant submittedAt;
     private Instant gradedAt;
 
-    @Column(nullable = false)
     private String timeZone;
 
     @Column(nullable = false)

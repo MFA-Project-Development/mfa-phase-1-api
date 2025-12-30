@@ -31,7 +31,6 @@ public class Assessment {
     private Instant startDate;
     private Instant dueDate;
 
-    @Column(nullable = false)
     private String timeZone;
 
     private Integer timeLimit;

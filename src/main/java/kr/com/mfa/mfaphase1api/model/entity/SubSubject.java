@@ -44,7 +44,6 @@ public class SubSubject {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    @Column(nullable = false)
     private String timeZone;
 
     @ToString.Exclude

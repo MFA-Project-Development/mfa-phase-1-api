@@ -25,7 +25,6 @@ public class StudentClassEnrollment {
     private Instant startDate;
     private Instant endDate;
 
-    @Column(nullable = false)
     private String timeZone;
 
     private String moveReason;

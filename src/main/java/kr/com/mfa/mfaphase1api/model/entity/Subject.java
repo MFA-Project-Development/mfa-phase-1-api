@@ -39,7 +39,6 @@ public class Subject {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    @Column(nullable = false)
     private String timeZone;
 
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
