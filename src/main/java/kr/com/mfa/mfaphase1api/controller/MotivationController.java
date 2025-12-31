@@ -56,7 +56,7 @@ public class MotivationController {
                 HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @GetMapping("/content")
     @Operation(
             summary = "Get all motivations",
@@ -94,7 +94,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @GetMapping("/content/{motivationContentId}")
     @Operation(
             summary = "Get motivation by ID",
