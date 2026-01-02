@@ -22,4 +22,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     Integer countByAssessment(Assessment assessment);
 
     Optional<Submission> findBySubmissionId_AndAssessment_AssessmentId(UUID submissionId, UUID assessmentId);
+
 }

@@ -1,12 +1,11 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
-import kr.com.mfa.mfaphase1api.model.dto.response.AnswerResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.FeedbackResponse;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -20,18 +19,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "answers")
-public class Answer {
+@Table(name = "feedbacks")
+public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID answerId;
+    private UUID feedbackId;
 
-    private String answerText;
-    private Boolean isCorrect;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal pointsAwarded;
+    @Column(nullable = false)
+    private String comment;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -44,21 +40,19 @@ public class Answer {
     private String timeZone;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_question"))
+    @JoinColumn(name = "answer_id", nullable = false, foreignKey = @ForeignKey(name = "fk_feedback_answer"))
     @ToString.Exclude
-    private Question question;
+    private Answer answer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "paper_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_paper"))
+    @Column(nullable = false)
+    private UUID authorId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "annotation_id", nullable = false, foreignKey = @ForeignKey(name = "fk_feedback_annotation"))
     @ToString.Exclude
-    private Paper paper;
+    private Annotation annotation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submission_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_submission"))
-    @ToString.Exclude
-    private Submission submission;
-
-    public AnswerResponse toResponse() {
+    public FeedbackResponse toResponse() {
 
         ZoneId zone;
         try {
@@ -69,11 +63,9 @@ public class Answer {
             zone = ZoneId.of("UTC");
         }
 
-        return AnswerResponse.builder()
-                .answerId(this.answerId)
-                .answerText(this.answerText)
-                .isCorrect(this.isCorrect)
-                .pointsAwarded(this.pointsAwarded)
+        return FeedbackResponse.builder()
+                .feedbackId(this.feedbackId)
+                .comment(this.comment)
                 .createdAt(
                         this.createdAt != null
                                 ? LocalDateTime.ofInstant(this.createdAt, zone)
@@ -84,9 +76,10 @@ public class Answer {
                                 ? LocalDateTime.ofInstant(this.updatedAt, zone)
                                 : null
                 )
-                .questionId(this.question.getQuestionId())
-                .paperId(this.paper.getPaperId())
-                .submissionId(this.submission.getSubmissionId())
+                .authorId(this.authorId)
+                .answerId(this.answer.getAnswerId())
+                .annotationId(this.annotation.getAnnotationId())
                 .build();
     }
+
 }
