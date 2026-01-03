@@ -1,5 +1,6 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
+import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnswerRequest;
@@ -118,6 +119,10 @@ public class AnswerServiceImpl implements AnswerService {
                 () -> new NotFoundException("Answer with ID " + answerId + " not found")
         );
 
+        if (request.getPointsAwarded().compareTo(question.getPoints()) > 0) {
+            throw new BadRequestException("Points cannot be greater than the maximum points");
+        }
+
         answer.setPointsAwarded(request.getPointsAwarded());
         answer.setPaper(paper);
         answer.setSubmission(submission);
@@ -166,6 +171,43 @@ public class AnswerServiceImpl implements AnswerService {
             case "ROLE_STUDENT" -> answerRepository
                     .findAllByQuestion_QuestionId_AndSubmission_StudentId(
                             questionId, currentUserId, pageable);
+            default -> throw new ForbiddenException("Unsupported role: " + currentRole);
+        };
+
+        List<AnswerResponse> items = pageAnswers.stream()
+                .map(Answer::toResponse)
+                .toList();
+
+        return pageResponse(
+                items,
+                pageAnswers.getTotalElements(),
+                page,
+                size,
+                pageAnswers.getTotalPages()
+        );
+    }
+
+    @Override
+    public PagedResponse<List<AnswerResponse>> getAllAnswersBySubmissionId(UUID submissionId, Integer page, Integer size, AnswerProperty property, Sort.Direction direction) {
+
+        UUID currentUserId = extractCurrentUserId();
+        String currentRole = extractCurrentRole();
+
+        submissionRepository.findById(submissionId).orElseThrow(
+                () -> new NotFoundException("Submission not " + submissionId + " found")
+        );
+
+        int zeroBased = Math.max(page, 1) - 1;
+        Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
+
+        Page<Answer> pageAnswers = switch (currentRole) {
+            case "ROLE_ADMIN" -> answerRepository
+                    .findAllBySubmission_SubmissionId(submissionId, pageable);
+            case "ROLE_INSTRUCTOR" -> answerRepository
+                    .findAllBySubmission_SubmissionId_AndQuestion_Assessment_CreatedBy(submissionId, currentUserId, pageable);
+            case "ROLE_STUDENT" -> answerRepository
+                    .findAllBySubmission_SubmissionId_AndSubmission_StudentId(
+                            submissionId, currentUserId, pageable);
             default -> throw new ForbiddenException("Unsupported role: " + currentRole);
         };
 

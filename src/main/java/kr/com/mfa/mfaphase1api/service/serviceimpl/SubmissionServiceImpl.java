@@ -5,14 +5,10 @@ import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
-import kr.com.mfa.mfaphase1api.model.entity.Assessment;
-import kr.com.mfa.mfaphase1api.model.entity.Paper;
-import kr.com.mfa.mfaphase1api.model.entity.Submission;
+import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
-import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
-import kr.com.mfa.mfaphase1api.repository.PaperRepository;
-import kr.com.mfa.mfaphase1api.repository.SubmissionRepository;
+import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.FileService;
 import kr.com.mfa.mfaphase1api.service.SubmissionService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
@@ -27,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -44,6 +41,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final PaperRepository paperRepository;
     private final FileService fileService;
     private final UserClient userClient;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
 
     @Override
     @Transactional
@@ -212,6 +211,20 @@ public class SubmissionServiceImpl implements SubmissionService {
         submission.setStatus(SubmissionStatus.SUBMITTED);
         submission.setSubmittedAt(Instant.now());
         submissionRepository.save(submission);
+
+        List<Question> questions = questionRepository.findAllByAssessment_AssessmentId(assessmentId);
+        List<Answer> answers = new ArrayList<>();
+
+        for (Question question : questions) {
+            Answer answer = Answer.builder()
+                    .pointsAwarded(BigDecimal.valueOf(0.00))
+                    .question(question)
+                    .submission(submission)
+                    .build();
+            answers.add(answer);
+        }
+
+        answerRepository.saveAll(answers);
     }
 
     private UUID extractCurrentUserId() {

@@ -26,4 +26,10 @@ public interface AnswerRepository extends JpaRepository<Answer, UUID> {
 
     Page<Answer> findAllByQuestion_QuestionId_AndSubmission_StudentId(UUID questionId, UUID studentId, Pageable pageable);
 
+    Page<Answer> findAllBySubmission_SubmissionId(UUID submissionId, Pageable pageable);
+
+    Page<Answer> findAllBySubmission_SubmissionId_AndQuestion_Assessment_CreatedBy(UUID submissionId, UUID createdBy, Pageable pageable);
+
+    Page<Answer> findAllBySubmission_SubmissionId_AndSubmission_StudentId(UUID submissionId, UUID studentId, Pageable pageable);
+
 }

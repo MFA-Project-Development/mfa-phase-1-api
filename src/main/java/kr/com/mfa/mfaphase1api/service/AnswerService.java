@@ -22,4 +22,6 @@ public interface AnswerService {
     void deleteAnswer(UUID questionId, UUID answerId);
 
     PagedResponse<List<AnswerResponse>> getAllAnswers(UUID questionId, Integer page, Integer size, AnswerProperty property, Sort.Direction direction);
+
+    PagedResponse<List<AnswerResponse>> getAllAnswersBySubmissionId(UUID submissionId,Integer page,Integer size, AnswerProperty property, Sort.Direction direction);
 }

@@ -49,7 +49,7 @@ public class Answer {
     private Question question;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "paper_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_paper"))
+    @JoinColumn(name = "paper_id", foreignKey = @ForeignKey(name = "fk_answer_paper"))
     @ToString.Exclude
     private Paper paper;
 
@@ -85,7 +85,7 @@ public class Answer {
                                 : null
                 )
                 .questionId(this.question.getQuestionId())
-                .paperId(this.paper.getPaperId())
+                .paperId(this.paper != null ? this.paper.getPaperId() : null)
                 .submissionId(this.submission.getSubmissionId())
                 .build();
     }

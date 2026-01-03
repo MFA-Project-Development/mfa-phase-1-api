@@ -24,5 +24,4 @@ public class AnswerResponse {
     private UUID paperId;
     private UUID submissionId;
 
-
 }

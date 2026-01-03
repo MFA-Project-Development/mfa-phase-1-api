@@ -28,7 +28,7 @@ import java.util.UUID;
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
 
 @RestController
-@RequestMapping("/api/v1/questions/{questionId}/answers")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "mfa")
 public class AnswerController {
@@ -36,7 +36,7 @@ public class AnswerController {
     private final AnswerService answerService;
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PostMapping
+    @PostMapping("/questions/{questionId}/answers")
     @Operation(
             summary = "Grade answer",
             description = "Grades a student's answer for an assessment.",
@@ -60,7 +60,7 @@ public class AnswerController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
-    @GetMapping
+    @GetMapping("/questions/{questionId}/answers")
     @Operation(
             summary = "Get all answers",
             description = "Retrieves all answers with optional filters for type, creator, and default status.",
@@ -92,7 +92,7 @@ public class AnswerController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
-    @GetMapping("/{answerId}")
+    @GetMapping("/questions/{questionId}/answers/{answerId}")
     @Operation(
             summary = "Get answer by ID",
             description = "Retrieves a single answer by its unique identifier.",
@@ -116,7 +116,7 @@ public class AnswerController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @PutMapping("/{answerId}")
+    @PutMapping("/questions/{questionId}/answers/{answerId}")
     @Operation(
             summary = "Update answer",
             description = "Updates an existing answer by its unique identifier.",
@@ -140,7 +140,7 @@ public class AnswerController {
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
-    @DeleteMapping("/{answerId}")
+    @DeleteMapping("/questions/{questionId}/answers/{answerId}")
     @Operation(
             summary = "Delete answer",
             description = "Deletes an existing answer",
@@ -159,6 +159,38 @@ public class AnswerController {
         answerService.deleteAnswer(questionId, answerId);
         return buildResponse("Answer deleted successfully",
                 null,
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
+    @GetMapping("/submissions/{submissionId}/answers")
+    @Operation(
+            summary = "Get all answers by submission",
+            description = "Retrieves all answers with optional filters for type, creator, and default status.",
+            tags = {"Answer"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success",
+                            content = @Content(schema = @Schema(implementation = AnswerResponse.class))),
+            }
+    )
+    public ResponseEntity<APIResponse<PagedResponse<List<AnswerResponse>>>> getAllAnswersBySubmissionId(
+            @Parameter(description = "Submission ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID submissionId,
+
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "1") @Positive Integer page,
+
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "10") @Positive Integer size,
+
+            @Parameter(description = "Sort property", example = "CREATED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CREATED_AT") AnswerProperty property,
+
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
+        return buildResponse("Answers retrieved successfully",
+                answerService.getAllAnswersBySubmissionId(submissionId, page, size, property, direction),
                 HttpStatus.OK);
     }
 
