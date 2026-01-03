@@ -11,6 +11,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -57,6 +58,10 @@ public class Answer {
     @JoinColumn(name = "submission_id", nullable = false, foreignKey = @ForeignKey(name = "fk_answer_submission"))
     @ToString.Exclude
     private Submission submission;
+
+    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Annotation> annotations;
 
     public AnswerResponse toResponse() {
 
