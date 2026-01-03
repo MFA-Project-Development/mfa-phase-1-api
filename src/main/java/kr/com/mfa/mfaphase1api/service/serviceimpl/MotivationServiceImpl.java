@@ -49,20 +49,10 @@ public class MotivationServiceImpl implements MotivationService {
     @Override
     public PagedResponse<List<MotivationContentResponse>> getAllMotivations(Integer page, Integer size, MotivationContentProperty property, Sort.Direction direction, MotivationContentType type, UUID createdBy, Boolean isDefault) {
 
-        UUID currentUserId = extractCurrentUserId();
-
-        String currentUserRole = extractCurrentRole();
-
         int zeroBased = Math.max(page, 1) - 1;
         Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
 
-        Page<MotivationContent> pageMotivationContents = switch (currentUserRole) {
-            case "ROLE_ADMIN" ->
-                    motivationContentRepository.findAllByTypeOrCreatedByOrIsDefault(type, createdBy, isDefault, pageable);
-            case "ROLE_INSTRUCTOR" ->
-                    motivationContentRepository.findAllByTypeOrCreatedByOrIsDefault(type, currentUserId, isDefault, pageable);
-            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole);
-        };
+        Page<MotivationContent> pageMotivationContents = motivationContentRepository.findAllByTypeOrIsDefault(type, isDefault, pageable);
 
         List<MotivationContentResponse> items = pageMotivationContents.stream()
                 .map(MotivationContent::toResponse)
@@ -79,20 +69,9 @@ public class MotivationServiceImpl implements MotivationService {
 
     @Override
     public MotivationContentResponse getMotivationById(UUID motivationContentId) {
-        UUID currentUserId = extractCurrentUserId();
-
-        String currentUserRole = extractCurrentRole();
-
-        MotivationContent motivationContent = switch (currentUserRole) {
-            case "ROLE_ADMIN" -> motivationContentRepository.findById(motivationContentId).orElseThrow(
-                    () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
-            );
-            case "ROLE_INSTRUCTOR" ->
-                    motivationContentRepository.findByCreatedByAndMotivationContentId(currentUserId, motivationContentId).orElseThrow(
-                            () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
-                    );
-            default -> throw new ForbiddenException("Unsupported role: " + currentUserRole);
-        };
+        MotivationContent motivationContent = motivationContentRepository.findById(motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+        );
 
         return motivationContent.toResponse();
     }

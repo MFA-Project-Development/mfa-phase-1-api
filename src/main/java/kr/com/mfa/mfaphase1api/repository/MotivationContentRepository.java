@@ -13,7 +13,7 @@ import java.util.UUID;
 @Repository
 public interface MotivationContentRepository extends JpaRepository<MotivationContent, UUID> {
 
-    Page<MotivationContent> findAllByTypeOrCreatedByOrIsDefault(MotivationContentType type, UUID createdBy, Boolean isDefault,
+    Page<MotivationContent> findAllByTypeOrIsDefault(MotivationContentType type, Boolean isDefault,
                                                                 Pageable pageable);
 
     Optional<MotivationContent> findByCreatedByAndMotivationContentId(UUID createdBy, UUID motivationContentId);
