@@ -89,7 +89,7 @@ public class Answer {
                                 ? LocalDateTime.ofInstant(this.updatedAt, zone)
                                 : null
                 )
-                .questionId(this.question.getQuestionId())
+                .questionResponse(this.question.toResponse())
                 .paperId(this.paper != null ? this.paper.getPaperId() : null)
                 .submissionId(this.submission.getSubmissionId())
                 .build();

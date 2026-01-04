@@ -20,7 +20,7 @@ public class AnswerResponse {
     private BigDecimal pointsAwarded;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private UUID questionId;
+    private QuestionResponse questionResponse;
     private UUID paperId;
     private UUID submissionId;
 
