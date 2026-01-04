@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,6 +21,7 @@ public class QuestionResponse {
     private Integer questionOrder;
     private GradingMode mode;
     private QuestionType questionType;
+    private List<QuestionImageResponse> questionImagesResponse;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 //    private UUID questionTypeId;

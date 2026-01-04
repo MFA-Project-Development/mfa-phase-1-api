@@ -59,18 +59,21 @@ public class QuestionServiceImpl implements QuestionService {
 
         int questionOrder = questionRepository.countByAssessment(assessment) + 1;
 
-        Question saved = questionRepository.saveAndFlush(request.toEntity(questionOrder, assessment));
+        Question question = request.toEntity(questionOrder, assessment);
 
         if (request.getQuestionImages() != null) {
             int imageOrder = 1;
             for (String imageUrl : request.getQuestionImages()) {
-                QuestionImage questionImage = new QuestionImage();
-                questionImage.setImageUrl(imageUrl);
-                questionImage.setImageOrder(imageOrder++);
-                questionImage.setQuestion(saved);
-                questionImageRepository.save(questionImage);
+                QuestionImage questionImage = QuestionImage.builder()
+                        .imageOrder(imageOrder++)
+                        .imageUrl(imageUrl)
+                        .question(question)
+                        .build();
+                question.getQuestionImages().add(questionImage);
             }
         }
+
+        Question saved = questionRepository.saveAndFlush(question);
 
         return saved.toResponse();
     }
@@ -208,20 +211,23 @@ public class QuestionServiceImpl implements QuestionService {
 
         return requests.stream()
                 .map(request -> {
-                    Question savedQuestion = questionRepository.saveAndFlush(request.toEntity(questionOrder.getAndIncrement(), assessment));
+                    Question question = request.toEntity(questionOrder.getAndIncrement(), assessment);
 
                     if (request.getQuestionImages() != null) {
                         int imageOrder = 1;
                         for (String imageUrl : request.getQuestionImages()) {
-                            QuestionImage questionImage = new QuestionImage();
-                            questionImage.setImageUrl(imageUrl);
-                            questionImage.setImageOrder(imageOrder++);
-                            questionImage.setQuestion(savedQuestion);
-                            questionImageRepository.save(questionImage);
+                            QuestionImage questionImage = QuestionImage.builder()
+                                    .imageOrder(imageOrder++)
+                                    .imageUrl(imageUrl)
+                                    .question(question)
+                                    .build();
+                            question.getQuestionImages().add(questionImage);
                         }
                     }
 
-                    return savedQuestion.toResponse();
+                    Question saved = questionRepository.saveAndFlush(question);
+
+                    return saved.toResponse();
                 })
                 .toList();
     }

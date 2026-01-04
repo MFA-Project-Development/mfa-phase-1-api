@@ -72,6 +72,7 @@ public class Question {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Option> options = new ArrayList<>();
 
+    @Builder.Default
     @ToString.Exclude
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<QuestionImage> questionImages = new ArrayList<>();
@@ -94,6 +95,9 @@ public class Question {
                 .mode(this.mode)
                 .questionType(this.questionType)
                 .questionOrder(this.questionOrder)
+                .questionImagesResponse(this.questionImages != null
+                        ? this.questionImages.stream().map(QuestionImage::toResponse).toList()
+                        : null)
                 .createdAt(
                         this.createdAt != null
                                 ? LocalDateTime.ofInstant(this.createdAt, zone)

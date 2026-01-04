@@ -1,6 +1,7 @@
 package kr.com.mfa.mfaphase1api.model.entity;
 
 import jakarta.persistence.*;
+import kr.com.mfa.mfaphase1api.model.dto.response.QuestionImageResponse;
 import lombok.*;
 
 import java.util.UUID;
@@ -29,4 +30,12 @@ public class QuestionImage {
     @JoinColumn(name = "question_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_image_question"))
     @ToString.Exclude
     private Question question;
+
+    public QuestionImageResponse toResponse(){
+        return QuestionImageResponse.builder()
+                .questionImageId(this.questionImageId)
+                .imageOrder(this.imageOrder)
+                .imageUrl(this.imageUrl)
+                .build();
+    }
 }
