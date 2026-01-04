@@ -52,7 +52,13 @@ public class MotivationServiceImpl implements MotivationService {
         int zeroBased = Math.max(page, 1) - 1;
         Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
 
-        Page<MotivationContent> pageMotivationContents = motivationContentRepository.findAllByTypeOrIsDefault(type, isDefault, pageable);
+        Page<MotivationContent> pageMotivationContents;
+
+        if (type == null && isDefault == null) {
+            pageMotivationContents = motivationContentRepository.findAll(pageable);
+        } else {
+            pageMotivationContents = motivationContentRepository.findAllByTypeOrIsDefault(type, isDefault, pageable);
+        }
 
         List<MotivationContentResponse> items = pageMotivationContents.stream()
                 .map(MotivationContent::toResponse)
