@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,7 +21,7 @@ import java.util.UUID;
 @Builder
 public class UpdateQuestionRequest {
 
-    @NotBlank
+    @NotNull
     private UUID questionId;
 
     @NotNull
@@ -40,6 +41,8 @@ public class UpdateQuestionRequest {
     @NotNull
     private QuestionType questionType;
 //    private UUID questionTypeId;
+
+    private List<String> questionImages;
 
     public Question toEntity(Integer questionOrder, Assessment assessment){
         return Question.builder()

@@ -172,7 +172,23 @@ public class QuestionServiceImpl implements QuestionService {
         question.setMode(request.getMode());
         question.setQuestionType(request.getQuestionType());
 
-        return question.toResponse();
+        question.getQuestionImages().removeAll(question.getQuestionImages());
+
+        if (request.getQuestionImages() != null) {
+            int imageOrder = 1;
+            for (String imageUrl : request.getQuestionImages()) {
+                QuestionImage questionImage = QuestionImage.builder()
+                        .imageOrder(imageOrder++)
+                        .imageUrl(imageUrl)
+                        .question(question)
+                        .build();
+                question.getQuestionImages().add(questionImage);
+            }
+        }
+
+        Question saved = questionRepository.saveAndFlush(question);
+
+        return saved.toResponse();
     }
 
     @Override
@@ -249,7 +265,23 @@ public class QuestionServiceImpl implements QuestionService {
                     question.setMode(request.getMode());
                     question.setQuestionType(request.getQuestionType());
 
-                    return question.toResponse();
+                    question.getQuestionImages().removeAll(question.getQuestionImages());
+
+                    if (request.getQuestionImages() != null) {
+                        int imageOrder = 1;
+                        for (String imageUrl : request.getQuestionImages()) {
+                            QuestionImage questionImage = QuestionImage.builder()
+                                    .imageOrder(imageOrder++)
+                                    .imageUrl(imageUrl)
+                                    .question(question)
+                                    .build();
+                            question.getQuestionImages().add(questionImage);
+                        }
+                    }
+
+                    Question saved = questionRepository.saveAndFlush(question);
+
+                    return saved.toResponse();
                 })
                 .toList();
     }
