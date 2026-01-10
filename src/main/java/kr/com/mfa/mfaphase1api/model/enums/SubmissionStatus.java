@@ -9,6 +9,7 @@ public enum SubmissionStatus {
     SUBMITTED("submitted"),
     LATE("late"),
     GRADED("graded"),
+    PUBLISHED("published"),
     RETURNED("returned"),
     RESUBMITTED("resubmitted"),
     CANCELLED("cancelled");

@@ -23,4 +23,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     Optional<Submission> findBySubmissionId_AndAssessment_AssessmentId(UUID submissionId, UUID assessmentId);
 
+    Optional<Submission> findBySubmissionId_AndAssessment_AndStudentId(UUID submissionId, Assessment assessment, UUID studentId);
+
 }

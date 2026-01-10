@@ -55,12 +55,23 @@ public class MotivationContent {
 
     private String timeZone;
 
-
     @OneToMany(mappedBy = "motivationContent", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<MotivationSession> motivationSessions = new ArrayList<>();
 
-    public MotivationContentResponse toResponse() {
+    @OneToMany(mappedBy = "motivationContent", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<MotivationBookmark> motivationBookmarks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "motivationContent", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<MotivationComment> motivationComments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "motivationContent", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<MotivationLike> motivationLikes = new ArrayList<>();
+
+    public MotivationContentResponse toResponse(Boolean isBookmarked) {
 
         ZoneId zone;
         try {
@@ -77,6 +88,7 @@ public class MotivationContent {
                 .isDefault(this.isDefault)
                 .contentJson(this.contentJson)
                 .createdBy(this.createdBy)
+                .isBookmarked(isBookmarked)
                 .createdAt(
                         this.createdAt != null
                                 ? LocalDateTime.ofInstant(this.createdAt, zone)

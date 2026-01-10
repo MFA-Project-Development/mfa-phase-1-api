@@ -147,6 +147,7 @@ public class SubmissionController {
         return buildResponse("Submission saved successfully", null, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @GetMapping
     @Operation(
             summary = "Get all submissions by assessment",

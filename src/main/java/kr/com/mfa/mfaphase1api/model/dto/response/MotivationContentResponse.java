@@ -1,5 +1,6 @@
 package kr.com.mfa.mfaphase1api.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import lombok.*;
 
@@ -17,6 +18,10 @@ public class MotivationContentResponse {
     private Boolean isDefault;
     private Object contentJson;
     private UUID createdBy;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isBookmarked;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
