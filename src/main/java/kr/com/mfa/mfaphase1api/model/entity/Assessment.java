@@ -30,6 +30,7 @@ public class Assessment {
     private String description;
     private Instant startDate;
     private Instant dueDate;
+    private Instant publishedDate;
 
     private String timeZone;
 

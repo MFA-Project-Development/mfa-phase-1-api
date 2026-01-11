@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.exception.BadRequestException;
+import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
@@ -42,7 +43,7 @@ public class ResultServiceImpl implements ResultService {
 
     @Transactional
     @Override
-    public void publishSubmissionResult(UUID assessmentId, UUID submissionId) {
+    public void gradeSubmissionResult(UUID assessmentId, UUID submissionId) {
 
         UUID currentUserId = extractCurrentUserId();
 
@@ -57,8 +58,20 @@ public class ResultServiceImpl implements ResultService {
                         "Submission with ID " + submissionId + " not found"
                 ));
 
-        if (submission.getStatus() != SubmissionStatus.SUBMITTED) {
-            throw new BadRequestException("Submission result cannot be published because it is not submitted yet.");
+        SubmissionStatus status = submission.getStatus();
+
+        if (status == SubmissionStatus.PUBLISHED) {
+            throw new ConflictException("Submission result has already been published.");
+        }
+
+        if (status == SubmissionStatus.GRADED) {
+            throw new ConflictException("Submission result has already been graded.");
+        }
+
+        if (status != SubmissionStatus.SUBMITTED) {
+            throw new BadRequestException(
+                    "Submission result cannot be graded because it is not in submitted status."
+            );
         }
 
         List<Question> questions = submission.getAssessment().getQuestions();
@@ -89,7 +102,7 @@ public class ResultServiceImpl implements ResultService {
         submission.setScoreEarned(scoreEarned);
         submission.setGradedBy(currentUserId);
         submission.setGradedAt(Instant.now());
-        submission.setStatus(SubmissionStatus.PUBLISHED);
+        submission.setStatus(SubmissionStatus.GRADED);
 
         submissionRepository.save(submission);
     }
@@ -171,6 +184,9 @@ public class ResultServiceImpl implements ResultService {
 
         List<SubmissionResponse> items = pageSubmissions.stream()
                 .map(submission -> {
+                    if (submission.getStatus() != SubmissionStatus.PUBLISHED) {
+                        throw new NotFoundException("Some submission result is not published yet.");
+                    }
                     UserResponse userResponse = Optional.ofNullable(userClient.getUserInfoById(submission.getStudentId()).getBody())
                             .map(APIResponse::getPayload)
                             .orElseThrow(() -> new NotFoundException("Student user info not found: " + submission.getStudentId()));
@@ -191,6 +207,30 @@ public class ResultServiceImpl implements ResultService {
                 size,
                 pageSubmissions.getTotalPages()
         );
+    }
+
+    @Transactional
+    @Override
+    public void publishSubmissionResult(UUID assessmentId) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        Assessment assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Assessment with ID " + assessmentId + " not found"
+                ));
+
+        for (Submission submission : assessment.getSubmissions()) {
+
+            if (submission.getStatus() != SubmissionStatus.GRADED) {
+                throw new BadRequestException("Submission result cannot be published because some submission is not graded yet.");
+            }
+
+            submission.setStatus(SubmissionStatus.PUBLISHED);
+            submission.setPublishedAt(Instant.now());
+            submissionRepository.save(submission);
+        }
+
     }
 
 

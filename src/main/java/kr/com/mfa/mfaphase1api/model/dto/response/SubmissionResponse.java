@@ -23,6 +23,7 @@ public class SubmissionResponse {
     private LocalDateTime startedAt;
     private LocalDateTime submittedAt;
     private LocalDateTime gradedAt;
+    private LocalDateTime publishedAt;
     private BigDecimal maxScore;
     private BigDecimal scoreEarned;
 }

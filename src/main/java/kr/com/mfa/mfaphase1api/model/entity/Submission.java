@@ -48,6 +48,7 @@ public class Submission {
 
     private Instant submittedAt;
     private Instant gradedAt;
+    private Instant publishedAt;
 
     private String timeZone;
 
@@ -93,6 +94,9 @@ public class Submission {
                         : null)
                 .gradedAt(this.gradedAt != null
                         ? LocalDateTime.ofInstant(this.gradedAt, zone)
+                        : null)
+                .publishedAt(this.publishedAt != null
+                        ? LocalDateTime.ofInstant(this.publishedAt, zone)
                         : null)
                 .studentResponse(studentResponse)
                 .gradedBy(this.gradedBy)

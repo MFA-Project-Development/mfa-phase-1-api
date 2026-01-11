@@ -33,21 +33,21 @@ public class ResultController {
     private final ResultService resultService;
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @PostMapping("/{submissionId}/result/publish")
+    @PostMapping("/{submissionId}/result/grade")
     @Operation(
-            summary = "Publish submission results",
-            description = "Publishes the results of the submission. After publication, results are visible to students.",
+            summary = "Graded submission results",
+            description = "Graded the results of the submission.",
             tags = {"Result"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Results published successfully")
+                    @ApiResponse(responseCode = "200", description = "Results graded successfully")
             }
     )
-    public ResponseEntity<APIResponse<Void>> publishSubmissionResult(
+    public ResponseEntity<APIResponse<Void>> gradeSubmissionResult(
             @PathVariable @NotNull UUID assessmentId,
             @PathVariable @NotNull UUID submissionId
     ) {
-        resultService.publishSubmissionResult(assessmentId, submissionId);
-        return buildResponse("Results published successfully", null, HttpStatus.OK);
+        resultService.gradeSubmissionResult(assessmentId, submissionId);
+        return buildResponse("Results grades successfully", null, HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
@@ -91,5 +91,22 @@ public class ResultController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
         return buildResponse("Submissions retrieved successfully", resultService.getAllSubmissionResults(assessmentId, page, size, property, direction), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("/result/publish")
+    @Operation(
+            summary = "Publish submission results",
+            description = "Publishes the results of the submission. After publication, results are visible to students.",
+            tags = {"Result"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Results published successfully")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> publishSubmissionResult(
+            @PathVariable @NotNull UUID assessmentId
+    ) {
+        resultService.publishSubmissionResult(assessmentId);
+        return buildResponse("Results published successfully", null, HttpStatus.OK);
     }
 }
