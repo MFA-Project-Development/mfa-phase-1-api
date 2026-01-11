@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnnotationRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnswerRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateAnswerRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.AnnotationProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AnswerProperty;
@@ -191,6 +192,28 @@ public class AnswerController {
     ) {
         return buildResponse("Answers retrieved successfully",
                 answerService.getAllAnswersBySubmissionId(submissionId, page, size, property, direction),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PutMapping("/submissions/{submissionId}/answers/bulk")
+    @Operation(
+            summary = "Bulk update answer",
+            description = "Bulk update an existing answer by its unique identifier.",
+            tags = {"Answer"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success",
+                            content = @Content(schema = @Schema(implementation = AnswerResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Answer not found")
+            }
+    )
+    public ResponseEntity<APIResponse<List<AnswerResponse>>> bulkUpdateAnswer(
+            @Parameter(description = "Submission ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID submissionId,
+            @RequestBody List<@Valid UpdateAnswerRequest> request
+    ) {
+        return buildResponse("Answer bulk updated successfully",
+                answerService.bulkUpdateAnswer(submissionId, request),
                 HttpStatus.OK);
     }
 

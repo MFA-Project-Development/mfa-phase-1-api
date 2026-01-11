@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.service;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnswerRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateAnswerRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AnswerResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.enums.AnswerProperty;
@@ -24,4 +25,6 @@ public interface AnswerService {
     PagedResponse<List<AnswerResponse>> getAllAnswers(UUID questionId, Integer page, Integer size, AnswerProperty property, Sort.Direction direction);
 
     PagedResponse<List<AnswerResponse>> getAllAnswersBySubmissionId(UUID submissionId,Integer page,Integer size, AnswerProperty property, Sort.Direction direction);
+
+    List<AnswerResponse> bulkUpdateAnswer(UUID submissionId, List<UpdateAnswerRequest> request);
 }

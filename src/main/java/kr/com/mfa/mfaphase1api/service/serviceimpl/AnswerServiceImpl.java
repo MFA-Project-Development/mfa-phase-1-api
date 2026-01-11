@@ -4,6 +4,7 @@ import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnswerRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UpdateAnswerRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.AnswerResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.entity.*;
@@ -19,9 +20,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -223,6 +224,83 @@ public class AnswerServiceImpl implements AnswerService {
                 pageAnswers.getTotalPages()
         );
     }
+
+    @Transactional
+    @Override
+    public List<AnswerResponse> bulkUpdateAnswer(UUID submissionId, List<UpdateAnswerRequest> requests) {
+
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission with ID " + submissionId + " not found"));
+
+        if (requests == null || requests.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, UpdateAnswerRequest> reqMap = new HashMap<>();
+        for (UpdateAnswerRequest r : requests) {
+            if (reqMap.put(r.getAnswerId(), r) != null) {
+                throw new BadRequestException("Duplicate update request for answerId: " + r.getAnswerId());
+            }
+        }
+
+        List<Answer> answers = answerRepository.findAllBySubmission_SubmissionId(submissionId);
+
+        Set<UUID> existingAnswerIds = answers.stream()
+                .map(Answer::getAnswerId)
+                .collect(Collectors.toSet());
+
+        for (UUID answerId : reqMap.keySet()) {
+            if (!existingAnswerIds.contains(answerId)) {
+                throw new NotFoundException("Answer with ID " + answerId + " not found in this submission");
+            }
+        }
+
+        Set<UUID> paperIds = requests.stream()
+                .map(UpdateAnswerRequest::getPaperId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, Paper> paperMap = new HashMap<>();
+        for (UUID paperId : paperIds) {
+            Paper paper = paperRepository
+                    .findBySubmission_SubmissionIdAndPaperId(submissionId, paperId)
+                    .orElseThrow(() -> new NotFoundException(
+                            "Paper with ID " + paperId + " not found for this submission"
+                    ));
+            paperMap.put(paperId, paper);
+        }
+
+        List<Answer> updated = new ArrayList<>();
+
+        for (Answer answer : answers) {
+            UpdateAnswerRequest r = reqMap.get(answer.getAnswerId());
+            if (r == null) continue;
+
+            BigDecimal maxPoints = answer.getQuestion().getPoints();
+            BigDecimal awarded = r.getPointsAwarded();
+
+            if (awarded.compareTo(maxPoints) > 0) {
+                throw new BadRequestException(
+                        "pointsAwarded (" + awarded + ") cannot be greater than maxPoints (" + maxPoints + ") " +
+                        "for answerId: " + answer.getAnswerId()
+                );
+            }
+
+            Paper paper = paperMap.get(r.getPaperId());
+
+            answer.setPointsAwarded(awarded);
+            answer.setPaper(paper);
+            answer.setSubmission(submission);
+
+            updated.add(answer);
+        }
+
+        List<Answer> saved = answerRepository.saveAll(updated);
+
+        return saved.stream()
+                .map(Answer::toResponse)
+                .toList();
+    }
+
 
     private UUID extractCurrentUserId() {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());

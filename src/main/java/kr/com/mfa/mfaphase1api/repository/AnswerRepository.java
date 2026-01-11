@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,5 +32,7 @@ public interface AnswerRepository extends JpaRepository<Answer, UUID> {
     Page<Answer> findAllBySubmission_SubmissionId_AndQuestion_Assessment_CreatedBy(UUID submissionId, UUID createdBy, Pageable pageable);
 
     Page<Answer> findAllBySubmission_SubmissionId_AndSubmission_StudentId(UUID submissionId, UUID studentId, Pageable pageable);
+
+    List<Answer> findAllBySubmission_SubmissionId(UUID submissionId);
 
 }
