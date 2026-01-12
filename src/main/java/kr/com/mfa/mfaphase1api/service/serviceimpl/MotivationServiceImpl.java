@@ -3,13 +3,16 @@ package kr.com.mfa.mfaphase1api.service.serviceimpl;
 import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.exception.BadRequestException;
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
+import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationCommentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
+import kr.com.mfa.mfaphase1api.model.entity.Annotation;
 import kr.com.mfa.mfaphase1api.model.entity.MotivationBookmark;
 import kr.com.mfa.mfaphase1api.model.entity.MotivationComment;
 import kr.com.mfa.mfaphase1api.model.entity.MotivationContent;
+import kr.com.mfa.mfaphase1api.model.enums.MotivationCommentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import kr.com.mfa.mfaphase1api.repository.*;
@@ -235,6 +238,82 @@ public class MotivationServiceImpl implements MotivationService {
         MotivationComment saved = motivationCommentRepository.saveAndFlush(motivationComment);
 
         return saved.toResponse(studentResponse);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PagedResponse<List<MotivationCommentResponse>> getAllCommentsByMotivationContentId(UUID motivationContentId, Integer page, Integer size, MotivationCommentProperty property, Sort.Direction direction) {
+
+        motivationContentRepository.findById(motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation content with ID " + motivationContentId + " not found")
+        );
+
+        int zeroBased = Math.max(page, 1) - 1;
+        Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
+
+        Page<MotivationComment> pageMotivationComments = motivationCommentRepository.findAllByMotivationContent_MotivationContentId(motivationContentId, pageable);
+
+        List<MotivationCommentResponse> items = pageMotivationComments.stream()
+                .map(motivationComment -> {
+
+                    UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(motivationComment.getStudentId()).getBody()).getPayload();
+
+                    StudentResponse studentResponse = StudentResponse.builder()
+                            .studentId(userResponse.getUserId())
+                            .studentEmail(userResponse.getEmail())
+                            .studentName(buildFullName(userResponse))
+                            .profileImage(userResponse.getProfileImage())
+                            .build();
+
+                    return motivationComment.toResponse(studentResponse);
+                })
+                .toList();
+
+        return pageResponse(
+                items,
+                pageMotivationComments.getTotalElements(),
+                page,
+                size,
+                pageMotivationComments.getTotalPages()
+        );
+    }
+
+    @Transactional
+    @Override
+    public MotivationCommentResponse updateMotivationComment(UUID motivationContentId, UUID commentId, MotivationCommentRequest request) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(currentUserId).getBody()).getPayload();
+
+        StudentResponse studentResponse = StudentResponse.builder()
+                .studentId(userResponse.getUserId())
+                .studentEmail(userResponse.getEmail())
+                .studentName(buildFullName(userResponse))
+                .profileImage(userResponse.getProfileImage())
+                .build();
+
+        MotivationComment motivationComment = motivationCommentRepository.findByMotivationCommentId_AndStudentId_AndMotivationContent_MotivationContentId(commentId, currentUserId, motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation comment with ID " + commentId + " not found")
+        );
+
+        motivationComment.setComment(request.getComment());
+        MotivationComment saved = motivationCommentRepository.saveAndFlush(motivationComment);
+
+        return saved.toResponse(studentResponse);
+    }
+
+    @Transactional
+    @Override
+    public void deleteMotivationComment(UUID motivationContentId, UUID commentId) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        MotivationComment motivationComment = motivationCommentRepository.findByMotivationCommentId_AndStudentId_AndMotivationContent_MotivationContentId(commentId, currentUserId, motivationContentId).orElseThrow(
+                () -> new NotFoundException("Motivation comment with ID " + commentId + " not found")
+        );
+
+        motivationCommentRepository.delete(motivationComment);
     }
 
     private UUID extractCurrentUserId() {

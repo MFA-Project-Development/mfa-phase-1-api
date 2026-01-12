@@ -15,6 +15,7 @@ import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationCommentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.enums.MotivationCommentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import kr.com.mfa.mfaphase1api.service.MotivationService;
@@ -223,6 +224,86 @@ public class MotivationController {
         return buildResponse("Motivation comment created",
                 motivationService.commentMotivation(motivationContentId, request),
                 HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
+    @GetMapping("/{motivationContentId}/comments")
+    @Operation(
+            summary = "Get all comments by motivation content ID",
+            description = "Retrieves all comments for a specific motivation content with pagination and sorting.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Comments retrieved successfully"),
+            }
+    )
+    public ResponseEntity<APIResponse<PagedResponse<List<MotivationCommentResponse>>>> getAllCommentsByMotivationContentId(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId,
+
+            @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "1") @Positive Integer page,
+
+            @Parameter(description = "Page size", example = "10", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "10") @Positive Integer size,
+
+            @Parameter(description = "Sort property (e.g., createdAt, updatedAt)", example = "CREATED_AT", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CREATED_AT") MotivationCommentProperty property,
+
+            @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
+        return buildResponse("Comments retrieved successfully",
+                motivationService.getAllCommentsByMotivationContentId(motivationContentId, page, size, property, direction),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PutMapping("/{motivationContentId}/comments/{commentId}")
+    @Operation(
+            summary = "Update comment on motivation",
+            description = "Updates a comment on a motivation content for the current user.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Comment updated"),
+                    @ApiResponse(responseCode = "404", description = "Comment not found")
+            }
+    )
+    public ResponseEntity<APIResponse<MotivationCommentResponse>> updateMotivationComment(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId,
+
+            @Parameter(description = "Comment ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID commentId,
+
+            @RequestBody @Valid MotivationCommentRequest request
+    ) {
+        return buildResponse("Motivation comment updated",
+                motivationService.updateMotivationComment(motivationContentId, commentId, request),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('STUDENT')")
+    @DeleteMapping("/{motivationContentId}/comments/{commentId}")
+    @Operation(
+            summary = "Delete comment on motivation",
+            description = "Deletes a comment from a motivation content for the current user.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Comment deleted"),
+                    @ApiResponse(responseCode = "404", description = "Comment not found")
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> deleteMotivationComment(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId,
+
+            @Parameter(description = "Comment ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID commentId
+    ) {
+        motivationService.deleteMotivationComment(motivationContentId, commentId);
+        return buildResponse("Motivation comment deleted",
+                null,
+                HttpStatus.OK);
     }
 
 }
