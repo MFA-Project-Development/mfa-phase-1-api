@@ -19,7 +19,7 @@ public class MotivationContentResponseWithExtraInfo {
     private MotivationContentType type;
     private Boolean isDefault;
     private Object contentJson;
-    private UUID createdBy;
+    private UserResponse createdBy;
     private Boolean isBookmarked;
     private Boolean isLiked;
     private Integer totalLikes;

@@ -22,7 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -66,12 +67,16 @@ public class SubmissionServiceImpl implements SubmissionService {
             return existSubmission.toResponse(studentResponse);
         }
 
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(assessment.getTimeZone()));
+
         Submission submission = Submission.builder()
                 .status(SubmissionStatus.NOT_SUBMITTED)
-                .maxScore(BigDecimal.valueOf(0.00))
-                .scoreEarned(BigDecimal.valueOf(0.00))
+                .maxScore(BigDecimal.ZERO)
+                .scoreEarned(BigDecimal.ZERO)
                 .assessment(assessment)
                 .studentId(currentUserId)
+                .startedAt(now.toInstant())
+                .timeZone(assessment.getTimeZone())
                 .build();
 
         return submissionRepository.save(submission).getSubmissionId();
@@ -208,8 +213,10 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new ConflictException("Submission has already been submitted for this assessment");
         }
 
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(submission.getAssessment().getTimeZone()));
+
         submission.setStatus(SubmissionStatus.SUBMITTED);
-        submission.setSubmittedAt(Instant.now());
+        submission.setSubmittedAt(now.toInstant());
         submissionRepository.save(submission);
 
         List<Question> questions = questionRepository.findAllByAssessment_AssessmentId(assessmentId);

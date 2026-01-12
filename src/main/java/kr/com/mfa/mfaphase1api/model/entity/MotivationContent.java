@@ -4,6 +4,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponseWithExtraInfo;
+import kr.com.mfa.mfaphase1api.model.dto.response.UserResponse;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -102,7 +103,7 @@ public class MotivationContent {
                 .build();
     }
 
-    public MotivationContentResponseWithExtraInfo toResponse(Boolean isBookmarked, Boolean isLiked) {
+    public MotivationContentResponseWithExtraInfo toResponse(UserResponse createdBy, Boolean isBookmarked, Boolean isLiked) {
 
         ZoneId zone;
         try {
@@ -118,7 +119,7 @@ public class MotivationContent {
                 .type(this.type)
                 .isDefault(this.isDefault)
                 .contentJson(this.contentJson)
-                .createdBy(this.createdBy)
+                .createdBy(createdBy)
                 .isBookmarked(isBookmarked)
                 .isLiked(isLiked)
                 .totalLikes(this.motivationLikes == null ? 0 : this.motivationLikes.size())

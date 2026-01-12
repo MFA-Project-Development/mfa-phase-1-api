@@ -37,8 +37,8 @@ import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 public class MotivationServiceImpl implements MotivationService {
 
     private final MotivationContentRepository motivationContentRepository;
-    private final MotivationSessionRepository motivationSessionRepository;
-    private final MotivationStudentLogRepository motivationStudentLogRepository;
+//    private final MotivationSessionRepository motivationSessionRepository;
+//    private final MotivationStudentLogRepository motivationStudentLogRepository;
     private final MotivationBookmarkRepository motivationBookmarkRepository;
     private final MotivationCommentRepository motivationCommentRepository;
     private final MotivationLikeRepository motivationLikeRepository;
@@ -112,10 +112,16 @@ public class MotivationServiceImpl implements MotivationService {
         );
 
         List<MotivationContentResponseWithExtraInfo> items = contents.stream()
-                .map(m -> m.toResponse(
-                        bookmarkedIds.contains(m.getMotivationContentId()),
-                        likedIds.contains(m.getMotivationContentId())
-                ))
+                .map(m -> {
+
+                    UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(m.getCreatedBy()).getBody()).getPayload();
+
+                    return m.toResponse(
+                            userResponse,
+                            bookmarkedIds.contains(m.getMotivationContentId()),
+                            likedIds.contains(m.getMotivationContentId())
+                    );
+                })
                 .toList();
 
         return pageResponse(
@@ -147,7 +153,9 @@ public class MotivationServiceImpl implements MotivationService {
         boolean isLiked = motivationLikeRepository
                 .findByUserIdAndMotivationContent(currentUserId, motivationContent).isPresent();
 
-        return motivationContent.toResponse(isBookmarked, isLiked);
+        UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(motivationContent.getCreatedBy()).getBody()).getPayload();
+
+        return motivationContent.toResponse(userResponse, isBookmarked, isLiked);
     }
 
 

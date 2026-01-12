@@ -8,11 +8,13 @@ public enum SubmissionStatus {
     NOT_SUBMITTED("not submitted"),
     SUBMITTED("submitted"),
     LATE("late"),
+    MISSED("missed"),
     GRADED("graded"),
     PUBLISHED("published"),
     RETURNED("returned"),
     RESUBMITTED("resubmitted"),
-    CANCELLED("cancelled");
+    CANCELLED("cancelled"),
+    REJECTED("rejected");
 
     private final String property;
 
