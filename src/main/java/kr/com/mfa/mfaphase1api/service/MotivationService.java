@@ -1,10 +1,10 @@
 package kr.com.mfa.mfaphase1api.service;
 
+import jakarta.validation.Valid;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationCommentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
-import kr.com.mfa.mfaphase1api.model.dto.response.MotivationCommentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.request.ReplyRequest;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationCommentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
@@ -17,9 +17,9 @@ public interface MotivationService {
 
     MotivationContentResponse createMotivation(MotivationContentRequest request);
 
-    PagedResponse<List<MotivationContentResponse>> getAllMotivations(Integer page, Integer size, MotivationContentProperty property, Sort.Direction direction, MotivationContentType type, UUID createdBy, Boolean isDefault, Boolean isBookmarked);
+    PagedResponse<List<MotivationContentResponseWithExtraInfo>> getAllMotivations(Integer page, Integer size, MotivationContentProperty property, Sort.Direction direction, MotivationContentType type, UUID createdBy, Boolean isDefault, Boolean isBookmarked);
 
-    MotivationContentResponse getMotivationById(UUID motivationContentId);
+    MotivationContentResponseWithExtraInfo getMotivationById(UUID motivationContentId);
 
     MotivationContentResponse updateMotivation(UUID motivationContentId, MotivationContentRequest request);
 
@@ -31,9 +31,15 @@ public interface MotivationService {
 
     MotivationCommentResponse commentMotivation(UUID motivationContentId, MotivationCommentRequest request);
 
-    PagedResponse<List<MotivationCommentResponse>> getAllCommentsByMotivationContentId(UUID motivationContentId, Integer page, Integer size, MotivationCommentProperty property, Sort.Direction direction);
+    PagedResponse<List<MotivationCommentResponseWithReply>> getAllCommentsByMotivationContentId(UUID motivationContentId, Integer page, Integer size, MotivationCommentProperty property, Sort.Direction direction);
 
     MotivationCommentResponse updateMotivationComment(UUID motivationContentId, UUID commentId, MotivationCommentRequest request);
 
     void deleteMotivationComment(UUID motivationContentId, UUID commentId);
+
+    MotivationCommentResponse replyCommentMotivation(UUID motivationContentId, ReplyRequest request);
+
+    void likeMotivation(UUID motivationContentId);
+
+    void unlikeMotivation(UUID motivationContentId);
 }

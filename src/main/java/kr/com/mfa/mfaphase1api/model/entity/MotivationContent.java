@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.model.entity;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponseWithExtraInfo;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -71,7 +72,7 @@ public class MotivationContent {
     @ToString.Exclude
     private List<MotivationLike> motivationLikes = new ArrayList<>();
 
-    public MotivationContentResponse toResponse(Boolean isBookmarked) {
+    public MotivationContentResponse toResponse() {
 
         ZoneId zone;
         try {
@@ -88,7 +89,40 @@ public class MotivationContent {
                 .isDefault(this.isDefault)
                 .contentJson(this.contentJson)
                 .createdBy(this.createdBy)
+                .createdAt(
+                        this.createdAt != null
+                                ? LocalDateTime.ofInstant(this.createdAt, zone)
+                                : null
+                )
+                .updatedAt(
+                        this.updatedAt != null
+                                ? LocalDateTime.ofInstant(this.updatedAt, zone)
+                                : null
+                )
+                .build();
+    }
+
+    public MotivationContentResponseWithExtraInfo toResponse(Boolean isBookmarked, Boolean isLiked) {
+
+        ZoneId zone;
+        try {
+            zone = this.timeZone != null
+                    ? ZoneId.of(this.timeZone)
+                    : ZoneId.of("UTC");
+        } catch (DateTimeException e) {
+            zone = ZoneId.of("UTC");
+        }
+
+        return MotivationContentResponseWithExtraInfo.builder()
+                .motivationContentId(this.motivationContentId)
+                .type(this.type)
+                .isDefault(this.isDefault)
+                .contentJson(this.contentJson)
+                .createdBy(this.createdBy)
                 .isBookmarked(isBookmarked)
+                .isLiked(isLiked)
+                .totalLikes(this.motivationLikes == null ? 0 : this.motivationLikes.size())
+                .totalComments(this.motivationComments == null ? 0 : this.motivationComments.size())
                 .createdAt(
                         this.createdAt != null
                                 ? LocalDateTime.ofInstant(this.createdAt, zone)

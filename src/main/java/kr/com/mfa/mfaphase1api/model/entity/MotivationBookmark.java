@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "motivation_bookmarks", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"student_id", "motivation_content_id"})
+        @UniqueConstraint(columnNames = {"user_id", "motivation_content_id"})
 })
 public class MotivationBookmark {
 
@@ -24,7 +24,7 @@ public class MotivationBookmark {
     private UUID motivationBookmarkId;
 
     @Column(nullable = false)
-    private UUID studentId;
+    private UUID userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "motivation_content_id", nullable = false, foreignKey = @ForeignKey(name = "fk_motivation_bookmark_motivation_content"))

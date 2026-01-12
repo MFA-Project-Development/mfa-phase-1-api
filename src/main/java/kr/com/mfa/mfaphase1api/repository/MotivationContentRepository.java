@@ -35,13 +35,13 @@ public interface MotivationContentRepository extends JpaRepository<MotivationCon
         SELECT m
         FROM MotivationBookmark b
         JOIN b.motivationContent m
-        WHERE b.studentId = :studentId
+        WHERE b.userId = :userId
           AND (:type IS NULL OR m.type = :type)
           AND (:createdBy IS NULL OR m.createdBy = :createdBy)
           AND (:isDefault IS NULL OR m.isDefault = :isDefault)
     """)
     Page<MotivationContent> searchBookmarked(
-            UUID studentId,
+            UUID userId,
             MotivationContentType type,
             UUID createdBy,
             Boolean isDefault,
@@ -54,7 +54,7 @@ public interface MotivationContentRepository extends JpaRepository<MotivationCon
         WHERE NOT EXISTS (
             SELECT 1
             FROM MotivationBookmark b
-            WHERE b.studentId = :studentId
+            WHERE b.userId = :userId
               AND b.motivationContent = m
         )
           AND (:type IS NULL OR m.type = :type)
@@ -62,7 +62,7 @@ public interface MotivationContentRepository extends JpaRepository<MotivationCon
           AND (:isDefault IS NULL OR m.isDefault = :isDefault)
     """)
     Page<MotivationContent> searchNotBookmarked(
-            UUID studentId,
+            UUID userId,
             MotivationContentType type,
             UUID createdBy,
             Boolean isDefault,

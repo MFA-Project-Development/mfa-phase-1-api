@@ -11,10 +11,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationCommentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
-import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.MotivationCommentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.MotivationContentResponse;
-import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.request.ReplyRequest;
+import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationCommentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
@@ -67,10 +65,10 @@ public class MotivationController {
             tags = {"Motivation"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success",
-                            content = @Content(schema = @Schema(implementation = MotivationContentResponse.class))),
+                            content = @Content(schema = @Schema(implementation = MotivationContentResponseWithExtraInfo.class))),
             }
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<MotivationContentResponse>>>> getAllMotivations(
+    public ResponseEntity<APIResponse<PagedResponse<List<MotivationContentResponseWithExtraInfo>>>> getAllMotivations(
             @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "1") @Positive Integer page,
 
@@ -108,11 +106,11 @@ public class MotivationController {
             tags = {"Motivation"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success",
-                            content = @Content(schema = @Schema(implementation = MotivationContentResponse.class))),
+                            content = @Content(schema = @Schema(implementation = MotivationContentResponseWithExtraInfo.class))),
                     @ApiResponse(responseCode = "404", description = "Motivation not found")
             }
     )
-    public ResponseEntity<APIResponse<MotivationContentResponse>> getMotivationById(
+    public ResponseEntity<APIResponse<MotivationContentResponseWithExtraInfo>> getMotivationById(
             @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID motivationContentId
     ) {
@@ -164,7 +162,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/boookmarks")
     @Operation(
             summary = "Bookmark motivation",
@@ -185,7 +183,7 @@ public class MotivationController {
     }
 
 
-    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @DeleteMapping("/{motivationContentId}/boookmarks")
     @Operation(
             summary = "Remove bookmark motivation",
@@ -205,7 +203,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/comments")
     @Operation(
             summary = "Comment on motivation",
@@ -236,7 +234,7 @@ public class MotivationController {
                     @ApiResponse(responseCode = "200", description = "Comments retrieved successfully"),
             }
     )
-    public ResponseEntity<APIResponse<PagedResponse<List<MotivationCommentResponse>>>> getAllCommentsByMotivationContentId(
+    public ResponseEntity<APIResponse<PagedResponse<List<MotivationCommentResponseWithReply>>>> getAllCommentsByMotivationContentId(
             @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID motivationContentId,
 
@@ -257,7 +255,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PutMapping("/{motivationContentId}/comments/{commentId}")
     @Operation(
             summary = "Update comment on motivation",
@@ -282,7 +280,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @DeleteMapping("/{motivationContentId}/comments/{commentId}")
     @Operation(
             summary = "Delete comment on motivation",
@@ -302,6 +300,68 @@ public class MotivationController {
     ) {
         motivationService.deleteMotivationComment(motivationContentId, commentId);
         return buildResponse("Motivation comment deleted",
+                null,
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
+    @PostMapping("/{motivationContentId}/comments/reply")
+    @Operation(
+            summary = "Reply to comment on motivation",
+            description = "Adds a reply to a comment on a motivation content for the current user.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Reply created"),
+            }
+    )
+    public ResponseEntity<APIResponse<MotivationCommentResponse>> replyCommentMotivation(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId,
+
+            @RequestBody @Valid ReplyRequest request
+    ) {
+        return buildResponse("Motivation reply created",
+                motivationService.replyCommentMotivation(motivationContentId, request),
+                HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
+    @PostMapping("/{motivationContentId}/likes")
+    @Operation(
+            summary = "Like motivation",
+            description = "Likes a motivation content for the current user.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Liked"),
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> likeMotivation(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId
+    ) {
+        motivationService.likeMotivation(motivationContentId);
+        return buildResponse("Motivation liked",
+                null,
+                HttpStatus.CREATED);
+    }
+
+
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
+    @DeleteMapping("/{motivationContentId}/likes")
+    @Operation(
+            summary = "Remove like motivation",
+            description = "Removes a like from a motivation content for the current user.",
+            tags = {"Motivation"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Like removed"),
+            }
+    )
+    public ResponseEntity<APIResponse<Void>> unlikeMotivation(
+            @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID motivationContentId
+    ) {
+        motivationService.unlikeMotivation(motivationContentId);
+        return buildResponse("Motivation like removed",
                 null,
                 HttpStatus.OK);
     }

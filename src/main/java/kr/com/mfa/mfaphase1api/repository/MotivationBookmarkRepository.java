@@ -12,16 +12,16 @@ import java.util.UUID;
 
 @Repository
 public interface MotivationBookmarkRepository extends JpaRepository<MotivationBookmark, UUID> {
-    Optional<MotivationBookmark> findByStudentIdAndMotivationContent(UUID studentId, MotivationContent motivationContent);
+    Optional<MotivationBookmark> findByUserIdAndMotivationContent(UUID userId, MotivationContent motivationContent);
 
     @Query("""
         SELECT b.motivationContent.motivationContentId
         FROM MotivationBookmark b
-        WHERE b.studentId = :studentId
+        WHERE b.userId = :userId
           AND b.motivationContent IN :contents
     """)
     List<UUID> findBookmarkedContentIds(
-            UUID studentId,
+            UUID userId,
             List<MotivationContent> contents
     );
 }
