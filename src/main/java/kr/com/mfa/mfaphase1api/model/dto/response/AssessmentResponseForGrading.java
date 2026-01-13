@@ -24,5 +24,6 @@ public class AssessmentResponseForGrading {
     private String className;
     private Integer totalSubmitted;
     private Integer totalStudents;
+    private Boolean isPublished;
 
 }

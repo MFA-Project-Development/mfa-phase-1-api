@@ -375,6 +375,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         return saved.toResponse(null);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction) {
 
@@ -398,7 +399,15 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .map(assessment -> {
 
                     Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
-                    Integer totalStudents = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getStudentClassEnrollments().size();
+                    Integer totalStudents = assessment.getClassSubSubjectInstructor()
+                            .getClassSubSubject()
+                            .getClazz()
+                            .getStudentClassEnrollments()
+                            .size();
+
+                    Integer totalPublished = submissionRepository.countByAssessmentAndPublishedAtIsNotNull(assessment);
+
+                    boolean isPublished = totalSubmitted > 0 && totalPublished.equals(totalSubmitted);
 
                     ZoneId zone = ZoneId.of(assessment.getTimeZone());
 
@@ -412,9 +421,11 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .className(assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getName())
                             .totalSubmitted(totalSubmitted)
                             .totalStudents(totalStudents)
+                            .isPublished(isPublished)
                             .build();
                 })
                 .toList();
+
 
         return pageResponse(
                 items,

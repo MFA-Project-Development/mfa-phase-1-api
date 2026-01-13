@@ -238,6 +238,7 @@ public class AssessmentController {
         );
     }
 
+
     @GetMapping("/assessments")
     @Operation(
             summary = "List assessments without class",

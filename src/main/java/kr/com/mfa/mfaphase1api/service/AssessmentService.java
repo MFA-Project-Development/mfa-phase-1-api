@@ -1,6 +1,5 @@
 package kr.com.mfa.mfaphase1api.service;
 
-import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentPublishRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
@@ -10,7 +9,6 @@ import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.List;
 import java.util.UUID;
@@ -37,4 +35,5 @@ public interface AssessmentService {
     PagedResponse<List<AssessmentResponseForGrading>> getAllAssessments(Integer page, Integer size, AssessmentProperty property, Sort.Direction direction);
 
     AssessmentSummary getAssessmentsSummary(Month month);
+
 }

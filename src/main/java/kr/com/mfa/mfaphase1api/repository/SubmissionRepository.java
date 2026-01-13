@@ -25,4 +25,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
 
     Optional<Submission> findBySubmissionId_AndAssessment_AndStudentId(UUID submissionId, Assessment assessment, UUID studentId);
 
+    Integer countByAssessmentAndPublishedAtIsNotNull(Assessment assessment);
 }

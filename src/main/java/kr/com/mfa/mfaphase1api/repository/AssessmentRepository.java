@@ -6,6 +6,7 @@ import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -54,4 +55,13 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId);
 
     List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId, Instant startDate, Instant endDate);
+
+    @Query("""
+                select distinct a
+                from Assessment a
+                join Submission s on s.assessment = a
+                where s.studentId = :studentId
+            """)
+    Page<Assessment> findMySubmittedAssessments(UUID studentId, Pageable pageable);
+
 }
