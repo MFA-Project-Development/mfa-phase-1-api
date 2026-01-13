@@ -1,7 +1,5 @@
 package kr.com.mfa.mfaphase1api.job;
 
-import kr.com.mfa.mfaphase1api.exception.ConflictException;
-import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentMessage;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
@@ -21,9 +19,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -45,45 +44,56 @@ public class AssessmentFinishJob implements org.quartz.Job {
         Assessment assessment = assessmentRepository.findById(assessmentId)
                 .orElseThrow();
 
-        List<UUID> studentIds = assessment.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getStudentClassEnrollments().stream().map(StudentClassEnrollment::getStudentId).toList();
+        List<UUID> allStudentIds =
+                assessment.getClassSubSubjectInstructor()
+                        .getClassSubSubject()
+                        .getClazz()
+                        .getStudentClassEnrollments()
+                        .stream()
+                        .map(StudentClassEnrollment::getStudentId)
+                        .toList();
+
+        Set<UUID> submittedStudentIds =
+                submissionRepository.findAllByAssessment_AssessmentId(assessmentId)
+                        .stream()
+                        .map(Submission::getStudentId)
+                        .collect(Collectors.toSet());
+
+        List<UUID> missingStudentIds = allStudentIds.stream()
+                .filter(studentId -> !submittedStudentIds.contains(studentId))
+                .toList();
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of(assessment.getTimeZone()));
+        Instant nowInstant = now.toInstant();
 
-        for (UUID studentId : studentIds) {
+        List<Question> questions = questionRepository.findAllByAssessment_AssessmentId(assessmentId);
+
+        for (UUID studentId : missingStudentIds) {
 
             Submission submission = Submission.builder()
-                    .status(SubmissionStatus.NOT_SUBMITTED)
+                    .status(SubmissionStatus.MISSED)
                     .maxScore(BigDecimal.ZERO)
                     .scoreEarned(BigDecimal.ZERO)
                     .assessment(assessment)
                     .studentId(studentId)
-                    .startedAt(now.toInstant())
+                    .startedAt(nowInstant)
+                    .submittedAt(nowInstant)
                     .timeZone(assessment.getTimeZone())
                     .build();
 
-            if (submission.getStatus() == SubmissionStatus.NOT_SUBMITTED) {
-                submission.setStatus(SubmissionStatus.MISSED);
-                submission.setSubmittedAt(now.toInstant());
-                submissionRepository.save(submission);
+            submissionRepository.save(submission);
 
-                List<Question> questions =
-                        questionRepository.findAllByAssessment_AssessmentId(assessmentId);
+            List<Answer> answers = questions.stream()
+                    .map(q -> Answer.builder()
+                            .pointsAwarded(BigDecimal.ZERO)
+                            .question(q)
+                            .submission(submission)
+                            .build())
+                    .toList();
 
-                List<Answer> answers = new ArrayList<>();
-
-                for (Question question : questions) {
-                    answers.add(
-                            Answer.builder()
-                                    .pointsAwarded(BigDecimal.ZERO)
-                                    .question(question)
-                                    .submission(submission)
-                                    .build()
-                    );
-                }
-
-                answerRepository.saveAll(answers);
-            }
+            answerRepository.saveAll(answers);
         }
+
 
         if (assessment.getStatus() == AssessmentStatus.STARTED
             || assessment.getStatus() == AssessmentStatus.SCHEDULED) {

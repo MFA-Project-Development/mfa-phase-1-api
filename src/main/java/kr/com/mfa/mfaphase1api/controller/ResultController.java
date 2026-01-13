@@ -69,7 +69,7 @@ public class ResultController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
     @GetMapping("/results")
     @Operation(
             summary = "Get all submissions result by assessment",
