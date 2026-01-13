@@ -22,7 +22,9 @@ public class SubmissionResponse {
     private SubmissionStatus status;
     private LocalDateTime startedAt;
     private LocalDateTime submittedAt;
+    private Boolean isGraded;
     private LocalDateTime gradedAt;
+    private Boolean isPublished;
     private LocalDateTime publishedAt;
     private BigDecimal maxScore;
     private BigDecimal scoreEarned;

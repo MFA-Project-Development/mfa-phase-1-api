@@ -59,11 +59,13 @@ public class ResultServiceImpl implements ResultService {
                 ));
 
         SubmissionStatus status = submission.getStatus();
+        boolean isPublished = submission.getPublishedAt() != null;
+        boolean isGraded = submission.getGradedAt() != null;
 
-        if (status == SubmissionStatus.PUBLISHED) {
+        if (isPublished) {
             throw new ConflictException("Submission result has already been published.");
         }
-        if (status == SubmissionStatus.GRADED) {
+        if (isGraded) {
             throw new ConflictException("Submission result has already been graded.");
         }
         if (status == SubmissionStatus.MISSED || status == SubmissionStatus.NOT_SUBMITTED) {
@@ -101,7 +103,6 @@ public class ResultServiceImpl implements ResultService {
         submission.setScoreEarned(scoreEarned);
         submission.setGradedBy(currentUserId);
         submission.setGradedAt(Instant.now());
-        submission.setStatus(SubmissionStatus.GRADED);
 
         submissionRepository.save(submission);
     }
@@ -133,9 +134,9 @@ public class ResultServiceImpl implements ResultService {
                 : submissionRepository.findBySubmissionId_AndAssessment_AndStudentId(submissionId, assessment, currentUserId)
                 .orElseThrow(() -> new NotFoundException("Submission with ID " + submissionId + " not found"));
 
-        SubmissionStatus status = submission.getStatus();
+        boolean isPublished = submission.getPublishedAt() != null;
 
-        if (status != SubmissionStatus.PUBLISHED && status != SubmissionStatus.MISSED) {
+        if (!isPublished) {
             throw new NotFoundException("Submission result is not available yet.");
         }
 
@@ -184,8 +185,7 @@ public class ResultServiceImpl implements ResultService {
                 : submissionRepository.findAllByAssessment_AssessmentIdAndStudentId(assessmentId, currentUserId, pageable);
 
         List<SubmissionResponse> items = pageSubmissions.stream()
-                .filter(s -> s.getStatus() == SubmissionStatus.PUBLISHED
-                             || s.getStatus() == SubmissionStatus.MISSED)
+                .filter(s -> s.getPublishedAt() != null)
                 .map(submission -> {
                     UserResponse userResponse = Optional
                             .ofNullable(userClient.getUserInfoById(submission.getStudentId()).getBody())
@@ -226,26 +226,31 @@ public class ResultServiceImpl implements ResultService {
                         "Assessment with ID " + assessmentId + " not found"
                 ));
 
-        boolean hasAnyGradableToPublish = assessment.getSubmissions().stream()
-                .anyMatch(s -> s.getStatus() == SubmissionStatus.GRADED);
+        boolean hasAnyToPublish = assessment.getSubmissions().stream()
+                .anyMatch(s ->
+                        s.getPublishedAt() == null &&
+                        (s.getGradedAt() != null || s.getStatus() == SubmissionStatus.MISSED)
+                );
 
-        if (!hasAnyGradableToPublish) {
-            throw new ConflictException(
-                    "All submissions are already published or missed. Cannot publish again."
-            );
+        if (!hasAnyToPublish) {
+            throw new ConflictException("No submissions available to publish.");
         }
 
         Instant now = Instant.now();
 
-        assessment.getSubmissions().forEach(submission -> {
+        for (Submission submission : assessment.getSubmissions()) {
+
+            if (submission.getPublishedAt() != null) continue;
+
             SubmissionStatus status = submission.getStatus();
+            boolean isGraded = submission.getGradedAt() != null;
 
-            if (status == SubmissionStatus.GRADED) {
-                submission.setStatus(SubmissionStatus.PUBLISHED);
+            if (isGraded) {
                 submission.setPublishedAt(now);
-                submissionRepository.save(submission);
+                continue;
+            }
 
-            } else if (status == SubmissionStatus.MISSED) {
+            if (status == SubmissionStatus.MISSED) {
 
                 List<Question> questions = submission.getAssessment().getQuestions();
 
@@ -254,15 +259,11 @@ public class ResultServiceImpl implements ResultService {
                         .filter(Objects::nonNull)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                if (submission.getPublishedAt() == null) {
-                    submission.setMaxScore(maxScore);
-                    submission.setPublishedAt(now);
-                    submissionRepository.save(submission);
-                }
+                submission.setMaxScore(maxScore);
+                submission.setPublishedAt(now);
             }
-        });
+        }
     }
-
 
 
     private UUID extractCurrentUserId() {

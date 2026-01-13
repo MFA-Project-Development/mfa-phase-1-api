@@ -92,9 +92,11 @@ public class Submission {
                 .submittedAt(this.submittedAt != null
                         ? LocalDateTime.ofInstant(this.submittedAt, zone)
                         : null)
+                .isGraded(this.gradedAt != null)
                 .gradedAt(this.gradedAt != null
                         ? LocalDateTime.ofInstant(this.gradedAt, zone)
                         : null)
+                .isPublished(this.publishedAt != null)
                 .publishedAt(this.publishedAt != null
                         ? LocalDateTime.ofInstant(this.publishedAt, zone)
                         : null)
