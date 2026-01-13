@@ -12,6 +12,7 @@ import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.AssessmentService;
 import kr.com.mfa.mfaphase1api.service.FileService;
@@ -409,6 +410,19 @@ public class AssessmentServiceImpl implements AssessmentService {
 
                     boolean isPublished = totalSubmitted > 0 && totalPublished.equals(totalSubmitted);
 
+                    Boolean isGraded = null;
+                    SubmissionStatus status = null;
+                    if (currentUserRole.contains("ROLE_STUDENT")) {
+                        isGraded = assessment.getSubmissions()
+                                .stream()
+                                .anyMatch(s -> s.getGradedAt() != null);
+                        status = assessment.getSubmissions()
+                                .stream()
+                                .map(Submission::getStatus)
+                                .findFirst()
+                                .orElse(null);
+                    }
+
                     ZoneId zone = ZoneId.of(assessment.getTimeZone());
 
                     return AssessmentResponseForGrading.builder()
@@ -422,6 +436,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .totalSubmitted(totalSubmitted)
                             .totalStudents(totalStudents)
                             .isPublished(isPublished)
+                            .isGraded(isGraded)
+                            .status(status)
                             .build();
                 })
                 .toList();

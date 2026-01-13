@@ -1,6 +1,8 @@
 package kr.com.mfa.mfaphase1api.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentType;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,5 +27,11 @@ public class AssessmentResponseForGrading {
     private Integer totalSubmitted;
     private Integer totalStudents;
     private Boolean isPublished;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isGraded;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SubmissionStatus status;
 
 }
