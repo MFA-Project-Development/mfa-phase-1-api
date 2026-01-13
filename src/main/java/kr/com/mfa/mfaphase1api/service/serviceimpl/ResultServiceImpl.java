@@ -63,15 +63,14 @@ public class ResultServiceImpl implements ResultService {
         if (status == SubmissionStatus.PUBLISHED) {
             throw new ConflictException("Submission result has already been published.");
         }
-
         if (status == SubmissionStatus.GRADED) {
             throw new ConflictException("Submission result has already been graded.");
         }
-
+        if (status == SubmissionStatus.MISSED || status == SubmissionStatus.NOT_SUBMITTED) {
+            throw new BadRequestException("Cannot grade because the student missed the submission.");
+        }
         if (status != SubmissionStatus.SUBMITTED) {
-            throw new BadRequestException(
-                    "Submission result cannot be graded because it is not in submitted status."
-            );
+            throw new BadRequestException("Submission result cannot be graded because it is not in submitted status.");
         }
 
         List<Question> questions = submission.getAssessment().getQuestions();
@@ -134,8 +133,10 @@ public class ResultServiceImpl implements ResultService {
                 : submissionRepository.findBySubmissionId_AndAssessment_AndStudentId(submissionId, assessment, currentUserId)
                 .orElseThrow(() -> new NotFoundException("Submission with ID " + submissionId + " not found"));
 
-        if (submission.getStatus() != SubmissionStatus.PUBLISHED) {
-            throw new NotFoundException("Submission result is not published yet.");
+        SubmissionStatus status = submission.getStatus();
+
+        if (status != SubmissionStatus.PUBLISHED && status != SubmissionStatus.MISSED) {
+            throw new NotFoundException("Submission result is not available yet.");
         }
 
         UserResponse user = Optional.ofNullable(userClient.getUserInfoById(submission.getStudentId()).getBody())
@@ -183,19 +184,23 @@ public class ResultServiceImpl implements ResultService {
                 : submissionRepository.findAllByAssessment_AssessmentIdAndStudentId(assessmentId, currentUserId, pageable);
 
         List<SubmissionResponse> items = pageSubmissions.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.PUBLISHED
+                             || s.getStatus() == SubmissionStatus.MISSED)
                 .map(submission -> {
-                    if (submission.getStatus() != SubmissionStatus.PUBLISHED) {
-                        throw new NotFoundException("Some submission result is not published yet.");
-                    }
-                    UserResponse userResponse = Optional.ofNullable(userClient.getUserInfoById(submission.getStudentId()).getBody())
+                    UserResponse userResponse = Optional
+                            .ofNullable(userClient.getUserInfoById(submission.getStudentId()).getBody())
                             .map(APIResponse::getPayload)
-                            .orElseThrow(() -> new NotFoundException("Student user info not found: " + submission.getStudentId()));
+                            .orElseThrow(() -> new NotFoundException(
+                                    "Student user info not found: " + submission.getStudentId()
+                            ));
+
                     StudentResponse studentResponse = StudentResponse.builder()
                             .studentId(userResponse.getUserId())
                             .studentEmail(userResponse.getEmail())
                             .studentName(buildFullName(userResponse))
                             .profileImage(userResponse.getProfileImage())
                             .build();
+
                     return submission.toResponse(studentResponse);
                 })
                 .toList();
@@ -215,23 +220,49 @@ public class ResultServiceImpl implements ResultService {
 
         UUID currentUserId = extractCurrentUserId();
 
-        Assessment assessment = assessmentRepository.findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
+        Assessment assessment = assessmentRepository
+                .findByAssessmentId_AndCreatedBy(assessmentId, currentUserId)
                 .orElseThrow(() -> new NotFoundException(
                         "Assessment with ID " + assessmentId + " not found"
                 ));
 
-        for (Submission submission : assessment.getSubmissions()) {
+        boolean hasAnyGradableToPublish = assessment.getSubmissions().stream()
+                .anyMatch(s -> s.getStatus() == SubmissionStatus.GRADED);
 
-            if (submission.getStatus() != SubmissionStatus.GRADED) {
-                throw new BadRequestException("Submission result cannot be published because some submission is not graded yet.");
-            }
-
-            submission.setStatus(SubmissionStatus.PUBLISHED);
-            submission.setPublishedAt(Instant.now());
-            submissionRepository.save(submission);
+        if (!hasAnyGradableToPublish) {
+            throw new ConflictException(
+                    "All submissions are already published or missed. Cannot publish again."
+            );
         }
 
+        Instant now = Instant.now();
+
+        assessment.getSubmissions().forEach(submission -> {
+            SubmissionStatus status = submission.getStatus();
+
+            if (status == SubmissionStatus.GRADED) {
+                submission.setStatus(SubmissionStatus.PUBLISHED);
+                submission.setPublishedAt(now);
+                submissionRepository.save(submission);
+
+            } else if (status == SubmissionStatus.MISSED) {
+
+                List<Question> questions = submission.getAssessment().getQuestions();
+
+                BigDecimal maxScore = questions.stream()
+                        .map(Question::getPoints)
+                        .filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                if (submission.getPublishedAt() == null) {
+                    submission.setMaxScore(maxScore);
+                    submission.setPublishedAt(now);
+                    submissionRepository.save(submission);
+                }
+            }
+        });
     }
+
 
 
     private UUID extractCurrentUserId() {
