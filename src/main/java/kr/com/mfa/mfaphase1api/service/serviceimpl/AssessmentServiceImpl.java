@@ -461,7 +461,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         if (month == null) {
             assessments = assessmentRepository
-                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(currentUserId, AssessmentStatus.STARTED);
+                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(currentUserId, AssessmentStatus.FINISHED);
         } else {
             int year = LocalDate.now().getYear();
             YearMonth ym = YearMonth.of(year, month);
@@ -481,7 +481,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
             assessments = assessmentRepository
                     .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(
-                            currentUserId, AssessmentStatus.STARTED, newStartDate, newDueDate);
+                            currentUserId, AssessmentStatus.FINISHED, newStartDate, newDueDate);
         }
 
         int exams = 0;
@@ -505,6 +505,83 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .homeworks(homeworks)
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<AssessmentResponseForGrading> getRecentAssessments() {
+
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+        List<String> roles = JwtUtils.getJwt().getClaimAsStringList("roles");
+
+        Pageable pageable = PageRequest.of(0, 5);
+
+        Page<Assessment> pageAssessments = switch (roles.getFirst()) {
+            case "ROLE_ADMIN" -> assessmentRepository.findRecentBySubmissionStartedAt(pageable);
+            case "ROLE_INSTRUCTOR" -> assessmentRepository
+                    .findRecentBySubmissionStartedAtAndInstructor(currentUserId, pageable);
+            case "ROLE_STUDENT" -> assessmentRepository
+                    .findRecentByMySubmissionStartedAt(currentUserId, pageable);
+            default -> Page.empty(pageable);
+        };
+
+        boolean isStudent = roles.contains("ROLE_STUDENT");
+
+        return pageAssessments.getContent().stream()
+                .map(assessment -> {
+
+                    Integer totalSubmitted = submissionRepository.countByAssessmentAndStartedAtIsNotNull(assessment);
+
+                    Integer totalStudents = assessment.getClassSubSubjectInstructor()
+                            .getClassSubSubject()
+                            .getClazz()
+                            .getStudentClassEnrollments()
+                            .size();
+
+                    Integer totalPublished = submissionRepository.countByAssessmentAndPublishedAtIsNotNull(assessment);
+
+                    boolean isPublished = totalSubmitted > 0 && totalPublished.equals(totalSubmitted);
+
+                    Boolean isGraded = null;
+                    SubmissionStatus status = null;
+
+                    if (isStudent) {
+                        Submission mySubmission = submissionRepository
+                                .findByAssessmentAndStudentId(assessment, currentUserId)
+                                .orElse(null);
+
+                        if (mySubmission != null) {
+                            isGraded = mySubmission.getGradedAt() != null;
+                            status = mySubmission.getStatus();
+                        }
+                    }
+
+                    ZoneId zone = ZoneId.of(assessment.getTimeZone());
+
+                    return AssessmentResponseForGrading.builder()
+                            .assessmentId(assessment.getAssessmentId())
+                            .title(assessment.getTitle())
+                            .startDate(LocalDateTime.ofInstant(assessment.getStartDate(), zone))
+                            .dueDate(LocalDateTime.ofInstant(assessment.getDueDate(), zone))
+                            .assessmentType(assessment.getAssessmentType())
+                            .subSubjectName(assessment.getClassSubSubjectInstructor()
+                                    .getClassSubSubject()
+                                    .getSubSubject()
+                                    .getName())
+                            .className(assessment.getClassSubSubjectInstructor()
+                                    .getClassSubSubject()
+                                    .getClazz()
+                                    .getName())
+                            .totalSubmitted(totalSubmitted)
+                            .totalStudents(totalStudents)
+                            .isPublished(isPublished)
+                            .isGraded(isGraded)
+                            .status(status)
+                            .build();
+                })
+                .toList();
+    }
+
+
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {
         return assessmentRepository

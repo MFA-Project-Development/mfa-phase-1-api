@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.repository;
 
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.SubSubject;
+import kr.com.mfa.mfaphase1api.model.entity.Submission;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,11 +58,57 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     List<Assessment> findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(UUID currentUserId, AssessmentStatus assessmentStatus, UUID classId, Instant startDate, Instant endDate);
 
     @Query("""
-                select distinct a
+                select a
                 from Assessment a
-                join Submission s on s.assessment = a
-                where s.studentId = :studentId
+                where exists (
+                    select 1 from Submission s
+                    where s.assessment = a
+                      and s.startedAt is not null
+                )
+                order by (
+                    select max(s2.startedAt)
+                    from Submission s2
+                    where s2.assessment = a
+                      and s2.startedAt is not null
+                ) desc
             """)
-    Page<Assessment> findMySubmittedAssessments(UUID studentId, Pageable pageable);
+    Page<Assessment> findRecentBySubmissionStartedAt(Pageable pageable);
+
+    @Query("""
+                select a
+                from Assessment a
+                where a.createdBy = :instructorId
+                  and exists (
+                    select 1 from Submission s
+                    where s.assessment = a
+                      and s.startedAt is not null
+                  )
+                order by (
+                    select max(s2.startedAt)
+                    from Submission s2
+                    where s2.assessment = a
+                      and s2.startedAt is not null
+                ) desc
+            """)
+    Page<Assessment> findRecentBySubmissionStartedAtAndInstructor(UUID instructorId, Pageable pageable);
+
+    @Query("""
+                select a
+                from Assessment a
+                where exists (
+                    select 1 from Submission s
+                    where s.assessment = a
+                      and s.studentId = :studentId
+                      and s.startedAt is not null
+                )
+                order by (
+                    select max(s2.startedAt)
+                    from Submission s2
+                    where s2.assessment = a
+                      and s2.studentId = :studentId
+                      and s2.startedAt is not null
+                ) desc
+            """)
+    Page<Assessment> findRecentByMySubmissionStartedAt(UUID studentId, Pageable pageable);
 
 }

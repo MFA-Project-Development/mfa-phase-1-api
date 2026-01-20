@@ -63,6 +63,10 @@ public class Answer {
     @ToString.Exclude
     private List<Annotation> annotations;
 
+    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Feedback> feedbacks;
+
     public AnswerResponse toResponse() {
 
         ZoneId zone;

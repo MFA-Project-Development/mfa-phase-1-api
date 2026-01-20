@@ -11,8 +11,11 @@ import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Question;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionSort;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
+import kr.com.mfa.mfaphase1api.model.enums.TimeRange;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
+import kr.com.mfa.mfaphase1api.repository.FeedbackRepository;
 import kr.com.mfa.mfaphase1api.repository.SubmissionRepository;
 import kr.com.mfa.mfaphase1api.service.ResultService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
@@ -26,7 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,7 @@ public class ResultServiceImpl implements ResultService {
     private final SubmissionRepository submissionRepository;
     private final AssessmentRepository assessmentRepository;
     private final UserClient userClient;
+    private final FeedbackRepository feedbackRepository;
 
     @Transactional
     @Override
@@ -265,6 +272,56 @@ public class ResultServiceImpl implements ResultService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public StudentResponseResultSummary getMySubmissionResultSummary(TimeRange range, SubmissionSort sort) {
+
+        UUID studentId = extractCurrentUserId();
+
+        List<Submission> all = submissionRepository.findAllByStudentIdAndSubmittedAtIsNotNull(studentId);
+
+        if (all.isEmpty()) {
+            return StudentResponseResultSummary.builder()
+                    .scoreEarned(BigDecimal.ZERO)
+                    .maxScore(BigDecimal.ZERO)
+                    .totalFeedbacks(0L)
+                    .build();
+        }
+
+        Submission anchor = pickAnchor(all, sort);
+
+        ZoneId zone = resolveZoneFromSubmission(anchor);
+
+        Instant[] r = resolveRangeInstant(range, zone);
+        Instant start = r[0];
+        Instant end = r[1];
+
+        PageRequest one = PageRequest.of(0, 1, toSort(sort));
+
+        List<Submission> picked =
+                submissionRepository.findAllByStudentIdAndSubmittedAtIsNotNullAndPublishedAtIsNotNullAndSubmittedAtBetween(
+                        studentId, start, end, one
+                );
+
+        if (picked.isEmpty()) {
+            return StudentResponseResultSummary.builder()
+                    .scoreEarned(BigDecimal.ZERO)
+                    .maxScore(BigDecimal.ZERO)
+                    .totalFeedbacks(0L)
+                    .build();
+        }
+
+        Submission submission = picked.getFirst();
+
+        long totalFeedbacks = feedbackRepository.countFeedbacksBySubmissionId(submission.getSubmissionId());
+
+        return StudentResponseResultSummary.builder()
+                .scoreEarned(nz(submission.getScoreEarned()))
+                .maxScore(nz(submission.getMaxScore()))
+                .totalFeedbacks(totalFeedbacks)
+                .build();
+    }
+
 
     private UUID extractCurrentUserId() {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
@@ -280,4 +337,76 @@ public class ResultServiceImpl implements ResultService {
         String lastName = userResponse.getLastName() != null ? userResponse.getLastName() : "";
         return (firstName + " " + lastName).trim();
     }
+
+    private Sort toSort(SubmissionSort sort) {
+        if (sort == null) sort = SubmissionSort.LATEST_WORK;
+
+        return switch (sort) {
+            case LATEST_WORK -> Sort.by(Sort.Direction.DESC, "submittedAt");
+            case OLDEST_WORK -> Sort.by(Sort.Direction.ASC, "submittedAt");
+            case HIGHEST_SCORE -> Sort.by(Sort.Direction.DESC, "scoreEarned");
+        };
+    }
+
+    private BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private Instant nzInstant(Instant v) {
+        return v == null ? Instant.EPOCH : v;
+    }
+
+    private Submission pickAnchor(List<Submission> all, SubmissionSort sort) {
+        if (sort == null) sort = SubmissionSort.LATEST_WORK;
+
+        return switch (sort) {
+            case LATEST_WORK -> all.stream()
+                    .max((a, b) -> nzInstant(a.getSubmittedAt()).compareTo(nzInstant(b.getSubmittedAt())))
+                    .orElse(all.getFirst());
+
+            case OLDEST_WORK -> all.stream()
+                    .min((a, b) -> nzInstant(a.getSubmittedAt()).compareTo(nzInstant(b.getSubmittedAt())))
+                    .orElse(all.getFirst());
+
+            case HIGHEST_SCORE -> all.stream()
+                    .max((a, b) -> nz(a.getScoreEarned()).compareTo(nz(b.getScoreEarned())))
+                    .orElse(all.getFirst());
+        };
+    }
+
+    private ZoneId resolveZoneFromSubmission(Submission submission) {
+        String tz = submission.getTimeZone();
+        if (tz == null || tz.isBlank()) return ZoneId.of("UTC");
+
+        try {
+            return ZoneId.of(tz.trim());
+        } catch (DateTimeException e) {
+            return ZoneId.of("UTC");
+        }
+    }
+
+    private Instant[] resolveRangeInstant(TimeRange range, ZoneId zone) {
+        ZonedDateTime now = ZonedDateTime.now(zone);
+
+        return switch (range) {
+            case CURRENT_MONTH -> new Instant[]{
+                    now.withDayOfMonth(1).toLocalDate().atStartOfDay(zone).toInstant(),
+                    now.toInstant()
+            };
+            case LAST_MONTH -> {
+                ZonedDateTime start = now.minusMonths(1)
+                        .withDayOfMonth(1)
+                        .toLocalDate()
+                        .atStartOfDay(zone);
+
+                ZonedDateTime end = start.plusMonths(1);
+                yield new Instant[]{start.toInstant(), end.toInstant()};
+            }
+            case THIS_YEAR -> new Instant[]{
+                    now.withDayOfYear(1).toLocalDate().atStartOfDay(zone).toInstant(),
+                    now.toInstant()
+            };
+        };
+    }
+
 }

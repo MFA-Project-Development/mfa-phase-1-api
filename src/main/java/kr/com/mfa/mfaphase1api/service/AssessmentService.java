@@ -36,4 +36,5 @@ public interface AssessmentService {
 
     AssessmentSummary getAssessmentsSummary(Month month);
 
+    List<AssessmentResponseForGrading> getRecentAssessments();
 }

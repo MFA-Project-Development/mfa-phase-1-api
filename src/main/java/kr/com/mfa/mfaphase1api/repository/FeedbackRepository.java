@@ -4,6 +4,7 @@ import kr.com.mfa.mfaphase1api.model.entity.Feedback;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -25,5 +26,14 @@ public interface FeedbackRepository extends JpaRepository<Feedback, UUID> {
     Page<Feedback> findAllByAnswer_AnswerId_AndAnswer_Submission_StudentId(UUID answerId, UUID studentId, Pageable pageable);
 
     Optional<Feedback> findFeedbackByAnswer_AnswerId_AndAnnotation_AnnotationId(UUID answerId, UUID annotationId);
+
+    @Query("""
+            select count(f)
+            from Feedback f
+            join f.answer a
+            join a.submission s
+            where s.submissionId = :submissionId
+            """)
+    long countFeedbacksBySubmissionId(UUID submissionId);
 
 }

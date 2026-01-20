@@ -238,7 +238,6 @@ public class AssessmentController {
         );
     }
 
-
     @GetMapping("/assessments")
     @Operation(
             summary = "List assessments without class",
@@ -270,9 +269,19 @@ public class AssessmentController {
     )
     public ResponseEntity<APIResponse<AssessmentSummary>> getAssessmentsSummary(
             @Parameter(description = "Filter by month (1-12)", example = "1", in = ParameterIn.QUERY)
-            @RequestParam(required = false) Month month
+            @RequestParam(defaultValue = "JANUARY") Month month
     ) {
         return buildResponse("Assessments summary retrieved successfully", assessmentService.getAssessmentsSummary(month), HttpStatus.OK);
+    }
+
+    @GetMapping("/assessments/recent")
+    @Operation(
+            summary = "List recent assessments without class",
+            description = "Returns only 5 most recent assessments without class.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<List<AssessmentResponseForGrading>>> getRecentAssessments() {
+        return buildResponse("Recent assessments retrieved successfully", assessmentService.getRecentAssessments(), HttpStatus.OK);
     }
 
 }

@@ -9,8 +9,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.StudentResponseResultSummary;
 import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
+import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionSort;
+import kr.com.mfa.mfaphase1api.model.enums.TimeRange;
 import kr.com.mfa.mfaphase1api.service.ResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -25,7 +29,7 @@ import java.util.UUID;
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
 
 @RestController
-@RequestMapping("/api/v1/assessments/{assessmentId}/submissions")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "mfa")
 public class ResultController {
@@ -33,7 +37,7 @@ public class ResultController {
     private final ResultService resultService;
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @PostMapping("/{submissionId}/result/grade")
+    @PostMapping("/assessments/{assessmentId}/submissions/{submissionId}/result/grade")
     @Operation(
             summary = "Graded submission results",
             description = "Graded the results of the submission.",
@@ -51,7 +55,7 @@ public class ResultController {
     }
 
     @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
-    @GetMapping("/{submissionId}/result")
+    @GetMapping("/assessments/{assessmentId}/submissions/{submissionId}/result")
     @Operation(
             summary = "Get submission result",
             description = "Retrieves the result of the submission.",
@@ -70,7 +74,7 @@ public class ResultController {
     }
 
     @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
-    @GetMapping("/results")
+    @GetMapping("/assessments/{assessmentId}/submissions/results")
     @Operation(
             summary = "Get all submissions result by assessment",
             description = "Returns a paginated list of submissions result for a specific assessment with sorting.",
@@ -94,7 +98,7 @@ public class ResultController {
     }
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @PostMapping("/result/publish")
+    @PostMapping("/assessments/{assessmentId}/submissions/result/publish")
     @Operation(
             summary = "Publish submission results",
             description = "Publishes the results of the submission. After publication, results are visible to students.",
@@ -109,4 +113,27 @@ public class ResultController {
         resultService.publishSubmissionResult(assessmentId);
         return buildResponse("Results published successfully", null, HttpStatus.OK);
     }
+
+    @PreAuthorize("hasAnyRole('STUDENT')")
+    @GetMapping("/submissions/result/me/summary")
+    @Operation(
+            summary = "Get submission result summary",
+            description = "Retrieves the result summary of the current user's submission.",
+            tags = {"Result"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Submission result summary retrieved successfully")
+            }
+    )
+    public ResponseEntity<APIResponse<StudentResponseResultSummary>> getMySubmissionResultSummary(
+            @Parameter(description = "Time Range", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "CURRENT_MONTH") @NotNull TimeRange range,
+
+            @Parameter(description = "Submission Sort", in = ParameterIn.QUERY)
+            @RequestParam(defaultValue = "LATEST_WORK") @NotNull SubmissionSort sort
+    ) {
+        return buildResponse("Submission result summary retrieved successfully",
+                resultService.getMySubmissionResultSummary(range, sort),
+                HttpStatus.OK);
+    }
+
 }

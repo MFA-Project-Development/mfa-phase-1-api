@@ -4,9 +4,11 @@ import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,4 +31,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     Integer countByAssessmentAndPublishedAtIsNotNull(Assessment assessment);
 
     List<Submission> findAllByAssessment_AssessmentId(UUID assessmentId);
+
+    List<Submission> findAllByStudentIdAndSubmittedAtIsNotNull(UUID studentId);
+
+    @EntityGraph(attributePaths = {"answers"})
+    List<Submission> findAllByStudentIdAndSubmittedAtIsNotNullAndPublishedAtIsNotNullAndSubmittedAtBetween(
+            UUID studentId,
+            Instant start,
+            Instant end,
+            Pageable pageable
+    );
+
+    Integer countByAssessmentAndStartedAtIsNotNull(Assessment assessment);
+
+    Optional<Submission> findByAssessmentAndStudentId(Assessment assessment, UUID studentId);
 }
