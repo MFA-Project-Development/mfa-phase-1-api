@@ -4,10 +4,12 @@ import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Class;
+import kr.com.mfa.mfaphase1api.model.entity.Submission;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.BaseRole;
 import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
 import kr.com.mfa.mfaphase1api.repository.ClassRepository;
+import kr.com.mfa.mfaphase1api.repository.MotivationContentRepository;
 import kr.com.mfa.mfaphase1api.repository.SubSubjectRepository;
 import kr.com.mfa.mfaphase1api.service.DashboardService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
@@ -17,7 +19,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
 @Service
@@ -29,6 +35,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final SubSubjectRepository subSubjectRepository;
     private final ClassRepository classRepository;
     private final AssessmentRepository assessmentRepository;
+    private final MotivationContentRepository motivationContentRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -150,6 +157,7 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         List<AssessmentSummaryByClass> assessmentSummaryByClasses = new ArrayList<>();
+        RecentActivity recentActivity = new RecentActivity();
 
         for (Class clazz : classes) {
 
@@ -180,27 +188,78 @@ public class DashboardServiceImpl implements DashboardService {
                         currentUserId, AssessmentStatus.FINISHED, clazz.getClassId(), newStartDate, newEndDate);
             }
 
-            int examsByClass = 0, quizzesByClass = 0, assignmentsByClass = 0, homeworksByClass = 0;
+            BigDecimal examAvg = BigDecimal.ZERO;
+            BigDecimal quizAvg = BigDecimal.ZERO;
+            BigDecimal assignmentAvg = BigDecimal.ZERO;
+            BigDecimal homeworkAvg = BigDecimal.ZERO;
+            long totalPendingGrading = 0, totalUpcomingAssessment = 0;
 
             for (Assessment assessment : assessmentsByClass) {
+
+                Instant startAt = assessment.getStartDate();
+                if (startAt == null) continue;
+
+                ZoneId zone = ZoneId.of(assessment.getTimeZone());
+                ZonedDateTime nowZdt = ZonedDateTime.now(zone);
+
+                ZonedDateTime weekEndZdt = nowZdt
+                        .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
+                        .toLocalDate()
+                        .atStartOfDay(zone);
+
+                Instant now = nowZdt.toInstant();
+                Instant weekEnd = weekEndZdt.toInstant();
+
+                boolean upcomingInCurrentWeek =
+                        startAt.isBefore(now) &&
+                        startAt.isBefore(weekEnd);
+
+                if (upcomingInCurrentWeek) {
+                    totalUpcomingAssessment++;
+                }
+
+                List<Submission> submissions = assessment.getSubmissions();
+                if (submissions.isEmpty()) continue;
+
+                BigDecimal totalStudentScore = BigDecimal.ZERO;
+
+                for (Submission submission : submissions) {
+                    totalStudentScore = totalStudentScore.add(submission.getScoreEarned());
+                    if (submission.getGradedAt() == null) {
+                        totalPendingGrading++;
+                    }
+                }
+
+                BigDecimal avgScore = totalStudentScore.divide(
+                        BigDecimal.valueOf(submissions.size()),
+                        2,
+                        RoundingMode.HALF_UP
+                );
+
                 switch (assessment.getAssessmentType()) {
-                    case EXAM -> examsByClass++;
-                    case QUIZ -> quizzesByClass++;
-                    case ASSIGNMENT -> assignmentsByClass++;
-                    case HOMEWORK -> homeworksByClass++;
+                    case EXAM -> examAvg = avgScore;
+                    case QUIZ -> quizAvg = avgScore;
+                    case ASSIGNMENT -> assignmentAvg = avgScore;
+                    case HOMEWORK -> homeworkAvg = avgScore;
                 }
             }
 
             AssessmentSummaryByClass assessmentSummaryByClass = AssessmentSummaryByClass.builder()
                     .classId(clazz.getClassId())
                     .className(clazz.getName())
-                    .exams(examsByClass)
-                    .assignments(assignmentsByClass)
-                    .quizzes(quizzesByClass)
-                    .homeworks(homeworksByClass)
+                    .exams(examAvg)
+                    .assignments(assignmentAvg)
+                    .quizzes(quizAvg)
+                    .homeworks(homeworkAvg)
                     .build();
 
             assessmentSummaryByClasses.add(assessmentSummaryByClass);
+
+            long totalMotivation = motivationContentRepository.findAllByCreatedBy(currentUserId).size();
+
+            recentActivity.setTotalPendingGrading(totalPendingGrading);
+            recentActivity.setTotalUpcomingAssessment(totalUpcomingAssessment);
+            recentActivity.setTotalMotivation(totalMotivation);
         }
 
 
@@ -215,7 +274,8 @@ public class DashboardServiceImpl implements DashboardService {
                         .quizzes(quizzes)
                         .homeworks(homeworks)
                         .build())
-                .assessmentSummaryByClasses(assessmentSummaryByClasses)
+                .avgStudentScoreByClasses(assessmentSummaryByClasses)
+                .recentActivity(recentActivity)
                 .build();
     }
 
@@ -230,6 +290,12 @@ public class DashboardServiceImpl implements DashboardService {
 
     private UUID extractCurrentUserId() {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+    }
+
+    private static long weekOfTerm(LocalDate termStart, LocalDate date) {
+        if (date.isBefore(termStart)) return 0;
+        long days = ChronoUnit.DAYS.between(termStart, date);
+        return (days / 7) + 1;
     }
 
 }

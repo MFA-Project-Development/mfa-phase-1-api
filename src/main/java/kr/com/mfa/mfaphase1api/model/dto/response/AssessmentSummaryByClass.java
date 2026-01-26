@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -14,9 +15,9 @@ import java.util.UUID;
 public class AssessmentSummaryByClass {
     private UUID classId;
     private String className;
-    private long assignments;
-    private long homeworks;
-    private long quizzes;
-    private long exams;
+    private BigDecimal assignments;
+    private BigDecimal homeworks;
+    private BigDecimal quizzes;
+    private BigDecimal exams;
 }
 

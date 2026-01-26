@@ -14,6 +14,7 @@ import java.util.List;
 public class TeacherOverviewResponse {
     private TotalStudentSummary totalStudentSummary;
     private TeachingSummary teachingSummary;
-    private List<AssessmentSummaryByClass> assessmentSummaryByClasses;
+    private List<AssessmentSummaryByClass> avgStudentScoreByClasses;
+    private RecentActivity recentActivity;
 
 }
