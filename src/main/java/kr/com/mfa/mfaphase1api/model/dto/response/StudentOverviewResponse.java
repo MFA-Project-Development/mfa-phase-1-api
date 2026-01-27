@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -14,11 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class StudentOverviewResponse {
-    private Double score;
+    private BigDecimal score;
     private ScoreStatus scoreStatus;
-    private Double progress;
-    private Double progressChange;
-    private Double average;
+    private BigDecimal progressPercent;
+    private BigDecimal progressChange;
+    private BigDecimal average;
     private AverageStatus averageStatus;
     private List<PerformanceItem> performance;
 }

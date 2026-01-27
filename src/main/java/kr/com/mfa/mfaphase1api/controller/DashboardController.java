@@ -3,6 +3,7 @@ package kr.com.mfa.mfaphase1api.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
+import kr.com.mfa.mfaphase1api.model.enums.PerformanceStatus;
 import kr.com.mfa.mfaphase1api.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -44,9 +45,9 @@ public class DashboardController {
     )
     public ResponseEntity<APIResponse<StudentOverviewResponse>> getStudentOverview(
             @RequestParam(required = false) Month month,
-            @RequestParam(required = false) String subSubjectName
+            @RequestParam(required = false) PerformanceStatus performanceStatus
     ) {
-        return buildResponse("Student dashboard overview retrieved", dashboardService.getStudentOverview(month, subSubjectName), HttpStatus.OK);
+        return buildResponse("Student dashboard overview retrieved", dashboardService.getStudentOverview(month, performanceStatus), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('INSTRUCTOR')")

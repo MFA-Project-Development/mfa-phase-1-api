@@ -1,16 +1,13 @@
 package kr.com.mfa.mfaphase1api.service.serviceimpl;
 
 import kr.com.mfa.mfaphase1api.client.UserClient;
+import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
-import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
-import kr.com.mfa.mfaphase1api.model.enums.BaseRole;
-import kr.com.mfa.mfaphase1api.repository.AssessmentRepository;
-import kr.com.mfa.mfaphase1api.repository.ClassRepository;
-import kr.com.mfa.mfaphase1api.repository.MotivationContentRepository;
-import kr.com.mfa.mfaphase1api.repository.SubSubjectRepository;
+import kr.com.mfa.mfaphase1api.model.enums.*;
+import kr.com.mfa.mfaphase1api.repository.*;
 import kr.com.mfa.mfaphase1api.service.DashboardService;
 import kr.com.mfa.mfaphase1api.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +33,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final ClassRepository classRepository;
     private final AssessmentRepository assessmentRepository;
     private final MotivationContentRepository motivationContentRepository;
+    private final SubmissionRepository submissionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,9 +53,149 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public StudentOverviewResponse getStudentOverview(Month month, String subSubjectName) {
-        return null;
+    @Transactional(readOnly = true)
+    public StudentOverviewResponse getStudentOverview(Month month, PerformanceStatus performanceStatus) {
+
+        UUID currentUserId = extractCurrentUserId();
+
+        ZoneId zone = ZoneId.of("UTC");
+        int year = Year.now(zone).getValue();
+
+        YearMonth ym = (month == null)
+                ? YearMonth.now(zone)
+                : YearMonth.of(year, month);
+
+        Instant start = ym.atDay(1).atStartOfDay(zone).toInstant();
+        Instant endExclusive = ym.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant();
+
+        Submission submission = submissionRepository
+                .findFirstByStudentIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(currentUserId, start, endExclusive)
+                .orElse(null);
+
+        List<Submission> submissions = submissionRepository
+                .findAllSubmissionsInMonth(currentUserId, start, endExclusive);
+
+        List<Submission> submissionsLastTwoMonths = submissionRepository
+                .findLastSubmissionOfTwoMonthsEndingAt(currentUserId, endExclusive);
+
+        BigDecimal score = (submission != null && submission.getScoreEarned() != null)
+                ? submission.getScoreEarned()
+                : BigDecimal.ZERO;
+
+        ScoreStatus scoreStatus;
+        if (score.compareTo(BigDecimal.valueOf(80)) >= 0) {
+            scoreStatus = ScoreStatus.GOOD;
+        } else if (score.compareTo(BigDecimal.valueOf(50)) >= 0) {
+            scoreStatus = ScoreStatus.AVERAGE;
+        } else {
+            scoreStatus = ScoreStatus.LOW;
+        }
+
+        BigDecimal progressPercent = BigDecimal.valueOf(100);
+        BigDecimal progressChange = BigDecimal.ZERO;
+
+        if (month == null || submission != null) {
+            if (submissionsLastTwoMonths.size() >= 2) {
+                Submission current = submissionsLastTwoMonths.get(0);
+                Submission previous = submissionsLastTwoMonths.get(1);
+
+                if (current.getSubmittedAt() != null && previous.getSubmittedAt() != null
+                    && current.getMaxScore() != null && previous.getMaxScore() != null
+                    && current.getMaxScore().compareTo(BigDecimal.ZERO) > 0
+                    && previous.getMaxScore().compareTo(BigDecimal.ZERO) > 0) {
+
+                    BigDecimal currentEarned = current.getScoreEarned() != null ? current.getScoreEarned() : BigDecimal.ZERO;
+                    BigDecimal previousEarned = previous.getScoreEarned() != null ? previous.getScoreEarned() : BigDecimal.ZERO;
+
+                    BigDecimal currentPercent = currentEarned
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(current.getMaxScore(), 2, RoundingMode.HALF_UP);
+
+                    BigDecimal previousPercent = previousEarned
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(previous.getMaxScore(), 2, RoundingMode.HALF_UP);
+
+                    progressChange = currentPercent
+                            .subtract(previousPercent)
+                            .setScale(2, RoundingMode.HALF_UP);
+
+                    progressPercent = currentPercent.min(BigDecimal.valueOf(100)); // UI cap
+                }
+            }
+        } else {
+            progressPercent = null;
+            progressChange = null;
+        }
+
+        BigDecimal average = null;
+        AverageStatus averageStatus = null;
+
+        if (submissions != null && !submissions.isEmpty()) {
+            BigDecimal totalPercent = BigDecimal.ZERO;
+            int valid = 0;
+
+            for (Submission s : submissions) {
+                if (s.getMaxScore() != null
+                    && s.getMaxScore().compareTo(BigDecimal.ZERO) > 0
+                    && s.getScoreEarned() != null) {
+
+                    BigDecimal percent = s.getScoreEarned()
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(s.getMaxScore(), 2, RoundingMode.HALF_UP);
+
+                    totalPercent = totalPercent.add(percent);
+                    valid++;
+                }
+            }
+
+            if (valid > 0) {
+                average = totalPercent.divide(BigDecimal.valueOf(valid), 2, RoundingMode.HALF_UP);
+
+                if (average.compareTo(BigDecimal.valueOf(80)) >= 0) {
+                    averageStatus = AverageStatus.HIGH;
+                } else if (average.compareTo(BigDecimal.valueOf(50)) >= 0) {
+                    averageStatus = AverageStatus.MEDIUM;
+                } else {
+                    averageStatus = AverageStatus.LOW;
+                }
+            }
+        }
+
+        PerformanceStatus effectiveStatus =
+                (performanceStatus == null)
+                        ? PerformanceStatus.TOTAL_AVG_SCORE
+                        : performanceStatus;
+
+        Month responseMonth = (month != null) ? month : ym.getMonth();
+        List<PerformanceItem> performance;
+
+        if (effectiveStatus == PerformanceStatus.TOTAL_ASSESSMENT) {
+            performance = List.of(
+                    PerformanceItem.builder()
+                            .month(responseMonth)
+                            .totalAssessment((long) (submissions == null ? 0 : submissions.size()))
+                            .build()
+            );
+        } else {
+            performance = List.of(
+                    PerformanceItem.builder()
+                            .month(responseMonth)
+                            .totalAvgScore(average == null ? BigDecimal.ZERO : average)
+                            .build()
+            );
+        }
+
+        return StudentOverviewResponse.builder()
+                .score(score)
+                .scoreStatus(scoreStatus)
+                .progressPercent(progressPercent)
+                .progressChange(progressChange)
+                .average(average)
+                .averageStatus(averageStatus)
+                .performance(performance)
+                .build();
     }
+
 
     @Override
     @Transactional(readOnly = true)
