@@ -185,6 +185,28 @@ public class DashboardServiceImpl implements DashboardService {
             );
         }
 
+
+        List<RecentFeedbackAssessmentResponse> recentFeedbackAssessments =
+                submissionRepository
+                        .findTop5ByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(currentUserId)
+                        .stream()
+                        .map(s -> RecentFeedbackAssessmentResponse.builder()
+                                .assessmentId(s.getAssessment().getAssessmentId())
+                                .submissionId(s.getSubmissionId())
+                                .title(s.getAssessment().getTitle())
+                                .gradedBy(Objects.requireNonNull(userClient.getUserInfoById(s.getGradedBy()).getBody()).getPayload().getFirstName() + " " + Objects.requireNonNull(userClient.getUserInfoById(s.getGradedBy()).getBody()).getPayload().getLastName())
+                                .publishedAt(
+                                        s.getPublishedAt() != null
+                                                ? LocalDateTime.ofInstant(
+                                                s.getPublishedAt(),
+                                                ZoneId.of(s.getTimeZone())
+                                        )
+                                                : null
+                                )
+                                .build()
+                        )
+                        .toList();
+
         return StudentOverviewResponse.builder()
                 .score(score)
                 .scoreStatus(scoreStatus)
@@ -193,6 +215,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .average(average)
                 .averageStatus(averageStatus)
                 .performance(performance)
+                .recentFeedbackAssessments(recentFeedbackAssessments)
                 .build();
     }
 

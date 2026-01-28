@@ -22,4 +22,5 @@ public class StudentOverviewResponse {
     private BigDecimal average;
     private AverageStatus averageStatus;
     private List<PerformanceItem> performance;
+    private List<RecentFeedbackAssessmentResponse> recentFeedbackAssessments;
 }

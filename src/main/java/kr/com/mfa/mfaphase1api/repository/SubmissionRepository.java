@@ -96,4 +96,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
             Instant endExclusive
     );
 
+    List<Submission> findTop5ByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(UUID studentId);
+
+
 }
