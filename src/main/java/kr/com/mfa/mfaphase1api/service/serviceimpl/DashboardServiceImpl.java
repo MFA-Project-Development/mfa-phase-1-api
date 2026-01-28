@@ -194,7 +194,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .assessmentId(s.getAssessment().getAssessmentId())
                                 .submissionId(s.getSubmissionId())
                                 .title(s.getAssessment().getTitle())
-                                .gradedBy(Objects.requireNonNull(userClient.getUserInfoById(s.getGradedBy()).getBody()).getPayload().getFirstName() + " " + Objects.requireNonNull(userClient.getUserInfoById(s.getGradedBy()).getBody()).getPayload().getLastName())
+                                .gradedBy(resolveGradedBy(s.getGradedBy()))
                                 .publishedAt(
                                         s.getPublishedAt() != null
                                                 ? LocalDateTime.ofInstant(
@@ -453,10 +453,25 @@ public class DashboardServiceImpl implements DashboardService {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
     }
 
-    private static long weekOfTerm(LocalDate termStart, LocalDate date) {
-        if (date.isBefore(termStart)) return 0;
-        long days = ChronoUnit.DAYS.between(termStart, date);
-        return (days / 7) + 1;
+    private String resolveGradedBy(UUID gradedBy) {
+        if (gradedBy == null) {
+            return null;
+        }
+
+        try {
+            var response = userClient.getUserInfoById(gradedBy);
+
+            if (response == null || response.getBody() == null || response.getBody().getPayload() == null) {
+                return null;
+            }
+
+            var user = response.getBody().getPayload();
+            return user.getFirstName() + " " + user.getLastName();
+
+        } catch (Exception e) {
+            return null;
+        }
     }
+
 
 }
