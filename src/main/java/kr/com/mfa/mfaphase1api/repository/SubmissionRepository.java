@@ -2,6 +2,7 @@ package kr.com.mfa.mfaphase1api.repository;
 
 import kr.com.mfa.mfaphase1api.model.entity.Assessment;
 import kr.com.mfa.mfaphase1api.model.entity.Submission;
+import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -96,7 +97,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
             Instant endExclusive
     );
 
-    List<Submission> findTop5ByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(UUID studentId);
+    List<Submission> findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(UUID studentId, SubmissionStatus status);
 
 
 }

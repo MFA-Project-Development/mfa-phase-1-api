@@ -188,7 +188,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<RecentFeedbackAssessmentResponse> recentFeedbackAssessments =
                 submissionRepository
-                        .findTop5ByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(currentUserId)
+                        .findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(currentUserId, SubmissionStatus.SUBMITTED)
                         .stream()
                         .map(s -> RecentFeedbackAssessmentResponse.builder()
                                 .assessmentId(s.getAssessment().getAssessmentId())
