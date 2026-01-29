@@ -72,8 +72,10 @@ public class DashboardServiceImpl implements DashboardService {
                 .findFirstByStudentIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(currentUserId, start, endExclusive)
                 .orElse(null);
 
-        List<Submission> submissions = submissionRepository
-                .findAllSubmissionsInMonth(currentUserId, start, endExclusive);
+        List<Assessment> assessments = assessmentRepository
+                .findAssessmentsInMonthByStudent(currentUserId, start, endExclusive);
+
+        List<Submission> submissions = submissionRepository.findAllSubmissionsInMonth(currentUserId, start, endExclusive);
 
         List<Submission> submissionsLastTwoMonths = submissionRepository
                 .findLastSubmissionOfTwoMonthsEndingAt(currentUserId, endExclusive);
@@ -119,7 +121,7 @@ public class DashboardServiceImpl implements DashboardService {
                             .subtract(previousPercent)
                             .setScale(2, RoundingMode.HALF_UP);
 
-                    progressPercent = currentPercent.min(BigDecimal.valueOf(100)); // UI cap
+                    progressPercent = currentPercent.min(BigDecimal.valueOf(100));
                 }
             }
         } else {
@@ -173,7 +175,7 @@ public class DashboardServiceImpl implements DashboardService {
             performance = List.of(
                     PerformanceItem.builder()
                             .month(responseMonth)
-                            .totalAssessment((long) (submissions == null ? 0 : submissions.size()))
+                            .totalAssessment((long) (assessments == null ? 0 : assessments.size()))
                             .build()
             );
         } else {

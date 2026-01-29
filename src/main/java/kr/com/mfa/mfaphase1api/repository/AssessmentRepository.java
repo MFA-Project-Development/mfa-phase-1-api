@@ -111,4 +111,18 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
             """)
     Page<Assessment> findRecentByMySubmissionStartedAt(UUID studentId, Pageable pageable);
 
+    @Query("""
+                select distinct a
+                from Submission s
+                join s.assessment a
+                where s.studentId = :studentId
+                  and a.startDate >= :start
+                  and a.startDate < :endExclusive
+                order by a.startDate desc
+            """)
+    List<Assessment> findAssessmentsInMonthByStudent(
+            UUID studentId, Instant start, Instant endExclusive
+    );
+
+
 }
