@@ -87,10 +87,6 @@ public class AssessmentServiceImpl implements AssessmentService {
             throw new NotFoundException("Class " + classId + " not found.");
         }
 
-        Class clazz = classRepository.findById(classId).orElseThrow(
-                () -> new NotFoundException("Class " + classId + " not found.")
-        );
-
         int zeroBased = Math.max(page, 1) - 1;
         Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
 
@@ -108,8 +104,12 @@ public class AssessmentServiceImpl implements AssessmentService {
         List<AssessmentResponse> items = pageAssessments.stream()
                 .map(
                         assessment -> {
-                            Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
-                            Integer totalStudents = clazz.getStudentClassEnrollments().size();
+                            Integer totalSubmitted = submissionRepository.countByAssessmentAndStatus(assessment, SubmissionStatus.SUBMITTED);
+                            Integer totalStudents = assessment.getClassSubSubjectInstructor()
+                                    .getClassSubSubject()
+                                    .getClazz()
+                                    .getStudentClassEnrollments()
+                                    .size();
                             return assessment.toResponse(totalSubmitted, totalStudents);
                         }
                 )
@@ -405,7 +405,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         List<AssessmentResponseForGrading> items = pageAssessments.stream()
                 .map(assessment -> {
 
-                    Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
+                    Integer totalSubmitted = submissionRepository.countByAssessmentAndStatus(assessment, SubmissionStatus.SUBMITTED);
                     Integer totalStudents = assessment.getClassSubSubjectInstructor()
                             .getClassSubSubject()
                             .getClazz()
