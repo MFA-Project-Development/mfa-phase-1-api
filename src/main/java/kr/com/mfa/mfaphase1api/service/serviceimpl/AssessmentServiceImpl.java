@@ -9,6 +9,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
+import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
@@ -63,7 +64,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 request.toEntity(currentUserId, csi)
         );
 
-        return saved.toResponse(null);
+        return saved.toResponse(null, null);
     }
 
     @Override
@@ -86,6 +87,10 @@ public class AssessmentServiceImpl implements AssessmentService {
             throw new NotFoundException("Class " + classId + " not found.");
         }
 
+        Class clazz = classRepository.findById(classId).orElseThrow(
+                () -> new NotFoundException("Class " + classId + " not found.")
+        );
+
         int zeroBased = Math.max(page, 1) - 1;
         Pageable pageable = PageRequest.of(zeroBased, size, Sort.by(direction, property.getProperty()));
 
@@ -104,7 +109,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .map(
                         assessment -> {
                             Integer totalSubmitted = submissionRepository.countByAssessment(assessment);
-                            return assessment.toResponse(totalSubmitted);
+                            Integer totalStudents = clazz.getStudentClassEnrollments().size();
+                            return assessment.toResponse(totalSubmitted, totalStudents);
                         }
                 )
                 .toList();
@@ -138,7 +144,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole.getFirst());
         };
 
-        return assessment.toResponse(null);
+        return assessment.toResponse(null, null);
     }
 
     @Override
@@ -168,7 +174,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
-        return saved.toResponse(null);
+        return saved.toResponse(null, null);
 
     }
 
@@ -326,7 +332,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             default -> throw new BadRequestException("Assessment is not in drafted and scheduled status.");
         }
 
-        return assessment.toResponse(null);
+        return assessment.toResponse(null, null);
     }
 
     @Override
@@ -373,7 +379,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         quartzSchedulerService.scheduleStartAndFinishJobs(saved);
 
-        return saved.toResponse(null);
+        return saved.toResponse(null, null);
     }
 
     @Transactional(readOnly = true)
@@ -580,7 +586,6 @@ public class AssessmentServiceImpl implements AssessmentService {
                 })
                 .toList();
     }
-
 
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

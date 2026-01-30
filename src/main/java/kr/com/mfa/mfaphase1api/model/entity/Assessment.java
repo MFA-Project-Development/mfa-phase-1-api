@@ -76,7 +76,7 @@ public class Assessment {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public AssessmentResponse toResponse(Integer totalSubmitted) {
+    public AssessmentResponse toResponse(Integer totalSubmitted, Integer totalStudents) {
 
         ZoneId zone;
         try {
@@ -129,6 +129,7 @@ public class Assessment {
                 )
                 .createdBy(this.createdBy)
                 .totalSubmitted(totalSubmitted)
+                .totalStudents(totalStudents)
                 .build();
     }
 

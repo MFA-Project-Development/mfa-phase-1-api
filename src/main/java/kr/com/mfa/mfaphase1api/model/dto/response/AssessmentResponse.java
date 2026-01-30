@@ -37,4 +37,7 @@ public class AssessmentResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer totalSubmitted;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer totalStudents;
+
 }
