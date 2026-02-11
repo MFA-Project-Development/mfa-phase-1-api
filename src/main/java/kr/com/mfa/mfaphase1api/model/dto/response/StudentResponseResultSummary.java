@@ -14,5 +14,7 @@ import java.math.BigDecimal;
 public class StudentResponseResultSummary {
     private BigDecimal maxScore;
     private BigDecimal scoreEarned;
+    private Long totalCorrect;
+    private Long totalIncorrect;
     private Long totalFeedbacks;
 }

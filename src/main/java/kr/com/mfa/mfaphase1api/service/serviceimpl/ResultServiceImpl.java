@@ -284,6 +284,8 @@ public class ResultServiceImpl implements ResultService {
             return StudentResponseResultSummary.builder()
                     .scoreEarned(BigDecimal.ZERO)
                     .maxScore(BigDecimal.ZERO)
+                    .totalCorrect(0L)
+                    .totalIncorrect(0L)
                     .totalFeedbacks(0L)
                     .build();
         }
@@ -307,17 +309,31 @@ public class ResultServiceImpl implements ResultService {
             return StudentResponseResultSummary.builder()
                     .scoreEarned(BigDecimal.ZERO)
                     .maxScore(BigDecimal.ZERO)
+                    .totalCorrect(0L)
+                    .totalIncorrect(0L)
                     .totalFeedbacks(0L)
                     .build();
         }
 
         Submission submission = picked.getFirst();
 
+        long totalCorrect = submission.getAnswers()
+                .stream()
+                .filter(answer -> answer.getFeedbacks().isEmpty())
+                .count();
+
+        long totalIncorrect = submission.getAnswers()
+                .stream()
+                .filter(answer -> !answer.getFeedbacks().isEmpty())
+                .count();
+
         long totalFeedbacks = feedbackRepository.countFeedbacksBySubmissionId(submission.getSubmissionId());
 
         return StudentResponseResultSummary.builder()
                 .scoreEarned(nz(submission.getScoreEarned()))
                 .maxScore(nz(submission.getMaxScore()))
+                .totalCorrect(totalCorrect)
+                .totalIncorrect(totalIncorrect)
                 .totalFeedbacks(totalFeedbacks)
                 .build();
     }
