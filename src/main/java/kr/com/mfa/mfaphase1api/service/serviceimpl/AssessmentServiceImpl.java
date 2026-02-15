@@ -9,7 +9,6 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
-import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
@@ -28,6 +27,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
 
@@ -549,6 +550,8 @@ public class AssessmentServiceImpl implements AssessmentService {
 
                     Boolean isGraded = null;
                     SubmissionStatus status = null;
+                    BigDecimal maxScore = null;
+                    BigDecimal scoreEarned = null;
 
                     if (isStudent) {
                         Submission mySubmission = submissionRepository
@@ -558,6 +561,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                         if (mySubmission != null) {
                             isGraded = mySubmission.getGradedAt() != null;
                             status = mySubmission.getStatus();
+                            maxScore = mySubmission.getMaxScore();
+                            scoreEarned = mySubmission.getScoreEarned();
                         }
                     }
 
@@ -582,9 +587,59 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .isPublished(isPublished)
                             .isGraded(isGraded)
                             .status(status)
+                            .maxScore(maxScore)
+                            .scoreEarned(scoreEarned)
                             .build();
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public AssessmentProfileSummary getAssessmentsProfileSummary() {
+        UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+
+        List<Assessment> assessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(currentUserId);
+
+        long totalAssessments = assessments.size();
+        long totalCompleted = assessments.stream().filter(a ->
+                a.getSubmissions().stream().anyMatch(
+                        s -> s.getStatus().equals(SubmissionStatus.SUBMITTED))
+        ).count();
+        long totalPending = assessments.stream().filter(a ->
+                a.getSubmissions().stream().anyMatch(
+                        s -> s.getStatus().equals(SubmissionStatus.NOT_SUBMITTED))
+        ).count();
+        long totalFailed = assessments.stream().filter(a ->
+                a.getSubmissions().stream().anyMatch(
+                        s -> s.getStatus().equals(SubmissionStatus.MISSED))
+        ).count();
+
+        BigDecimal totalScoreEarned = assessments.stream()
+                .flatMap(a -> a.getSubmissions().stream())
+                .map(Submission::getScoreEarned)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalMaxScore = assessments.stream()
+                .flatMap(a -> a.getSubmissions().stream())
+                .map(Submission::getMaxScore)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal percentageAssessments = totalScoreEarned.divide(totalMaxScore, 2, RoundingMode.HALF_UP);
+        BigDecimal percentageCompleted = BigDecimal.valueOf(totalCompleted).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
+        BigDecimal percentagePending = BigDecimal.valueOf(totalPending).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
+        BigDecimal percentageFailed = BigDecimal.valueOf(totalFailed).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
+
+        return AssessmentProfileSummary.builder()
+                .totalAssessments(totalAssessments)
+                .totalCompleted(totalCompleted)
+                .totalPending(totalPending)
+                .totalFailed(totalFailed)
+                .percentageAssessments(percentageAssessments)
+                .percentageCompleted(percentageCompleted)
+                .percentagePending(percentagePending)
+                .percentageFailed(percentageFailed)
+                .build();
     }
 
 

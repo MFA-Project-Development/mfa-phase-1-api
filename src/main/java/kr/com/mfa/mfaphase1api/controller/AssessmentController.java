@@ -284,4 +284,14 @@ public class AssessmentController {
         return buildResponse("Recent assessments retrieved successfully", assessmentService.getRecentAssessments(), HttpStatus.OK);
     }
 
+    @GetMapping("/assessments/profile/summary")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(
+            summary = "Get assessments summary",
+            description = "Returns summary statistics of assessments, optionally filtered by month.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<AssessmentProfileSummary>> getAssessmentsProfileSummary() {
+        return buildResponse("Assessments profile summary retrieved successfully", assessmentService.getAssessmentsProfileSummary(), HttpStatus.OK);
+    }
 }

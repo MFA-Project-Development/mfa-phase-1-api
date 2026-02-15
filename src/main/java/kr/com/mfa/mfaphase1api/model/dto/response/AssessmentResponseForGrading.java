@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,5 +34,11 @@ public class AssessmentResponseForGrading {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private SubmissionStatus status;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private BigDecimal scoreEarned;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private BigDecimal maxScore;
 
 }
