@@ -66,20 +66,21 @@ public class ResultServiceImpl implements ResultService {
                 ));
 
         SubmissionStatus status = submission.getStatus();
-        boolean isPublished = submission.getPublishedAt() != null;
         boolean isGraded = submission.getGradedAt() != null;
+        boolean isPublished = submission.getPublishedAt() != null;
 
         if (isPublished) {
             throw new ConflictException("Submission result has already been published.");
         }
-        if (isGraded) {
-            throw new ConflictException("Submission result has already been graded.");
-        }
+
         if (status == SubmissionStatus.MISSED || status == SubmissionStatus.NOT_SUBMITTED) {
             throw new BadRequestException("Cannot grade because the student missed the submission.");
         }
-        if (status != SubmissionStatus.SUBMITTED) {
-            throw new BadRequestException("Submission result cannot be graded because it is not in submitted status.");
+
+        if (status != SubmissionStatus.SUBMITTED && isGraded) {
+            throw new BadRequestException(
+                    "Submission result can only be graded when status is SUBMITTED or GRADED."
+            );
         }
 
         List<Question> questions = submission.getAssessment().getQuestions();
