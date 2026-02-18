@@ -599,36 +599,49 @@ public class AssessmentServiceImpl implements AssessmentService {
     public AssessmentProfileSummary getAssessmentsProfileSummary() {
         UUID currentUserId = UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
 
-        List<Assessment> assessments = assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(currentUserId);
+        List<Assessment> assessments =
+                assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(currentUserId);
 
         long totalAssessments = assessments.size();
-        long totalCompleted = assessments.stream().filter(a ->
-                a.getSubmissions().stream().anyMatch(
-                        s -> s.getStatus().equals(SubmissionStatus.SUBMITTED))
-        ).count();
-        long totalPending = assessments.stream().filter(a ->
-                a.getSubmissions().stream().anyMatch(
-                        s -> s.getStatus().equals(SubmissionStatus.NOT_SUBMITTED))
-        ).count();
-        long totalFailed = assessments.stream().filter(a ->
-                a.getSubmissions().stream().anyMatch(
-                        s -> s.getStatus().equals(SubmissionStatus.MISSED))
-        ).count();
 
-        BigDecimal totalScoreEarned = assessments.stream()
-                .flatMap(a -> a.getSubmissions().stream())
+        List<Submission> mySubmissionsPerAssessment = assessments.stream()
+                .map(a -> a.getSubmissions().stream()
+                        .filter(s -> currentUserId.equals(s.getStudentId()))
+                        .max(Comparator.comparing(Submission::getSubmittedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                                .thenComparing(Submission::getStartedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        )
+                        .orElse(null)
+                )
+                .filter(Objects::nonNull)
+                .toList();
+
+        long totalCompleted = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.SUBMITTED)
+                .count();
+
+        long totalPending = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.NOT_SUBMITTED)
+                .count();
+
+        long totalFailed = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.MISSED)
+                .count();
+
+        BigDecimal totalScoreEarned = mySubmissionsPerAssessment.stream()
                 .map(Submission::getScoreEarned)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalMaxScore = assessments.stream()
-                .flatMap(a -> a.getSubmissions().stream())
+        BigDecimal totalMaxScore = mySubmissionsPerAssessment.stream()
                 .map(Submission::getMaxScore)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal percentageAssessments = totalScoreEarned.divide(totalMaxScore, 2, RoundingMode.HALF_UP);
-        BigDecimal percentageCompleted = BigDecimal.valueOf(totalCompleted).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
-        BigDecimal percentagePending = BigDecimal.valueOf(totalPending).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
-        BigDecimal percentageFailed = BigDecimal.valueOf(totalFailed).divide(BigDecimal.valueOf(totalAssessments), 2, RoundingMode.HALF_UP);
+        BigDecimal percentageAssessments = safeDivide(totalScoreEarned, totalMaxScore);
+        BigDecimal bdTotalAssessments = BigDecimal.valueOf(totalAssessments);
+        BigDecimal percentageCompleted = safeDivide(BigDecimal.valueOf(totalCompleted), bdTotalAssessments);
+        BigDecimal percentagePending = safeDivide(BigDecimal.valueOf(totalPending), bdTotalAssessments);
+        BigDecimal percentageFailed = safeDivide(BigDecimal.valueOf(totalFailed), bdTotalAssessments);
 
         return AssessmentProfileSummary.builder()
                 .totalAssessments(totalAssessments)
@@ -641,7 +654,6 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .percentageFailed(percentageFailed)
                 .build();
     }
-
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {
         return assessmentRepository
@@ -656,5 +668,13 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     private void validateFilesExist(List<String> fileNames) {
         fileNames.forEach(fileService::getFileByFileName);
+    }
+
+    private BigDecimal safeDivide(BigDecimal numerator, BigDecimal denominator) {
+        if (numerator == null) numerator = BigDecimal.ZERO;
+        if (denominator == null || denominator.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return numerator.divide(denominator, 2, RoundingMode.HALF_UP);
     }
 }
