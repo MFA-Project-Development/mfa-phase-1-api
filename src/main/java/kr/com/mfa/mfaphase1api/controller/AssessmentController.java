@@ -268,8 +268,8 @@ public class AssessmentController {
             tags = {"Assessment"}
     )
     public ResponseEntity<APIResponse<AssessmentSummary>> getAssessmentsSummary(
-            @Parameter(description = "Filter by month (1-12)", example = "1", in = ParameterIn.QUERY)
-            @RequestParam(defaultValue = "JANUARY") Month month
+            @Parameter(description = "Filter by month", in = ParameterIn.QUERY)
+            @RequestParam(required = false) Month month
     ) {
         return buildResponse("Assessments summary retrieved successfully", assessmentService.getAssessmentsSummary(month), HttpStatus.OK);
     }
