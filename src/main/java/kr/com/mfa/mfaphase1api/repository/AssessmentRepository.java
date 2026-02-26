@@ -45,9 +45,12 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
 
     Page<Assessment> findAllByStatusAndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(AssessmentStatus status, UUID studentId, Pageable pageable);
 
-    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, Instant startDate, Instant dueDate);
+//    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(UUID studentId, AssessmentStatus status, Instant startDate, Instant dueDate);
 
-    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(UUID studentId, AssessmentStatus status);
+    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStartDateBetween(UUID studentId, Instant startDate, Instant dueDate);
+
+
+//    List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(UUID studentId, AssessmentStatus status);
 
     List<Assessment> findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(UUID studentId);
 

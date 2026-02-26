@@ -468,7 +468,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
         if (month == null) {
             assessments = assessmentRepository
-                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus(currentUserId, AssessmentStatus.FINISHED);
+                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(currentUserId);
         } else {
             int year = LocalDate.now().getYear();
             YearMonth ym = YearMonth.of(year, month);
@@ -487,8 +487,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                     .toInstant();
 
             assessments = assessmentRepository
-                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStatus_AndStartDateBetween(
-                            currentUserId, AssessmentStatus.FINISHED, newStartDate, newDueDate);
+                    .findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId_AndStartDateBetween(
+                            currentUserId, newStartDate, newDueDate);
         }
 
         int exams = 0;
