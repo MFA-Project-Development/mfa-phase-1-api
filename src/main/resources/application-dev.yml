@@ -47,6 +47,8 @@ spring:
           mime-types: application/json,application/xml,text/plain
         response:
           enabled: true
+      circuitbreaker:
+        enabled: true
 
   servlet:
     multipart:
@@ -123,3 +125,12 @@ management:
 socketio:
   server:
     url: http://localhost:3001
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      authentication:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        automaticTransitionFromOpenToHalfOpenEnabled: true

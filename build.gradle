@@ -48,6 +48,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-quartz-test'
     implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.12.0'
     implementation 'io.socket:socket.io-client:2.1.2'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 }
 
 dependencyManagement {

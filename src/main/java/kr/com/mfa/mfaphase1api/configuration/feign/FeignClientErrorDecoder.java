@@ -20,26 +20,27 @@ public class FeignClientErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
         String msg = "Unknown error";
+
         try {
             String body = readBody(response);
             if (body != null && !body.isBlank()) {
                 JsonNode node = mapper.readTree(body);
-                if (node.has("detail")) {
-                    msg = node.get("detail").asText();
-                } else {
-                    msg = body;
-                }
+                if (node.has("detail")) msg = node.get("detail").asText();
+                else msg = body;
             }
         } catch (Exception e) {
             msg = "Error reading response body";
         }
 
+        String url = response.request() != null ? response.request().url() : "unknown-url";
+        String fullMsg = "[Feign] " + methodKey + " -> " + response.status() + " " + url + " | " + msg;
+
         return switch (response.status()) {
-            case 400 -> new BadRequestException(msg);
-            case 401 -> new UnauthorizeException(msg);
-            case 404 -> new NotFoundException(msg);
-            case 409 -> new ConflictException(msg);
-            default -> new RuntimeException(msg);
+            case 400 -> new BadRequestException(fullMsg);
+            case 401 -> new UnauthorizeException(fullMsg);
+            case 404 -> new NotFoundException(fullMsg);
+            case 409 -> new ConflictException(fullMsg);
+            default -> new RuntimeException(fullMsg);
         };
     }
 

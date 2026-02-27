@@ -38,7 +38,7 @@ public class MotivationController {
 
     private final MotivationService motivationService;
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @PostMapping
     @Operation(
             summary = "Create motivation",
@@ -119,7 +119,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @PutMapping("/{motivationContentId}")
     @Operation(
             summary = "Update motivation",
@@ -141,7 +141,7 @@ public class MotivationController {
                 HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @DeleteMapping("/{motivationContentId}")
     @Operation(
             summary = "Delete motivation",
