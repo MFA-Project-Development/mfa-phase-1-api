@@ -1,0 +1,107 @@
+services:
+  mfa-phase1-db:
+    image: postgres:16
+    container_name: mfa-phase1-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Asia/Seoul
+
+    volumes:
+      - mfa-phase1-db-data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+    expose:
+      - "5432"
+
+    networks:
+      - mfa-private
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mfa-phase1-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mfa-phase1-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      # --- TIMEZONE (CRITICAL) ---
+      TZ: Asia/Seoul
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul"
+
+      # --- Database ---
+      SPRING_DATASOURCE_URL: jdbc:postgresql://mfa-phase1-db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # --- Eureka ---
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "true"
+      EUREKA_CLIENT_FETCH_REGISTRY: "true"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: mfa-phase1-api
+      EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS: "5"
+      EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS: "10"
+      EUREKA_INSTANCE_INSTANCE_ID: "${SPRING_APPLICATION_NAME}:${SERVER_PORT}"
+
+      # --- MinIO ---
+      MINIO_URL: http://storage:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+
+      # --- Keycloak ---
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://keycloak:8080/realms/mfa/protocol/openid-connect/certs"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "https://keycloak.dara-it.site/realms/mfa"
+
+      # --- App ---
+      SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME:-mfa-phase1-api}
+      SERVER_PORT: ${SERVER_PORT:-8003}
+
+      # --- Spring time handling (RECOMMENDED) ---
+      SPRING_JACKSON_TIME_ZONE: Asia/Seoul
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: UTC
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+    expose:
+      - "8003"
+
+    depends_on:
+      mfa-phase1-db:
+        condition: service_healthy
+
+    networks:
+      mfa-private: {}
+      mfa-hostlink:
+        ipv4_address: 172.23.0.21
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${SERVER_PORT:-8003}/swagger-ui/index.html >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 20
+
+networks:
+  mfa-private:
+    external: true
+  mfa-hostlink:
+    external: true
+
+volumes:
+  mfa-phase1-db-data:
