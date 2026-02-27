@@ -134,3 +134,6 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         automaticTransitionFromOpenToHalfOpenEnabled: true
+
+keycloak:
+  token-endpoint: http://localhost:8080realms/mfa/protocol/openid-connect/token
