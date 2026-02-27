@@ -124,7 +124,7 @@ management:
 
 socketio:
   server:
-    url: http://localhost:3001
+    url: http://next-app:3000
 
 resilience4j:
   circuitbreaker:
