@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.FeedbackRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.FeedbackResponse;
@@ -35,6 +36,7 @@ public class FeedbackController {
 
     private final FeedbackService feedbackService;
 
+    @AuditAction("CREATE_FEEDBACK")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping
     @Operation(
@@ -43,7 +45,7 @@ public class FeedbackController {
             tags = {"Feedback"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Created",
-                             content = @Content(schema = @Schema(implementation = FeedbackResponse.class))),
+                            content = @Content(schema = @Schema(implementation = FeedbackResponse.class))),
             }
     )
     public ResponseEntity<APIResponse<FeedbackResponse>> createFeedback(
@@ -52,9 +54,11 @@ public class FeedbackController {
 
             @RequestBody @Valid FeedbackRequest request
     ) {
-        return buildResponse("Feedback created",
+        return buildResponse(
+                "Feedback created",
                 feedbackService.createFeedback(answerId, request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -84,9 +88,11 @@ public class FeedbackController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Feedbacks retrieved successfully",
+        return buildResponse(
+                "Feedbacks retrieved successfully",
                 feedbackService.getAllFeedbacks(answerId, page, size, property, direction),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -97,7 +103,7 @@ public class FeedbackController {
             tags = {"Feedback"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success",
-                             content = @Content(schema = @Schema(implementation = FeedbackResponse.class))),
+                            content = @Content(schema = @Schema(implementation = FeedbackResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Feedback not found")
             }
     )
@@ -108,11 +114,14 @@ public class FeedbackController {
             @Parameter(description = "Feedback ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID feedbackId
     ) {
-        return buildResponse("Feedback retrieved successfully",
+        return buildResponse(
+                "Feedback retrieved successfully",
                 feedbackService.getFeedbackById(answerId, feedbackId),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_FEEDBACK")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/{feedbackId}")
     @Operation(
@@ -128,15 +137,20 @@ public class FeedbackController {
     public ResponseEntity<APIResponse<FeedbackResponse>> updateFeedback(
             @Parameter(description = "Answer ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID answerId,
+
             @Parameter(description = "Feedback  ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID feedbackId,
+
             @RequestBody @Valid FeedbackRequest request
     ) {
-        return buildResponse("Feedback updated successfully",
+        return buildResponse(
+                "Feedback updated successfully",
                 feedbackService.updateFeedback(answerId, feedbackId, request),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_FEEDBACK")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @DeleteMapping("/{feedbackId}")
     @Operation(
@@ -151,13 +165,16 @@ public class FeedbackController {
     public ResponseEntity<APIResponse<Void>> deleteFeedback(
             @Parameter(description = "Answer ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID answerId,
+
             @Parameter(description = "Feedback  ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID feedbackId
     ) {
         feedbackService.deleteFeedback(answerId, feedbackId);
-        return buildResponse("Feedback deleted successfully",
+
+        return buildResponse(
+                "Feedback deleted successfully",
                 null,
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
-    
 }

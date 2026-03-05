@@ -514,6 +514,11 @@ public class ClassServiceImpl implements ClassService {
                             .studentEmail(user.getEmail())
                             .studentName(fullName)
                             .profileImage(user.getProfileImage())
+                            .loginEventType(user.getLoginEventType())
+                            .lastLoginTime(user.getLastLoginTime())
+                            .lastLogoutTime(user.getLastLogoutTime())
+                            .lastAction(user.getLastAction())
+                            .lastActivityTime(user.getLastActivityTime())
                             .build();
                 })
                 .filter(Objects::nonNull)

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.UpdateQuestionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
@@ -36,6 +37,7 @@ public class QuestionController {
 
     private final QuestionService questionService;
 
+    @AuditAction("CREATE_QUESTION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping
     @Operation(
@@ -53,9 +55,14 @@ public class QuestionController {
             @PathVariable UUID assessmentId,
             @RequestBody @Valid QuestionRequest request
     ) {
-        return buildResponse("Question created", questionService.createQuestion(assessmentId, request), HttpStatus.CREATED);
+        return buildResponse(
+                "Question created",
+                questionService.createQuestion(assessmentId, request),
+                HttpStatus.CREATED
+        );
     }
 
+    @AuditAction("CREATE_MULTIPLE_QUESTIONS")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping("/bulk")
     @Operation(
@@ -73,7 +80,11 @@ public class QuestionController {
             @PathVariable UUID assessmentId,
             @RequestBody List<@Valid QuestionRequest> requests
     ) {
-        return buildResponse("Questions created", questionService.createMultipleQuestions(assessmentId, requests), HttpStatus.CREATED);
+        return buildResponse(
+                "Questions created",
+                questionService.createMultipleQuestions(assessmentId, requests),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
@@ -119,9 +130,14 @@ public class QuestionController {
             @PathVariable UUID assessmentId,
             @PathVariable UUID questionId
     ) {
-        return buildResponse("Question retrieved", questionService.getQuestionById(assessmentId, questionId), HttpStatus.OK);
+        return buildResponse(
+                "Question retrieved",
+                questionService.getQuestionById(assessmentId, questionId),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_QUESTION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/{questionId}")
     @Operation(
@@ -139,9 +155,14 @@ public class QuestionController {
             @PathVariable UUID questionId,
             @RequestBody @Valid QuestionRequest request
     ) {
-        return buildResponse("Question updated", questionService.updateQuestionById(assessmentId, questionId, request), HttpStatus.OK);
+        return buildResponse(
+                "Question updated",
+                questionService.updateQuestionById(assessmentId, questionId, request),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("BULK_UPDATE_QUESTIONS")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/bulk")
     @Operation(
@@ -158,9 +179,14 @@ public class QuestionController {
             @PathVariable UUID assessmentId,
             @RequestBody List<@Valid UpdateQuestionRequest> requests
     ) {
-        return buildResponse("Questions updated", questionService.updateQuestionsBulk(assessmentId, requests), HttpStatus.OK);
+        return buildResponse(
+                "Questions updated",
+                questionService.updateQuestionsBulk(assessmentId, requests),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_QUESTION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @DeleteMapping("/{questionId}")
     @Operation(

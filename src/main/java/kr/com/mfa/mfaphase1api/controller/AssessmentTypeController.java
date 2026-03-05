@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentTypeRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentTypeResponse;
@@ -35,6 +36,7 @@ public class AssessmentTypeController {
 
     private final AssessmentTypeService assessmentTypeService;
 
+    @AuditAction("CREATE_ASSESSMENT_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(
@@ -96,6 +98,7 @@ public class AssessmentTypeController {
         return buildResponse("Assessment Type retrieved", assessmentTypeService.getAssessmentTypeById(assessmentTypeId), HttpStatus.OK);
     }
 
+    @AuditAction("UPDATE_ASSESSMENT_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{assessmentTypeId}")
     @Operation(
@@ -116,6 +119,7 @@ public class AssessmentTypeController {
         return buildResponse("Assessment Type updated", assessmentTypeService.updateAssessmentTypeById(assessmentTypeId, request), HttpStatus.OK);
     }
 
+    @AuditAction("DELETE_ASSESSMENT_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{assessmentTypeId}")
     @Operation(
@@ -133,5 +137,4 @@ public class AssessmentTypeController {
         assessmentTypeService.deleteAssessmentTypeById(assessmentTypeId);
         return buildResponse("Assessment Type deleted", null, HttpStatus.OK);
     }
-    
 }

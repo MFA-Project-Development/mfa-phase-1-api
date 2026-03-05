@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.OptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.UpdateOptionRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
@@ -36,6 +37,7 @@ public class OptionController {
 
     private final OptionService optionService;
 
+    @AuditAction("CREATE_OPTION")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     @Operation(
@@ -53,11 +55,14 @@ public class OptionController {
             @PathVariable UUID questionId,
             @RequestBody @Valid OptionRequest request
     ) {
-        return buildResponse("Option created",
+        return buildResponse(
+                "Option created",
                 optionService.createOption(questionId, request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
+    @AuditAction("CREATE_MULTIPLE_OPTIONS")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping("/bulk")
     @Operation(
@@ -75,9 +80,11 @@ public class OptionController {
             @PathVariable UUID questionId,
             @RequestBody List<@Valid OptionRequest> requests
     ) {
-        return buildResponse("Options created",
+        return buildResponse(
+                "Options created",
                 optionService.createMultipleOptions(questionId, requests),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
@@ -130,6 +137,7 @@ public class OptionController {
         );
     }
 
+    @AuditAction("UPDATE_OPTION")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PutMapping("/{optionId}")
     @Operation(
@@ -155,6 +163,7 @@ public class OptionController {
         );
     }
 
+    @AuditAction("BULK_UPDATE_OPTIONS")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PutMapping("/bulk")
     @Operation(
@@ -179,6 +188,7 @@ public class OptionController {
         );
     }
 
+    @AuditAction("DELETE_OPTION")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/{optionId}")
     @Operation(

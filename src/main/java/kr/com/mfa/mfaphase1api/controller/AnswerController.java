@@ -9,11 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import kr.com.mfa.mfaphase1api.model.dto.request.AnnotationRequest;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnswerRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.UpdateAnswerRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
-import kr.com.mfa.mfaphase1api.model.enums.AnnotationProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AnswerProperty;
 import kr.com.mfa.mfaphase1api.service.AnswerService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +35,7 @@ public class AnswerController {
 
     private final AnswerService answerService;
 
+    @AuditAction("GRADE_ANSWER")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping("/questions/{questionId}/answers")
     @Operation(
@@ -116,6 +116,7 @@ public class AnswerController {
                 HttpStatus.OK);
     }
 
+    @AuditAction("UPDATE_ANSWER")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/questions/{questionId}/answers/{answerId}")
     @Operation(
@@ -140,6 +141,7 @@ public class AnswerController {
                 HttpStatus.OK);
     }
 
+    @AuditAction("DELETE_ANSWER")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @DeleteMapping("/questions/{questionId}/answers/{answerId}")
     @Operation(
@@ -195,6 +197,7 @@ public class AnswerController {
                 HttpStatus.OK);
     }
 
+    @AuditAction("BULK_UPDATE_ANSWER")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/submissions/{submissionId}/answers/bulk")
     @Operation(
@@ -216,5 +219,4 @@ public class AnswerController {
                 answerService.bulkUpdateAnswer(submissionId, request),
                 HttpStatus.OK);
     }
-
 }

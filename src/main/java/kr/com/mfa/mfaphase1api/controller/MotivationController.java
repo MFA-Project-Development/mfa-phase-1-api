@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationCommentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ReplyRequest;
@@ -24,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +38,7 @@ public class MotivationController {
 
     private final MotivationService motivationService;
 
+    @AuditAction("CREATE_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @PostMapping
     @Operation(
@@ -52,9 +53,11 @@ public class MotivationController {
     public ResponseEntity<APIResponse<MotivationContentResponse>> createMotivation(
             @RequestBody @Valid MotivationContentRequest request
     ) {
-        return buildResponse("Motivation created",
+        return buildResponse(
+                "Motivation created",
                 motivationService.createMotivation(request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -93,9 +96,11 @@ public class MotivationController {
             @Parameter(description = "Bookmarked", in = ParameterIn.QUERY)
             @RequestParam(required = false) Boolean isBookmarked
     ) {
-        return buildResponse("Motivations retrieved successfully",
+        return buildResponse(
+                "Motivations retrieved successfully",
                 motivationService.getAllMotivations(page, size, property, direction, type, createdBy, isDefault, isBookmarked),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -114,11 +119,14 @@ public class MotivationController {
             @Parameter(description = "Motivation content ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID motivationContentId
     ) {
-        return buildResponse("Motivation retrieved successfully",
+        return buildResponse(
+                "Motivation retrieved successfully",
                 motivationService.getMotivationById(motivationContentId),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @PutMapping("/{motivationContentId}")
     @Operation(
@@ -136,11 +144,14 @@ public class MotivationController {
             @PathVariable UUID motivationContentId,
             @RequestBody @Valid MotivationContentRequest request
     ) {
-        return buildResponse("Motivation updated successfully",
+        return buildResponse(
+                "Motivation updated successfully",
                 motivationService.updateMotivation(motivationContentId, request),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @DeleteMapping("/{motivationContentId}")
     @Operation(
@@ -157,11 +168,14 @@ public class MotivationController {
             @PathVariable UUID motivationContentId
     ) {
         motivationService.deleteMotivation(motivationContentId);
-        return buildResponse("Motivation deleted successfully",
+        return buildResponse(
+                "Motivation deleted successfully",
                 null,
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("BOOKMARK_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/boookmarks")
     @Operation(
@@ -177,12 +191,14 @@ public class MotivationController {
             @PathVariable UUID motivationContentId
     ) {
         motivationService.bookmarkMotivation(motivationContentId);
-        return buildResponse("Motivation bookmarked",
+        return buildResponse(
+                "Motivation bookmarked",
                 null,
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
-
+    @AuditAction("REMOVE_BOOKMARK_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @DeleteMapping("/{motivationContentId}/boookmarks")
     @Operation(
@@ -198,11 +214,14 @@ public class MotivationController {
             @PathVariable UUID motivationContentId
     ) {
         motivationService.removeBookmarkMotivation(motivationContentId);
-        return buildResponse("Motivation bookmark removed",
+        return buildResponse(
+                "Motivation bookmark removed",
                 null,
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("COMMENT_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/comments")
     @Operation(
@@ -219,9 +238,11 @@ public class MotivationController {
 
             @RequestBody @Valid MotivationCommentRequest request
     ) {
-        return buildResponse("Motivation comment created",
+        return buildResponse(
+                "Motivation comment created",
                 motivationService.commentMotivation(motivationContentId, request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -250,11 +271,14 @@ public class MotivationController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Comments retrieved successfully",
+        return buildResponse(
+                "Comments retrieved successfully",
                 motivationService.getAllCommentsByMotivationContentId(motivationContentId, page, size, property, direction),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_MOTIVATION_COMMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PutMapping("/{motivationContentId}/comments/{commentId}")
     @Operation(
@@ -275,11 +299,14 @@ public class MotivationController {
 
             @RequestBody @Valid MotivationCommentRequest request
     ) {
-        return buildResponse("Motivation comment updated",
+        return buildResponse(
+                "Motivation comment updated",
                 motivationService.updateMotivationComment(motivationContentId, commentId, request),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_MOTIVATION_COMMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @DeleteMapping("/{motivationContentId}/comments/{commentId}")
     @Operation(
@@ -299,11 +326,14 @@ public class MotivationController {
             @PathVariable UUID commentId
     ) {
         motivationService.deleteMotivationComment(motivationContentId, commentId);
-        return buildResponse("Motivation comment deleted",
+        return buildResponse(
+                "Motivation comment deleted",
                 null,
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("REPLY_MOTIVATION_COMMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/comments/reply")
     @Operation(
@@ -320,11 +350,14 @@ public class MotivationController {
 
             @RequestBody @Valid ReplyRequest request
     ) {
-        return buildResponse("Motivation reply created",
+        return buildResponse(
+                "Motivation reply created",
                 motivationService.replyCommentMotivation(motivationContentId, request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
+    @AuditAction("LIKE_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @PostMapping("/{motivationContentId}/likes")
     @Operation(
@@ -340,12 +373,14 @@ public class MotivationController {
             @PathVariable UUID motivationContentId
     ) {
         motivationService.likeMotivation(motivationContentId);
-        return buildResponse("Motivation liked",
+        return buildResponse(
+                "Motivation liked",
                 null,
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
-
+    @AuditAction("UNLIKE_MOTIVATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @DeleteMapping("/{motivationContentId}/likes")
     @Operation(
@@ -361,9 +396,10 @@ public class MotivationController {
             @PathVariable UUID motivationContentId
     ) {
         motivationService.unlikeMotivation(motivationContentId);
-        return buildResponse("Motivation like removed",
+        return buildResponse(
+                "Motivation like removed",
                 null,
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
-
 }

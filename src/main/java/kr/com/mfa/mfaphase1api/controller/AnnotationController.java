@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.AnnotationRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.AnnotationResponse;
@@ -35,6 +36,7 @@ public class AnnotationController {
 
     private final AnnotationService annotationService;
 
+    @AuditAction("CREATE_ANNOTATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping
     @Operation(
@@ -52,9 +54,11 @@ public class AnnotationController {
 
             @RequestBody @Valid AnnotationRequest request
     ) {
-        return buildResponse("Annotation created",
+        return buildResponse(
+                "Annotation created",
                 annotationService.createAnnotation(answerId, request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -84,9 +88,11 @@ public class AnnotationController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Annotations retrieved successfully",
+        return buildResponse(
+                "Annotations retrieved successfully",
                 annotationService.getAllAnnotations(answerId, page, size, property, direction),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
@@ -108,11 +114,14 @@ public class AnnotationController {
             @Parameter(description = "Annotation ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID annotationId
     ) {
-        return buildResponse("Annotation retrieved successfully",
+        return buildResponse(
+                "Annotation retrieved successfully",
                 annotationService.getAnnotationById(answerId, annotationId),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_ANNOTATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/{annotationId}")
     @Operation(
@@ -128,15 +137,20 @@ public class AnnotationController {
     public ResponseEntity<APIResponse<AnnotationResponse>> updateAnnotation(
             @Parameter(description = "Answer ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID answerId,
+
             @Parameter(description = "Annotation ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID annotationId,
+
             @RequestBody @Valid AnnotationRequest request
     ) {
-        return buildResponse("Annotation updated successfully",
+        return buildResponse(
+                "Annotation updated successfully",
                 annotationService.updateAnnotation(answerId, annotationId, request),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_ANNOTATION")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @DeleteMapping("/{annotationId}")
     @Operation(
@@ -151,13 +165,16 @@ public class AnnotationController {
     public ResponseEntity<APIResponse<Void>> deleteAnnotation(
             @Parameter(description = "Answer ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID answerId,
+
             @Parameter(description = "Annotation ID", required = true, in = ParameterIn.PATH)
             @PathVariable UUID annotationId
     ) {
         annotationService.deleteAnnotation(answerId, annotationId);
-        return buildResponse("Annotation deleted successfully",
-                null,
-                HttpStatus.OK);
-    }
 
+        return buildResponse(
+                "Annotation deleted successfully",
+                null,
+                HttpStatus.OK
+        );
+    }
 }

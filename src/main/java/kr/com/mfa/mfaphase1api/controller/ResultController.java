@@ -7,11 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.StudentResponseResultSummary;
 import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
-import kr.com.mfa.mfaphase1api.model.enums.MotivationContentType;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionSort;
 import kr.com.mfa.mfaphase1api.model.enums.TimeRange;
@@ -36,6 +36,7 @@ public class ResultController {
 
     private final ResultService resultService;
 
+    @AuditAction("GRADE_SUBMISSION_RESULT")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping("/assessments/{assessmentId}/submissions/{submissionId}/result/grade")
     @Operation(
@@ -68,9 +69,11 @@ public class ResultController {
             @PathVariable @NotNull UUID assessmentId,
             @PathVariable @NotNull UUID submissionId
     ) {
-        return buildResponse("Submission result retrieved successfully",
+        return buildResponse(
+                "Submission result retrieved successfully",
                 resultService.getSubmissionResult(assessmentId, submissionId),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR')")
@@ -82,6 +85,7 @@ public class ResultController {
     )
     public ResponseEntity<APIResponse<PagedResponse<List<SubmissionResponse>>>> getAllSubmissionResults(
             @PathVariable UUID assessmentId,
+
             @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "1") @Positive Integer page,
 
@@ -94,9 +98,14 @@ public class ResultController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Submissions retrieved successfully", resultService.getAllSubmissionResults(assessmentId, page, size, property, direction), HttpStatus.OK);
+        return buildResponse(
+                "Submissions retrieved successfully",
+                resultService.getAllSubmissionResults(assessmentId, page, size, property, direction),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("PUBLISH_SUBMISSION_RESULT")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping("/assessments/{assessmentId}/submissions/result/publish")
     @Operation(
@@ -131,9 +140,10 @@ public class ResultController {
             @Parameter(description = "Submission Sort", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "LATEST_WORK") @NotNull SubmissionSort sort
     ) {
-        return buildResponse("Submission result summary retrieved successfully",
+        return buildResponse(
+                "Submission result summary retrieved successfully",
                 resultService.getMySubmissionResultSummary(range, sort),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
-
 }

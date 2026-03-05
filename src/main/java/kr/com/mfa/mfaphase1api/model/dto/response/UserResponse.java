@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -20,4 +21,9 @@ public class UserResponse {
     private String lastName;
     private Role role;
     private String profileImage;
+    private String loginEventType;
+    private LocalDateTime lastLoginTime;
+    private LocalDateTime lastLogoutTime;
+    private String lastAction;
+    private LocalDateTime lastActivityTime;
 }

@@ -10,19 +10,19 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import kr.com.mfa.mfaphase1api.model.dto.response.*;
-import kr.com.mfa.mfaphase1api.model.entity.Paper;
-import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
+import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.PaperResponse;
+import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
 import kr.com.mfa.mfaphase1api.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +37,7 @@ public class SubmissionController {
 
     private final SubmissionService submissionService;
 
+    @AuditAction("START_SUBMISSION")
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping
     @Operation(
@@ -55,6 +56,7 @@ public class SubmissionController {
         return buildResponse("Submission ready", submission, HttpStatus.CREATED);
     }
 
+    @AuditAction("UPLOAD_SUBMISSION_PAPERS")
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/{submissionId}/papers")
     @Operation(
@@ -74,6 +76,7 @@ public class SubmissionController {
         return buildResponse("Papers uploaded successfully", null, HttpStatus.OK);
     }
 
+    @AuditAction("FINALIZE_SUBMISSION")
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/{submissionId}/submit")
     @Operation(
@@ -111,6 +114,7 @@ public class SubmissionController {
         return buildResponse("Papers retrieved successfully", papers, HttpStatus.OK);
     }
 
+    @AuditAction("DELETE_SUBMISSION")
     @PreAuthorize("hasRole('STUDENT')")
     @DeleteMapping("/{submissionId}")
     @Operation(
@@ -129,6 +133,7 @@ public class SubmissionController {
         return buildResponse("Submission deleted successfully", null, HttpStatus.OK);
     }
 
+    @AuditAction("SAVE_SUBMISSION")
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/{submissionId}/save")
     @Operation(
@@ -156,6 +161,7 @@ public class SubmissionController {
     )
     public ResponseEntity<APIResponse<PagedResponse<List<SubmissionResponse>>>> getSubmissionsByAssessmentId(
             @PathVariable UUID assessmentId,
+
             @Parameter(description = "1-based page index", example = "1", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "1") @Positive Integer page,
 
@@ -168,7 +174,10 @@ public class SubmissionController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Submissions retrieved successfully", submissionService.getAllSubmissions(assessmentId, page, size, property, direction), HttpStatus.OK);
+        return buildResponse(
+                "Submissions retrieved successfully",
+                submissionService.getAllSubmissions(assessmentId, page, size, property, direction),
+                HttpStatus.OK
+        );
     }
-
 }

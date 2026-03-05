@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentPublishRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
@@ -24,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +39,7 @@ public class AssessmentController {
 
     private final AssessmentService assessmentService;
 
+    @AuditAction("CREATE_ASSESSMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping("/classes/{classId}/assessments")
     @Operation(
@@ -61,6 +62,7 @@ public class AssessmentController {
                 HttpStatus.CREATED);
     }
 
+    @AuditAction("SCHEDULE_ASSESSMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/classes/{classId}/assessments/{assessmentId}/schedule")
     @Operation(
@@ -84,6 +86,7 @@ public class AssessmentController {
                 HttpStatus.OK);
     }
 
+    @AuditAction("PUBLISH_ASSESSMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/classes/{classId}/assessments/{assessmentId}/publish")
     @Operation(
@@ -127,7 +130,11 @@ public class AssessmentController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessmentsByClassId(classId, page, size, property, direction), HttpStatus.OK);
+        return buildResponse(
+                "Assessments retrieved successfully",
+                assessmentService.getAllAssessmentsByClassId(classId, page, size, property, direction),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/classes/{classId}/assessments/{assessmentId}")
@@ -152,6 +159,7 @@ public class AssessmentController {
         );
     }
 
+    @AuditAction("UPDATE_ASSESSMENT")
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("/classes/{classId}/assessments/{assessmentId}")
     @Operation(
@@ -177,6 +185,7 @@ public class AssessmentController {
         );
     }
 
+    @AuditAction("DELETE_ASSESSMENT")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/classes/{classId}/assessments/{assessmentId}")
     @Operation(
@@ -196,6 +205,7 @@ public class AssessmentController {
         return buildResponse("Assessment deleted", null, HttpStatus.OK);
     }
 
+    @AuditAction("UPLOAD_ASSESSMENT_RESOURCE")
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/classes/{classId}/assessments/{assessmentId}/resources")
     @Operation(
@@ -257,7 +267,11 @@ public class AssessmentController {
             @Parameter(description = "Sort direction", example = "DESC", in = ParameterIn.QUERY)
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
-        return buildResponse("Assessments retrieved successfully", assessmentService.getAllAssessments(page, size, property, direction), HttpStatus.OK);
+        return buildResponse(
+                "Assessments retrieved successfully",
+                assessmentService.getAllAssessments(page, size, property, direction),
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("hasRole('STUDENT')")
@@ -271,7 +285,11 @@ public class AssessmentController {
             @Parameter(description = "Filter by month", in = ParameterIn.QUERY)
             @RequestParam(required = false) Month month
     ) {
-        return buildResponse("Assessments summary retrieved successfully", assessmentService.getAssessmentsSummary(month), HttpStatus.OK);
+        return buildResponse(
+                "Assessments summary retrieved successfully",
+                assessmentService.getAssessmentsSummary(month),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/assessments/recent")
@@ -281,7 +299,11 @@ public class AssessmentController {
             tags = {"Assessment"}
     )
     public ResponseEntity<APIResponse<List<AssessmentResponseForGrading>>> getRecentAssessments() {
-        return buildResponse("Recent assessments retrieved successfully", assessmentService.getRecentAssessments(), HttpStatus.OK);
+        return buildResponse(
+                "Recent assessments retrieved successfully",
+                assessmentService.getRecentAssessments(),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/assessments/profile/summary")
@@ -292,6 +314,10 @@ public class AssessmentController {
             tags = {"Assessment"}
     )
     public ResponseEntity<APIResponse<AssessmentProfileSummary>> getAssessmentsProfileSummary() {
-        return buildResponse("Assessments profile summary retrieved successfully", assessmentService.getAssessmentsProfileSummary(), HttpStatus.OK);
+        return buildResponse(
+                "Assessments profile summary retrieved successfully",
+                assessmentService.getAssessmentsProfileSummary(),
+                HttpStatus.OK
+        );
     }
 }

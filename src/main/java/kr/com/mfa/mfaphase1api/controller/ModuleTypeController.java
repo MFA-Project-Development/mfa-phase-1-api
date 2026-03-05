@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.ModuleTypeRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.ModuleTypeResponse;
@@ -35,6 +36,7 @@ public class ModuleTypeController {
 
     private final ModuleTypeService moduleTypeService;
 
+    @AuditAction("CREATE_MODULE_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(
@@ -96,6 +98,7 @@ public class ModuleTypeController {
         return buildResponse("Module Type retrieved", moduleTypeService.getModuleTypeById(moduleTypeId), HttpStatus.OK);
     }
 
+    @AuditAction("UPDATE_MODULE_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{moduleTypeId}")
     @Operation(
@@ -116,6 +119,7 @@ public class ModuleTypeController {
         return buildResponse("Module Type updated", moduleTypeService.updateModuleTypeById(moduleTypeId, request), HttpStatus.OK);
     }
 
+    @AuditAction("DELETE_MODULE_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{moduleTypeId}")
     @Operation(
@@ -133,5 +137,4 @@ public class ModuleTypeController {
         moduleTypeService.deleteModuleTypeById(moduleTypeId);
         return buildResponse("Module Type deleted", null, HttpStatus.OK);
     }
-
 }

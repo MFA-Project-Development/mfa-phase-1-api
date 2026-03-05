@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.QuestionTypeRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
@@ -35,6 +36,7 @@ public class QuestionTypeController {
 
     private final QuestionTypeService questionTypeService;
 
+    @AuditAction("CREATE_QUESTION_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(
@@ -50,9 +52,11 @@ public class QuestionTypeController {
     public ResponseEntity<APIResponse<QuestionTypeResponse>> createQuestionType(
             @RequestBody @Valid QuestionTypeRequest request
     ) {
-        return buildResponse("QuestionType created",
+        return buildResponse(
+                "QuestionType created",
                 questionTypeService.createQuestionType(request),
-                HttpStatus.CREATED);
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
@@ -95,11 +99,14 @@ public class QuestionTypeController {
     public ResponseEntity<APIResponse<QuestionTypeResponse>> getQuestionTypeById(
             @PathVariable UUID questionTypeId
     ) {
-        return buildResponse("QuestionType retrieved",
+        return buildResponse(
+                "QuestionType retrieved",
                 questionTypeService.getQuestionTypeById(questionTypeId),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_QUESTION_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{questionTypeId}")
     @Operation(
@@ -117,11 +124,14 @@ public class QuestionTypeController {
             @PathVariable UUID questionTypeId,
             @RequestBody @Valid QuestionTypeRequest request
     ) {
-        return buildResponse("QuestionType updated",
+        return buildResponse(
+                "QuestionType updated",
                 questionTypeService.updateQuestionTypeById(questionTypeId, request),
-                HttpStatus.OK);
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_QUESTION_TYPE")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{questionTypeId}")
     @Operation(

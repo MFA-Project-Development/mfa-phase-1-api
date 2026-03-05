@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.request.SubSubjectRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.PagedResponse;
@@ -35,6 +36,7 @@ public class SubSubjectController {
 
     private final SubSubjectService subSubjectService;
 
+    @AuditAction("CREATE_SUB_SUBJECT")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(
@@ -52,7 +54,11 @@ public class SubSubjectController {
             @PathVariable UUID subjectId,
             @RequestBody @Valid SubSubjectRequest request
     ) {
-        return buildResponse("SubSubject created", subSubjectService.createSubSubject(subjectId, request), HttpStatus.CREATED);
+        return buildResponse(
+                "SubSubject created",
+                subSubjectService.createSubSubject(subjectId, request),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
@@ -98,9 +104,14 @@ public class SubSubjectController {
             @PathVariable UUID subjectId,
             @PathVariable UUID subSubjectId
     ) {
-        return buildResponse("SubSubject retrieved", subSubjectService.getSubSubjectById(subjectId, subSubjectId), HttpStatus.OK);
+        return buildResponse(
+                "SubSubject retrieved",
+                subSubjectService.getSubSubjectById(subjectId, subSubjectId),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("UPDATE_SUB_SUBJECT")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{subSubjectId}")
     @Operation(
@@ -119,9 +130,14 @@ public class SubSubjectController {
             @PathVariable UUID subSubjectId,
             @RequestBody @Valid SubSubjectRequest request
     ) {
-        return buildResponse("SubSubject updated", subSubjectService.updateSubSubjectById(subjectId, subSubjectId, request), HttpStatus.OK);
+        return buildResponse(
+                "SubSubject updated",
+                subSubjectService.updateSubSubjectById(subjectId, subSubjectId, request),
+                HttpStatus.OK
+        );
     }
 
+    @AuditAction("DELETE_SUB_SUBJECT")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{subSubjectId}")
     @Operation(
@@ -140,6 +156,4 @@ public class SubSubjectController {
         subSubjectService.deleteSubSubjectById(subjectId, subSubjectId);
         return buildResponse("SubSubject deleted", null, HttpStatus.OK);
     }
-
-
 }

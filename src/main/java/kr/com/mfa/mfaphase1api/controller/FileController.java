@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import kr.com.mfa.mfaphase1api.model.annotation.AuditAction;
 import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.entity.FileMetadata;
 import kr.com.mfa.mfaphase1api.service.FileService;
@@ -31,6 +32,7 @@ public class FileController {
 
     private final FileService fileService;
 
+    @AuditAction("UPLOAD_FILE")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Upload file",
@@ -52,6 +54,7 @@ public class FileController {
         return buildResponse("File uploaded successfully", saved, HttpStatus.CREATED);
     }
 
+    @AuditAction("UPLOAD_MULTIPLE_FILES")
     @PostMapping(value = "/multiple-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Multiple Upload file",
@@ -66,7 +69,7 @@ public class FileController {
                     @ApiResponse(responseCode = "400", description = "Invalid file or unsupported format")
             }
     )
-    public ResponseEntity<APIResponse<List<FileMetadata>>> uploadFile(
+    public ResponseEntity<APIResponse<List<FileMetadata>>> uploadMultipleFiles(
             @RequestParam("files") @NotNull @NotEmpty List<MultipartFile> files
     ) {
         List<FileMetadata> saved = fileService.multipleUploadFile(files);
@@ -112,6 +115,7 @@ public class FileController {
                 .body(inputStream.readAllBytes());
     }
 
+    @AuditAction("DELETE_FILE")
     @DeleteMapping("/delete/{file-name}")
     @Operation(
             summary = "Delete file",
@@ -122,8 +126,10 @@ public class FileController {
                     @ApiResponse(responseCode = "404", description = "File not found")
             }
     )
-    public ResponseEntity<APIResponse<Void>> deleteFileByFileName(@PathVariable("file-name") @NotNull String fileName) {
+    public ResponseEntity<APIResponse<Void>> deleteFileByFileName(
+            @PathVariable("file-name") @NotNull String fileName
+    ) {
         fileService.deleteFileByFileName(fileName);
-        return buildResponse("File delete successfully", null, HttpStatus.CREATED);
+        return buildResponse("File delete successfully", null, HttpStatus.OK);
     }
 }
