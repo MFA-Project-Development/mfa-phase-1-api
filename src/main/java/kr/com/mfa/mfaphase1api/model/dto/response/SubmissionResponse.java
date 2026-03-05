@@ -21,6 +21,7 @@ public class SubmissionResponse {
     private UUID gradedBy;
     private SubmissionStatus status;
     private LocalDateTime startedAt;
+    private LocalDateTime endedAt;
     private LocalDateTime submittedAt;
     private Boolean isGraded;
     private LocalDateTime gradedAt;

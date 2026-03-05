@@ -129,4 +129,4 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
 keycloak:
-  token-endpoint: http://localhost:8080realms/mfa/protocol/openid-connect/token
+  token-endpoint: http://localhost:8080/realms/mfa/protocol/openid-connect/token

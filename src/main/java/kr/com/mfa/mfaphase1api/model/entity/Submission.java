@@ -74,11 +74,28 @@ public class Submission {
 
         ZoneId zone;
         try {
-            zone = this.timeZone != null
-                    ? ZoneId.of(this.timeZone)
-                    : ZoneId.of("UTC");
+            zone = this.timeZone != null ? ZoneId.of(this.timeZone) : ZoneId.of("UTC");
         } catch (DateTimeException e) {
             zone = ZoneId.of("UTC");
+        }
+
+        LocalDateTime studentDueDate = null;
+
+        String type = this.assessment.getAssessmentType().name();
+        Integer timeLimit = this.assessment.getTimeLimit();
+        Instant globalDue = this.assessment.getDueDate();
+
+        if (("EXAM".equals(type) || "QUIZ".equals(type))
+            && this.startedAt != null
+            && timeLimit != null) {
+
+            Instant dueInstant = this.startedAt.plusSeconds(timeLimit.longValue() * 60L);
+
+            if (globalDue != null && dueInstant.isAfter(globalDue)) {
+                dueInstant = globalDue;
+            }
+
+            studentDueDate = LocalDateTime.ofInstant(dueInstant, zone);
         }
 
         return SubmissionResponse.builder()
@@ -86,20 +103,13 @@ public class Submission {
                 .status(this.status)
                 .maxScore(this.maxScore)
                 .scoreEarned(this.scoreEarned)
-                .startedAt(this.startedAt != null
-                        ? LocalDateTime.ofInstant(this.startedAt, zone)
-                        : null)
-                .submittedAt(this.submittedAt != null
-                        ? LocalDateTime.ofInstant(this.submittedAt, zone)
-                        : null)
+                .startedAt(this.startedAt != null ? LocalDateTime.ofInstant(this.startedAt, zone) : null)
+                .submittedAt(this.submittedAt != null ? LocalDateTime.ofInstant(this.submittedAt, zone) : null)
                 .isGraded(this.gradedAt != null)
-                .gradedAt(this.gradedAt != null
-                        ? LocalDateTime.ofInstant(this.gradedAt, zone)
-                        : null)
+                .gradedAt(this.gradedAt != null ? LocalDateTime.ofInstant(this.gradedAt, zone) : null)
                 .isPublished(this.publishedAt != null)
-                .publishedAt(this.publishedAt != null
-                        ? LocalDateTime.ofInstant(this.publishedAt, zone)
-                        : null)
+                .publishedAt(this.publishedAt != null ? LocalDateTime.ofInstant(this.publishedAt, zone) : null)
+                .endedAt(studentDueDate)
                 .studentResponse(studentResponse)
                 .gradedBy(this.gradedBy)
                 .assessmentId(this.assessment.getAssessmentId())

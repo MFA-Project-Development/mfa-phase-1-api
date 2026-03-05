@@ -50,20 +50,28 @@ public class SubmissionServiceImpl implements SubmissionService {
     public Object startSubmission(UUID assessmentId) {
         UUID currentUserId = extractCurrentUserId();
 
-        Assessment assessment = assessmentRepository.findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(assessmentId, currentUserId).orElseThrow(
-                () -> new NotFoundException("Assessment not found")
-        );
+        Assessment assessment = assessmentRepository
+                .findByAssessmentId_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(
+                        assessmentId, currentUserId
+                )
+                .orElseThrow(() -> new NotFoundException("Assessment not found"));
 
-        Submission existSubmission = submissionRepository.findSubmissionByAssessmentAndStudentId(assessment, currentUserId).orElse(null);
+        Submission existSubmission = submissionRepository
+                .findSubmissionByAssessmentAndStudentId(assessment, currentUserId)
+                .orElse(null);
 
         if (existSubmission != null) {
-            UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(existSubmission.getStudentId()).getBody()).getPayload();
+            UserResponse userResponse = Objects.requireNonNull(
+                    userClient.getUserInfoById(existSubmission.getStudentId()).getBody()
+            ).getPayload();
+
             StudentResponse studentResponse = StudentResponse.builder()
                     .studentId(userResponse.getUserId())
                     .studentEmail(userResponse.getEmail())
                     .studentName(buildFullName(userResponse))
                     .profileImage(userResponse.getProfileImage())
                     .build();
+
             return existSubmission.toResponse(studentResponse);
         }
 
@@ -79,7 +87,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .timeZone(assessment.getTimeZone())
                 .build();
 
-        return submissionRepository.save(submission).getSubmissionId();
+        Submission savedSubmission = submissionRepository.save(submission);
+
+        return savedSubmission.getSubmissionId();
     }
 
     @Override
@@ -260,6 +270,5 @@ public class SubmissionServiceImpl implements SubmissionService {
         String lastName = userResponse.getLastName() != null ? userResponse.getLastName() : "";
         return (firstName + " " + lastName).trim();
     }
-
 
 }

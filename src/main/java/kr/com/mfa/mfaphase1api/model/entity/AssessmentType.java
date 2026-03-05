@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import kr.com.mfa.mfaphase1api.model.dto.response.AssessmentTypeResponse;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
