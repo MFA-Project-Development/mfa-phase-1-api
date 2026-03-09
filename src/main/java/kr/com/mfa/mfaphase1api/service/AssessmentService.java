@@ -39,4 +39,8 @@ public interface AssessmentService {
     List<AssessmentResponseForGrading> getRecentAssessments();
 
     AssessmentProfileSummary getAssessmentsProfileSummary();
+
+    AssessmentProfileSummary getAssessmentsProfileSummaryByStudentId(UUID studentId);
+
+    List<AssessmentResponseForGrading> getRecentAssessmentsByStudentId(UUID studentId);
 }

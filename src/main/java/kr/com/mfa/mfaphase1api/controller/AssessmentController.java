@@ -320,4 +320,33 @@ public class AssessmentController {
                 HttpStatus.OK
         );
     }
+
+    @GetMapping("/assessments/recent/{studentId}")
+    @Operation(
+            summary = "List recent assessments without class",
+            description = "Returns only 5 most recent assessments without class.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<List<AssessmentResponseForGrading>>> getRecentAssessmentsByStudentId(@PathVariable UUID studentId) {
+        return buildResponse(
+                "Recent assessments retrieved successfully",
+                assessmentService.getRecentAssessmentsByStudentId(studentId),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/assessments/profile/summary/{studentId}")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(
+            summary = "Get assessments summary",
+            description = "Returns summary statistics of assessments, optionally filtered by month.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<AssessmentProfileSummary>> getAssessmentsProfileSummaryByStudentId(@PathVariable UUID studentId) {
+        return buildResponse(
+                "Assessments profile summary retrieved successfully",
+                assessmentService.getAssessmentsProfileSummaryByStudentId(studentId),
+                HttpStatus.OK
+        );
+    }
 }

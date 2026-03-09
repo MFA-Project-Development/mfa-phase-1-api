@@ -655,6 +655,132 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public AssessmentProfileSummary getAssessmentsProfileSummaryByStudentId(UUID studentId) {
+        List<Assessment> assessments =
+                assessmentRepository.findAllByClassSubSubjectInstructor_ClassSubSubject_Clazz_StudentClassEnrollments_StudentId(studentId);
+
+        long totalAssessments = assessments.size();
+
+        List<Submission> mySubmissionsPerAssessment = assessments.stream()
+                .map(a -> a.getSubmissions().stream()
+                        .filter(s -> studentId.equals(s.getStudentId()))
+                        .max(Comparator.comparing(Submission::getSubmittedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                                .thenComparing(Submission::getStartedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        )
+                        .orElse(null)
+                )
+                .filter(Objects::nonNull)
+                .toList();
+
+        long totalCompleted = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.SUBMITTED)
+                .count();
+
+        long totalPending = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.NOT_SUBMITTED)
+                .count();
+
+        long totalFailed = mySubmissionsPerAssessment.stream()
+                .filter(s -> s.getStatus() == SubmissionStatus.MISSED)
+                .count();
+
+        BigDecimal totalScoreEarned = mySubmissionsPerAssessment.stream()
+                .map(Submission::getScoreEarned)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalMaxScore = mySubmissionsPerAssessment.stream()
+                .map(Submission::getMaxScore)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal percentageAssessments = safeDivide(totalScoreEarned, totalMaxScore);
+        BigDecimal bdTotalAssessments = BigDecimal.valueOf(totalAssessments);
+        BigDecimal percentageCompleted = safeDivide(BigDecimal.valueOf(totalCompleted), bdTotalAssessments);
+        BigDecimal percentagePending = safeDivide(BigDecimal.valueOf(totalPending), bdTotalAssessments);
+        BigDecimal percentageFailed = safeDivide(BigDecimal.valueOf(totalFailed), bdTotalAssessments);
+
+        return AssessmentProfileSummary.builder()
+                .totalAssessments(totalAssessments)
+                .totalCompleted(totalCompleted)
+                .totalPending(totalPending)
+                .totalFailed(totalFailed)
+                .percentageAssessments(percentageAssessments)
+                .percentageCompleted(percentageCompleted)
+                .percentagePending(percentagePending)
+                .percentageFailed(percentageFailed)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<AssessmentResponseForGrading> getRecentAssessmentsByStudentId(UUID studentId) {
+        Pageable pageable = PageRequest.of(0, 5);
+
+        Page<Assessment> pageAssessments = assessmentRepository
+                .findRecentByMySubmissionStartedAt(studentId, pageable);
+
+        return pageAssessments.getContent().stream()
+                .map(assessment -> {
+
+                    Integer totalSubmitted = submissionRepository.countByAssessmentAndStartedAtIsNotNull(assessment);
+
+                    Integer totalStudents = assessment.getClassSubSubjectInstructor()
+                            .getClassSubSubject()
+                            .getClazz()
+                            .getStudentClassEnrollments()
+                            .size();
+
+                    Integer totalPublished = submissionRepository.countByAssessmentAndPublishedAtIsNotNull(assessment);
+
+                    boolean isPublished = totalSubmitted > 0 && totalPublished.equals(totalSubmitted);
+
+                    Boolean isGraded = null;
+                    SubmissionStatus status = null;
+                    BigDecimal maxScore = null;
+                    BigDecimal scoreEarned = null;
+
+                    Submission mySubmission = submissionRepository
+                            .findByAssessmentAndStudentId(assessment, studentId)
+                            .orElse(null);
+
+                    if (mySubmission != null) {
+                        isGraded = mySubmission.getGradedAt() != null;
+                        status = mySubmission.getStatus();
+                        maxScore = mySubmission.getMaxScore();
+                        scoreEarned = mySubmission.getScoreEarned();
+                    }
+
+                    ZoneId zone = ZoneId.of(assessment.getTimeZone());
+
+                    return AssessmentResponseForGrading.builder()
+                            .assessmentId(assessment.getAssessmentId())
+                            .title(assessment.getTitle())
+                            .startDate(LocalDateTime.ofInstant(assessment.getStartDate(), zone))
+                            .dueDate(LocalDateTime.ofInstant(assessment.getDueDate(), zone))
+                            .assessmentType(assessment.getAssessmentType())
+                            .subSubjectName(assessment.getClassSubSubjectInstructor()
+                                    .getClassSubSubject()
+                                    .getSubSubject()
+                                    .getName())
+                            .className(assessment.getClassSubSubjectInstructor()
+                                    .getClassSubSubject()
+                                    .getClazz()
+                                    .getName())
+                            .totalSubmitted(totalSubmitted)
+                            .totalStudents(totalStudents)
+                            .isPublished(isPublished)
+                            .isGraded(isGraded)
+                            .status(status)
+                            .maxScore(maxScore)
+                            .scoreEarned(scoreEarned)
+                            .build();
+                })
+                .toList();
+    }
+
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {
         return assessmentRepository
                 .findByAssessmentIdAndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId(
