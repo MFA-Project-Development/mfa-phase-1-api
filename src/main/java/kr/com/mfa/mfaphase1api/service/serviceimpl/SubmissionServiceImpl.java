@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -218,9 +220,17 @@ public class SubmissionServiceImpl implements SubmissionService {
         UUID currentUserId = extractCurrentUserId();
 
         Submission submission = getAndValidateSubmission(assessmentId, currentUserId);
+        String type = submission.getAssessment().getAssessmentType().name();
 
         if (submission.getStatus() != SubmissionStatus.NOT_SUBMITTED) {
             throw new ConflictException("Submission has already been submitted for this assessment");
+        }
+
+        if ("EXAM".equals(type) || "QUIZ".equals(type)) {
+            LocalDateTime endedAt = submission.toResponse(null).getEndedAt();
+            if (endedAt != null && LocalDateTime.now().isAfter(endedAt)) {
+                submission.setStatus(SubmissionStatus.LATE);
+            }
         }
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of(submission.getAssessment().getTimeZone()));

@@ -5,6 +5,7 @@ import kr.com.mfa.mfaphase1api.model.dto.response.StudentResponse;
 import kr.com.mfa.mfaphase1api.model.dto.response.SubmissionResponse;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionStatus;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Getter
 @Setter
 @ToString
@@ -83,17 +85,12 @@ public class Submission {
 
         String type = this.assessment.getAssessmentType().name();
         Integer timeLimit = this.assessment.getTimeLimit();
-        Instant globalDue = this.assessment.getDueDate();
 
         if (("EXAM".equals(type) || "QUIZ".equals(type))
             && this.startedAt != null
             && timeLimit != null) {
 
             Instant dueInstant = this.startedAt.plusSeconds(timeLimit.longValue() * 60L);
-
-            if (globalDue != null && dueInstant.isAfter(globalDue)) {
-                dueInstant = globalDue;
-            }
 
             studentDueDate = LocalDateTime.ofInstant(dueInstant, zone);
         }
