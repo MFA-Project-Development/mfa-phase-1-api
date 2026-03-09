@@ -336,7 +336,6 @@ public class AssessmentController {
     }
 
     @GetMapping("/assessments/profile/summary/{studentId}")
-    @PreAuthorize("hasRole('STUDENT')")
     @Operation(
             summary = "Get assessments summary",
             description = "Returns summary statistics of assessments, optionally filtered by month.",
