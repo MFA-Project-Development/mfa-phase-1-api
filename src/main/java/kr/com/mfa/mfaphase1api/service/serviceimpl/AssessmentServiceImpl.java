@@ -416,6 +416,9 @@ public class AssessmentServiceImpl implements AssessmentService {
                     Integer totalSubmissions = submissionRepository.countByAssessment(assessment);
                     Integer totalPublished = submissionRepository.countByAssessmentAndPublishedAtIsNotNull(assessment);
 
+                    log.info("totalSubmissions {}", totalSubmissions);
+                    log.info("totalPublished {}", totalPublished);
+
                     boolean isPublished = totalSubmissions > 0 && totalPublished.equals(totalSubmissions);
 
                     Boolean isGraded = null;

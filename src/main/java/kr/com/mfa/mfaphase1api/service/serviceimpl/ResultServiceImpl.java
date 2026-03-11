@@ -269,6 +269,8 @@ public class ResultServiceImpl implements ResultService {
 
                 submission.setMaxScore(maxScore);
                 submission.setPublishedAt(now);
+            } else {
+                submission.setPublishedAt(now);
             }
         }
     }
