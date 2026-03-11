@@ -100,4 +100,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     List<Submission> findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(UUID studentId, SubmissionStatus status);
 
 
+    Integer countByAssessment(Assessment assessment);
 }

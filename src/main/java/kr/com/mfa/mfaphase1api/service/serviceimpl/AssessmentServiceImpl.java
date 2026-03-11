@@ -413,9 +413,10 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .getStudentClassEnrollments()
                             .size();
 
+                    Integer totalSubmissions = submissionRepository.countByAssessment(assessment);
                     Integer totalPublished = submissionRepository.countByAssessmentAndPublishedAtIsNotNull(assessment);
 
-                    boolean isPublished = totalSubmitted > 0 && totalPublished.equals(totalSubmitted);
+                    boolean isPublished = totalSubmissions > 0 && totalPublished.equals(totalSubmissions);
 
                     Boolean isGraded = null;
                     SubmissionStatus status = null;
