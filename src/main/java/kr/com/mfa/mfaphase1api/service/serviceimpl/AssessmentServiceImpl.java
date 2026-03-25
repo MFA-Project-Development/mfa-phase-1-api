@@ -314,6 +314,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 assessment.setStartDate(startDate);
                 assessment.setDueDate(dueDate);
                 assessment.setTimeZone(request.getTimeZone());
+                assessment.setPdfFileName(request.getPdfFileName());
                 assessment.setClassSubSubjectInstructor(csi);
                 assessment.setStatus(AssessmentStatus.SCHEDULED);
 
@@ -325,6 +326,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 assessment.setStartDate(dueDate);
                 assessment.setDueDate(dueDate);
                 assessment.setTimeZone(request.getTimeZone());
+                assessment.setPdfFileName(request.getPdfFileName());
 
                 Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
@@ -373,6 +375,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setStartDate(startDate);
         assessment.setDueDate(newDueDate);
         assessment.setTimeZone(request.getTimeZone());
+        assessment.setPdfFileName(request.getPdfFileName());
         assessment.setClassSubSubjectInstructor(csi);
         assessment.setStatus(AssessmentStatus.STARTED);
 

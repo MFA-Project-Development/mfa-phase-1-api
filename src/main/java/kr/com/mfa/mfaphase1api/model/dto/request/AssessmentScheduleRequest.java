@@ -15,4 +15,5 @@ public class AssessmentScheduleRequest {
     private LocalDateTime startDate;
     private LocalDateTime dueDate;
     private String timeZone;
+    private String pdfFileName;
 }

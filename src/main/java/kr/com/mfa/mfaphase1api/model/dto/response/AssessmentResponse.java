@@ -25,6 +25,7 @@ public class AssessmentResponse {
     private LocalDateTime dueDate;
     private String timeZone;
     private Integer timeLimit;
+    private String pdfFileName;
     private AssessmentStatus status;
     private AssessmentType assessmentType;
 //    private UUID assessmentTypeId;

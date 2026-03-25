@@ -18,6 +18,8 @@ public class AssessmentPublishRequest {
     @NotNull
     private LocalDateTime dueDate;
 
+    private String pdfFileName;
+
     @NotNull
     @NotBlank
     private String timeZone;

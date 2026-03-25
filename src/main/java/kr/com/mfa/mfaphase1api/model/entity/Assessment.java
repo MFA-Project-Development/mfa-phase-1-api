@@ -34,6 +34,7 @@ public class Assessment {
     private String timeZone;
 
     private Integer timeLimit;
+    private String pdfFileName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
