@@ -12,14 +12,20 @@ import kr.com.mfa.mfaphase1api.model.dto.response.APIResponse;
 import kr.com.mfa.mfaphase1api.model.entity.FileMetadata;
 import kr.com.mfa.mfaphase1api.service.FileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.buildResponse;
