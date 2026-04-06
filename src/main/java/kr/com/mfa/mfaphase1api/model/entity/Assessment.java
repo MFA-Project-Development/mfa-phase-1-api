@@ -131,6 +131,7 @@ public class Assessment {
                 .createdBy(this.createdBy)
                 .totalSubmitted(totalSubmitted)
                 .totalStudents(totalStudents)
+                .pdfFileName(this.pdfFileName)
                 .build();
     }
 
