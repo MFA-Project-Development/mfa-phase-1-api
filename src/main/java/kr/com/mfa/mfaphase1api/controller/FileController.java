@@ -76,24 +76,38 @@ public class FileController {
         return buildResponse("File uploaded successfully", saved, HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/preview/{file-name}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-    @Operation(
-            summary = "Preview",
-            description = "Fetches the file content by its name. Supports image preview",
-            tags = {"File"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "File retrieved successfully"),
-                    @ApiResponse(responseCode = "404", description = "File not found")
-            }
-    )
-    public ResponseEntity<byte[]> getFileByFileName(
-            @PathVariable("file-name") @NotNull String fileName
-    ) throws IOException {
-        InputStream inputStream = fileService.getFileByFileName(fileName);
-        return ResponseEntity.status(HttpStatus.OK)
-                .contentType(MediaType.IMAGE_PNG)
-                .body(inputStream.readAllBytes());
+    @GetMapping(value = "/preview/{file-name}")
+@Operation(
+        summary = "Preview",
+        description = "Fetches the file content by its name. Supports image and PDF preview",
+        tags = {"File"},
+        responses = {
+                @ApiResponse(responseCode = "200", description = "File retrieved successfully"),
+                @ApiResponse(responseCode = "404", description = "File not found")
+        }
+)
+public ResponseEntity<InputStreamResource> getFileByFileName(
+        @PathVariable("file-name") @NotNull String fileName
+) throws IOException {
+    InputStream inputStream = fileService.getFileByFileName(fileName);
+
+    String contentType = Files.probeContentType(Paths.get(fileName));
+    if (contentType == null) {
+        contentType = new BufferedInputStream(inputStream).toString();
+        contentType = URLConnection.guessContentTypeFromStream(
+            new BufferedInputStream(inputStream)
+        );
     }
+    if (contentType == null) {
+        contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    }
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + fileName + "\"")
+            .body(new InputStreamResource(inputStream));
+}
 
     @GetMapping(value = "/download/{file-name}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @Operation(
