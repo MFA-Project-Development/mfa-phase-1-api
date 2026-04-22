@@ -28,6 +28,9 @@ public class AssessmentRequest {
     private Integer timeLimit;
 
     @NotNull
+    private UUID fileId;
+
+    @NotNull
     private AssessmentType assessmentType;
 
 //    @NotNull

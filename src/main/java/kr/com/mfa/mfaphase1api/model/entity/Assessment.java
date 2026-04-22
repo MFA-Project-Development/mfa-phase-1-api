@@ -67,6 +67,9 @@ public class Assessment {
     private List<Resource> resources = new ArrayList<>();
 
     @Column(nullable = false)
+    private UUID fileId;
+
+    @Column(nullable = false)
     private UUID createdBy;
 
     @CreationTimestamp
