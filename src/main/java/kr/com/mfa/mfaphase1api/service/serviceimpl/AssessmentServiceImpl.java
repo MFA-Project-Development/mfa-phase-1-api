@@ -172,6 +172,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setTitle(request.getTitle().trim());
         assessment.setDescription(request.getDescription());
         assessment.setTimeLimit(request.getTimeLimit() != null ? request.getTimeLimit() : assessment.getTimeLimit());
+        assessment.setFileId(request.getFileId());
 
         Assessment saved = assessmentRepository.saveAndFlush(assessment);
 
