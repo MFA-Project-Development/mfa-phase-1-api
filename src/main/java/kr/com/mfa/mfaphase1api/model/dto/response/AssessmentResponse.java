@@ -31,6 +31,7 @@ public class AssessmentResponse {
 //    private UUID assessmentTypeId;
     private UUID subSubjectId;
     private UUID classId;
+    private UUID fileId;
     private UUID createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

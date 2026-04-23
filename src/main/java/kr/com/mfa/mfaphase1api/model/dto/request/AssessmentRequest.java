@@ -43,6 +43,7 @@ public class AssessmentRequest {
                 .timeLimit(this.timeLimit)
                 .status(AssessmentStatus.DRAFTED)
                 .assessmentType(this.assessmentType)
+                .fileId(this.fileId)
                 .classSubSubjectInstructor(classSubSubjectInstructor)
                 .createdBy(userId)
                 .build();

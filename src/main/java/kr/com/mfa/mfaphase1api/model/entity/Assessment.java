@@ -131,6 +131,7 @@ public class Assessment {
                                 .getClazz()
                                 .getClassId()
                 )
+                .fileId(this.fileId)
                 .createdBy(this.createdBy)
                 .totalSubmitted(totalSubmitted)
                 .totalStudents(totalStudents)
