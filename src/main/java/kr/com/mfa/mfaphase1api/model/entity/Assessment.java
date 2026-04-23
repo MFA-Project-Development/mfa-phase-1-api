@@ -66,7 +66,6 @@ public class Assessment {
     @ToString.Exclude
     private List<Resource> resources = new ArrayList<>();
 
-    @Column(nullable = false)
     private UUID fileId;
 
     @Column(nullable = false)
