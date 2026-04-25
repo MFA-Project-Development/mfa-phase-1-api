@@ -22,6 +22,7 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -188,26 +189,31 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
 
-        List<RecentFeedbackAssessmentResponse> recentFeedbackAssessments =
-                submissionRepository
-                        .findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(currentUserId, SubmissionStatus.SUBMITTED)
-                        .stream()
-                        .map(s -> RecentFeedbackAssessmentResponse.builder()
-                                .assessmentId(s.getAssessment().getAssessmentId())
-                                .submissionId(s.getSubmissionId())
-                                .title(s.getAssessment().getTitle())
-                                .gradedBy(resolveGradedBy(s.getGradedBy()))
-                                .publishedAt(
-                                        s.getPublishedAt() != null
-                                                ? LocalDateTime.ofInstant(
-                                                s.getPublishedAt(),
-                                                ZoneId.of(s.getTimeZone())
-                                        )
-                                                : null
-                                )
-                                .build()
+        List<Submission> top5 = submissionRepository
+                .findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(currentUserId, SubmissionStatus.SUBMITTED);
+
+        // Batch fetch graders in one call instead of one Feign call per submission
+        List<UUID> gradedByIds = top5.stream()
+                .map(Submission::getGradedBy)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<UUID, String> gradedByNames = resolveGradedByBatch(gradedByIds);
+
+        List<RecentFeedbackAssessmentResponse> recentFeedbackAssessments = top5.stream()
+                .map(s -> RecentFeedbackAssessmentResponse.builder()
+                        .assessmentId(s.getAssessment().getAssessmentId())
+                        .submissionId(s.getSubmissionId())
+                        .title(s.getAssessment().getTitle())
+                        .gradedBy(s.getGradedBy() != null ? gradedByNames.get(s.getGradedBy()) : null)
+                        .publishedAt(
+                                s.getPublishedAt() != null
+                                        ? LocalDateTime.ofInstant(s.getPublishedAt(), ZoneId.of(s.getTimeZone()))
+                                        : null
                         )
-                        .toList();
+                        .build()
+                )
+                .toList();
 
         return StudentOverviewResponse.builder()
                 .score(score)
@@ -234,9 +240,16 @@ public class DashboardServiceImpl implements DashboardService {
                 classId, currentUserId
         );
 
-        long totalStudents = classes.stream()
-                .mapToLong(c -> c.getStudentClassEnrollments().size())
-                .sum();
+        // Batch count query — avoids N lazy-load queries on studentClassEnrollments
+        List<UUID> classIds = classes.stream().map(Class::getClassId).toList();
+        Map<UUID, Long> studentCountByClass = classIds.isEmpty() ? Map.of() :
+                classRepository.countStudentsByClassIds(classIds).stream()
+                        .collect(Collectors.toMap(
+                                row -> (UUID) row[0],
+                                row -> (Long) row[1]
+                        ));
+
+        long totalStudents = studentCountByClass.values().stream().mapToLong(Long::longValue).sum();
 
         List<ClassStudentCount> classStudentCounts = new ArrayList<>();
         if (totalStudents == 0) {
@@ -252,7 +265,7 @@ public class DashboardServiceImpl implements DashboardService {
             int used = 0;
 
             for (Class c : classes) {
-                int count = c.getStudentClassEnrollments().size();
+                int count = studentCountByClass.getOrDefault(c.getClassId(), 0L).intValue();
                 int percent = (int) ((double) count * 100 / totalStudents);
 
                 used += percent;
@@ -271,6 +284,9 @@ public class DashboardServiceImpl implements DashboardService {
                 item.setPercentage(item.getPercentage() + 1);
             }
         }
+
+        // Count motivation content once — outside the class loop below
+        long totalMotivation = motivationContentRepository.countByCreatedBy(currentUserId);
 
         List<Assessment> assessments;
 
@@ -321,6 +337,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<AssessmentSummaryByClass> assessmentSummaryByClasses = new ArrayList<>();
         RecentActivity recentActivity = new RecentActivity();
+        long totalPendingGradingAll = 0, totalUpcomingAssessmentAll = 0;
 
         for (Class clazz : classes) {
 
@@ -339,13 +356,8 @@ public class DashboardServiceImpl implements DashboardService {
 
                 ZoneId zone = ZoneId.of("UTC");
 
-                Instant newStartDate = startDate
-                        .atZone(zone)
-                        .toInstant();
-
-                Instant newEndDate = endDate
-                        .atZone(zone)
-                        .toInstant();
+                Instant newStartDate = startDate.atZone(zone).toInstant();
+                Instant newEndDate = endDate.atZone(zone).toInstant();
 
                 assessmentsByClass = assessmentRepository.findAllByCreatedBy_AndStatus_AndClassSubSubjectInstructor_ClassSubSubject_Clazz_ClassId_AndStartDateBetween(
                         currentUserId, AssessmentStatus.FINISHED, clazz.getClassId(), newStartDate, newEndDate);
@@ -356,6 +368,15 @@ public class DashboardServiceImpl implements DashboardService {
             BigDecimal assignmentAvg = BigDecimal.ZERO;
             BigDecimal homeworkAvg = BigDecimal.ZERO;
             long totalPendingGrading = 0, totalUpcomingAssessment = 0;
+
+            // Batch-fetch submission summaries for all assessments in this class — avoids N+1
+            List<UUID> assessmentIds = assessmentsByClass.stream()
+                    .map(Assessment::getAssessmentId)
+                    .toList();
+            Map<UUID, List<SubmissionRepository.SubmissionSummary>> summariesByAssessment =
+                    assessmentIds.isEmpty() ? Map.of() :
+                            submissionRepository.findSummariesByAssessmentIds(assessmentIds).stream()
+                                    .collect(Collectors.groupingBy(SubmissionRepository.SubmissionSummary::getAssessmentId));
 
             for (Assessment assessment : assessmentsByClass) {
 
@@ -373,28 +394,27 @@ public class DashboardServiceImpl implements DashboardService {
                 Instant now = nowZdt.toInstant();
                 Instant weekEnd = weekEndZdt.toInstant();
 
-                boolean upcomingInCurrentWeek =
-                        startAt.isBefore(now) &&
-                        startAt.isBefore(weekEnd);
-
-                if (upcomingInCurrentWeek) {
+                if (startAt.isBefore(now) && startAt.isBefore(weekEnd)) {
                     totalUpcomingAssessment++;
                 }
 
-                List<Submission> submissions = assessment.getSubmissions();
-                if (submissions.isEmpty()) continue;
+                List<SubmissionRepository.SubmissionSummary> summaries =
+                        summariesByAssessment.getOrDefault(assessment.getAssessmentId(), List.of());
+                if (summaries.isEmpty()) continue;
 
                 BigDecimal totalStudentScore = BigDecimal.ZERO;
 
-                for (Submission submission : submissions) {
-                    totalStudentScore = totalStudentScore.add(submission.getScoreEarned());
-                    if (submission.getGradedAt() == null) {
+                for (SubmissionRepository.SubmissionSummary summary : summaries) {
+                    if (summary.getScoreEarned() != null) {
+                        totalStudentScore = totalStudentScore.add(summary.getScoreEarned());
+                    }
+                    if (summary.getGradedAt() == null) {
                         totalPendingGrading++;
                     }
                 }
 
                 BigDecimal avgScore = totalStudentScore.divide(
-                        BigDecimal.valueOf(submissions.size()),
+                        BigDecimal.valueOf(summaries.size()),
                         2,
                         RoundingMode.HALF_UP
                 );
@@ -407,23 +427,23 @@ public class DashboardServiceImpl implements DashboardService {
                 }
             }
 
-            AssessmentSummaryByClass assessmentSummaryByClass = AssessmentSummaryByClass.builder()
+            assessmentSummaryByClasses.add(AssessmentSummaryByClass.builder()
                     .classId(clazz.getClassId())
                     .className(clazz.getName())
                     .exams(examAvg)
                     .assignments(assignmentAvg)
                     .quizzes(quizAvg)
                     .homeworks(homeworkAvg)
-                    .build();
+                    .build());
 
-            assessmentSummaryByClasses.add(assessmentSummaryByClass);
-
-            long totalMotivation = motivationContentRepository.findAllByCreatedBy(currentUserId).size();
-
-            recentActivity.setTotalPendingGrading(totalPendingGrading);
-            recentActivity.setTotalUpcomingAssessment(totalUpcomingAssessment);
-            recentActivity.setTotalMotivation(totalMotivation);
+            totalPendingGradingAll += totalPendingGrading;
+            totalUpcomingAssessmentAll += totalUpcomingAssessment;
         }
+
+        // totalMotivation is fetched once above the loop — set after the loop
+        recentActivity.setTotalPendingGrading(totalPendingGradingAll);
+        recentActivity.setTotalUpcomingAssessment(totalUpcomingAssessmentAll);
+        recentActivity.setTotalMotivation(totalMotivation);
 
 
         return TeacherOverviewResponse.builder()
@@ -455,23 +475,22 @@ public class DashboardServiceImpl implements DashboardService {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
     }
 
-    private String resolveGradedBy(UUID gradedBy) {
-        if (gradedBy == null) {
-            return null;
-        }
-
+    private Map<UUID, String> resolveGradedByBatch(List<UUID> userIds) {
+        if (userIds.isEmpty()) return Map.of();
         try {
-            var response = userClient.getUserInfoById(gradedBy);
-
-            if (response == null || response.getBody() == null || response.getBody().getPayload() == null) {
-                return null;
-            }
-
-            var user = response.getBody().getPayload();
-            return user.getFirstName() + " " + user.getLastName();
-
+            List<UserResponse> users = Objects.requireNonNull(
+                    userClient.getAllUserByUserIds(
+                            new kr.com.mfa.mfaphase1api.model.dto.request.UserIdsRequest(userIds)
+                    ).getBody()
+            ).getPayload();
+            return users.stream().collect(Collectors.toMap(
+                    UserResponse::getUserId,
+                    u -> ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
+                          (u.getLastName() != null ? u.getLastName() : "")).trim()
+            ));
         } catch (Exception e) {
-            return null;
+            log.warn("Batch graded-by user fetch failed: {}", e.getMessage());
+            return Map.of();
         }
     }
 

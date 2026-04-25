@@ -4,6 +4,7 @@ import kr.com.mfa.mfaphase1api.client.UserClient;
 import kr.com.mfa.mfaphase1api.exception.ConflictException;
 import kr.com.mfa.mfaphase1api.exception.ForbiddenException;
 import kr.com.mfa.mfaphase1api.exception.NotFoundException;
+import kr.com.mfa.mfaphase1api.model.dto.request.UserIdsRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
 import kr.com.mfa.mfaphase1api.model.enums.SubmissionProperty;
@@ -25,9 +26,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
@@ -190,9 +190,16 @@ public class SubmissionServiceImpl implements SubmissionService {
             default -> throw new ForbiddenException("Unsupported role: " + currentUserRole);
         };
 
+        List<UUID> studentIds = pageSubmissions.stream()
+                .map(Submission::getStudentId)
+                .distinct()
+                .toList();
+        Map<UUID, UserResponse> userMap = fetchUserMap(studentIds);
+
         List<SubmissionResponse> items = pageSubmissions.stream()
                 .map(submission -> {
-                    UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(submission.getStudentId()).getBody()).getPayload();
+                    UserResponse userResponse = userMap.get(submission.getStudentId());
+                    if (userResponse == null) return submission.toResponse(null);
                     StudentResponse studentResponse = StudentResponse.builder()
                             .studentId(userResponse.getUserId())
                             .studentEmail(userResponse.getEmail())
@@ -281,6 +288,19 @@ public class SubmissionServiceImpl implements SubmissionService {
         String firstName = userResponse.getFirstName() != null ? userResponse.getFirstName() : "";
         String lastName = userResponse.getLastName() != null ? userResponse.getLastName() : "";
         return (firstName + " " + lastName).trim();
+    }
+
+    private Map<UUID, UserResponse> fetchUserMap(List<UUID> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        try {
+            List<UserResponse> users = Objects.requireNonNull(
+                    userClient.getAllUserByUserIds(new UserIdsRequest(userIds)).getBody()
+            ).getPayload();
+            return users.stream().collect(Collectors.toMap(UserResponse::getUserId, u -> u));
+        } catch (Exception e) {
+            log.warn("Batch user fetch failed, responses will have no user info: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
 }

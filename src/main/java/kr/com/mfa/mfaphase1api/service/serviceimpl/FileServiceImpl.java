@@ -16,6 +16,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class FileServiceImpl implements FileService {
     private final MinioClient minioClient;
 
     private static final String PREVIEW_PATH = "/api/v1/files/preview/{file-name}";
+    private static final ExecutorService UPLOAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     @PostConstruct
     public void initBucket() {
@@ -104,17 +108,14 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<FileMetadata> multipleUploadFile(final List<MultipartFile> files) {
+        List<CompletableFuture<FileMetadata>> futures = files.stream()
+                .filter(f -> f != null && !f.isEmpty())
+                .map(file -> CompletableFuture.supplyAsync(() -> uploadFile(file), UPLOAD_EXECUTOR))
+                .toList();
 
-        final List<FileMetadata> results = new ArrayList<>(files.size());
-
-        for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) {
-                continue;
-            }
-            results.add(uploadFile(file));
-        }
-
-        return Collections.unmodifiableList(results);
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
     }
 
     @Override

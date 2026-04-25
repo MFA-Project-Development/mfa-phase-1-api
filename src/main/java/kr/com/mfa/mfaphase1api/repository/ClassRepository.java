@@ -4,6 +4,8 @@ import kr.com.mfa.mfaphase1api.model.entity.Class;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,4 +31,12 @@ public interface ClassRepository extends JpaRepository<Class, UUID> {
     List<Class> findAllByClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID instructorId);
 
     List<Class> findAllByClassIdAndClassSubSubjects_ClassSubSubjectInstructors_InstructorId(UUID classId, UUID currentUserId);
+
+    @Query("""
+                SELECT e.clazz.classId, COUNT(e)
+                FROM StudentClassEnrollment e
+                WHERE e.clazz.classId IN :classIds
+                GROUP BY e.clazz.classId
+            """)
+    List<Object[]> countStudentsByClassIds(@Param("classIds") List<UUID> classIds);
 }

@@ -6,6 +6,7 @@ import kr.com.mfa.mfaphase1api.exception.NotFoundException;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationCommentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.MotivationContentRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ReplyRequest;
+import kr.com.mfa.mfaphase1api.model.dto.request.UserIdsRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.MotivationBookmark;
 import kr.com.mfa.mfaphase1api.model.entity.MotivationComment;
@@ -111,17 +112,18 @@ public class MotivationServiceImpl implements MotivationService {
                 motivationLikeRepository.findLikedContentIds(currentUserId, contents)
         );
 
+        List<UUID> creatorIds = contents.stream()
+                .map(MotivationContent::getCreatedBy)
+                .distinct()
+                .toList();
+        Map<UUID, UserResponse> userMap = fetchUserMap(creatorIds);
+
         List<MotivationContentResponseWithExtraInfo> items = contents.stream()
-                .map(m -> {
-
-                    UserResponse userResponse = Objects.requireNonNull(userClient.getUserInfoById(m.getCreatedBy()).getBody()).getPayload();
-
-                    return m.toResponse(
-                            userResponse,
-                            bookmarkedIds.contains(m.getMotivationContentId()),
-                            likedIds.contains(m.getMotivationContentId())
-                    );
-                })
+                .map(m -> m.toResponse(
+                        userMap.get(m.getCreatedBy()),
+                        bookmarkedIds.contains(m.getMotivationContentId()),
+                        likedIds.contains(m.getMotivationContentId())
+                ))
                 .toList();
 
         return pageResponse(
@@ -397,6 +399,19 @@ public class MotivationServiceImpl implements MotivationService {
 
     private UUID extractCurrentUserId() {
         return UUID.fromString(Objects.requireNonNull(JwtUtils.getJwt()).getSubject());
+    }
+
+    private Map<UUID, UserResponse> fetchUserMap(List<UUID> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        try {
+            List<UserResponse> users = Objects.requireNonNull(
+                    userClient.getAllUserByUserIds(new UserIdsRequest(userIds)).getBody()
+            ).getPayload();
+            return users.stream().collect(Collectors.toMap(UserResponse::getUserId, u -> u));
+        } catch (Exception e) {
+            log.warn("Batch user fetch failed, responses will have no user info: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     private MotivationCommentResponseWithReply buildResponse(

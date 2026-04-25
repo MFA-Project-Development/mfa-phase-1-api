@@ -4,6 +4,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
   jackson:
     serialization:
@@ -18,14 +24,29 @@ spring:
 
   jpa:
     database: postgresql
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         jdbc:
           time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: password
+      timeout: 2000ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300s
 
   cloud:
     openfeign:
@@ -38,8 +59,11 @@ spring:
         config:
           default:
             connect-timeout: 1000
-            read-timeout: 2000
+            read-timeout: 3000
             logger-level: none
+          authentication:
+            connect-timeout: 1000
+            read-timeout: 3000
       compression:
         request:
           enabled: true
@@ -114,6 +138,10 @@ management:
     web:
       exposure:
         include: "*"
+  metrics:
+    export:
+      prometheus:
+        enabled: true
 
 socketio:
   server:
@@ -123,10 +151,22 @@ resilience4j:
   circuitbreaker:
     instances:
       authentication:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-        automaticTransitionFromOpenToHalfOpenEnabled: true
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  retry:
+    instances:
+      authentication:
+        max-attempts: 3
+        wait-duration: 500ms
+        exponential-backoff-multiplier: 2
+  bulkhead:
+    instances:
+      authentication:
+        max-concurrent-calls: 20
+        max-wait-duration: 100ms
 
 keycloak:
   token-endpoint: http://localhost:8080/realms/mfa/protocol/openid-connect/token

@@ -22,6 +22,8 @@ public interface MotivationContentRepository extends JpaRepository<MotivationCon
 
     List<MotivationContent> findAllByCreatedBy(UUID createdBy);
 
+    long countByCreatedBy(UUID createdBy);
+
 
     @Query("""
         SELECT m

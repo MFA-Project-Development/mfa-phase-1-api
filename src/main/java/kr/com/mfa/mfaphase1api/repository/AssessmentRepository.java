@@ -129,5 +129,13 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
             UUID studentId, Instant start, Instant endExclusive
     );
 
+    @Query("""
+                SELECT a FROM Assessment a
+                JOIN FETCH a.classSubSubjectInstructor csi
+                JOIN FETCH csi.classSubSubject css
+                JOIN FETCH css.clazz
+                WHERE a.assessmentId = :assessmentId
+            """)
+    Optional<Assessment> findByIdWithClassInfo(UUID assessmentId);
 
 }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -97,8 +98,26 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
             Instant endExclusive
     );
 
+    @EntityGraph(attributePaths = {"assessment"})
     List<Submission> findTop5ByStudentIdAndPublishedAtIsNotNullAndStatusOrderByPublishedAtDesc(UUID studentId, SubmissionStatus status);
 
-
     Integer countByAssessment(Assessment assessment);
+
+    @Query("SELECT s.studentId FROM Submission s WHERE s.assessment.assessmentId = :assessmentId")
+    List<UUID> findStudentIdsByAssessmentId(UUID assessmentId);
+
+    @Query("""
+                SELECT s.assessment.assessmentId AS assessmentId,
+                       s.scoreEarned             AS scoreEarned,
+                       s.gradedAt                AS gradedAt
+                FROM Submission s
+                WHERE s.assessment.assessmentId IN :assessmentIds
+            """)
+    List<SubmissionSummary> findSummariesByAssessmentIds(List<UUID> assessmentIds);
+
+    interface SubmissionSummary {
+        UUID getAssessmentId();
+        BigDecimal getScoreEarned();
+        Instant getGradedAt();
+    }
 }
