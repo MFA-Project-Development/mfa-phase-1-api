@@ -23,10 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -220,38 +218,42 @@ public class SubmissionServiceImpl implements SubmissionService {
         UUID currentUserId = extractCurrentUserId();
 
         Submission submission = getAndValidateSubmission(assessmentId, currentUserId);
-        String type = submission.getAssessment().getAssessmentType().name();
 
         if (submission.getStatus() != SubmissionStatus.NOT_SUBMITTED) {
             throw new ConflictException("Submission has already been submitted for this assessment");
         }
 
-        if ("EXAM".equals(type) || "QUIZ".equals(type)) {
-            LocalDateTime endedAt = submission.toResponse(null).getEndedAt();
-            if (endedAt != null && LocalDateTime.now().isAfter(endedAt)) {
-                submission.setStatus(SubmissionStatus.LATE);
-            }
-        }
+        SubmissionStatus finalStatus = resolveSubmissionStatus(submission);
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of(submission.getAssessment().getTimeZone()));
-
-        submission.setStatus(SubmissionStatus.SUBMITTED);
+        submission.setStatus(finalStatus);
         submission.setSubmittedAt(now.toInstant());
         submissionRepository.save(submission);
 
         List<Question> questions = questionRepository.findAllByAssessment_AssessmentId(assessmentId);
-        List<Answer> answers = new ArrayList<>();
-
-        for (Question question : questions) {
-            Answer answer = Answer.builder()
-                    .pointsAwarded(BigDecimal.valueOf(0.00))
-                    .question(question)
-                    .submission(submission)
-                    .build();
-            answers.add(answer);
-        }
+        List<Answer> answers = questions.stream()
+                .map(question -> Answer.builder()
+                        .pointsAwarded(BigDecimal.ZERO)
+                        .question(question)
+                        .submission(submission)
+                        .build())
+                .toList();
 
         answerRepository.saveAll(answers);
+    }
+
+    private SubmissionStatus resolveSubmissionStatus(Submission submission) {
+        String type = submission.getAssessment().getAssessmentType().name();
+        if ("EXAM".equals(type) || "QUIZ".equals(type)) {
+            Integer timeLimit = submission.getAssessment().getTimeLimit();
+            if (timeLimit != null && submission.getStartedAt() != null) {
+                Instant dueInstant = submission.getStartedAt().plusSeconds(timeLimit.longValue() * 60L);
+                if (Instant.now().isAfter(dueInstant)) {
+                    return SubmissionStatus.LATE;
+                }
+            }
+        }
+        return SubmissionStatus.SUBMITTED;
     }
 
     private UUID extractCurrentUserId() {
