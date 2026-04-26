@@ -16,6 +16,7 @@ import java.util.UUID;
 public class QuestionResponse {
 
     private UUID questionId;
+    private String title;
     private String text;
     private BigDecimal points;
     private Integer questionOrder;

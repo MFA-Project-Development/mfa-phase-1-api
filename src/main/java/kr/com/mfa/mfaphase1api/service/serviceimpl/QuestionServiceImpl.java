@@ -167,6 +167,7 @@ public class QuestionServiceImpl implements QuestionService {
 //        QuestionType questionType = questionTypeRepository.findById(request.getQuestionTypeId())
 //                .orElseThrow(() -> new NotFoundException("QuestionType not found"));
 
+        question.setTitle(request.getTitle());
         question.setText(request.getText());
         question.setPoints(request.getPoints());
         question.setMode(request.getMode());
@@ -260,6 +261,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .map(request -> {
                     Question question = getOrThrow(assessment.getAssessmentId(), request.getQuestionId());
 
+                    question.setTitle(request.getTitle());
                     question.setText(request.getText());
                     question.setPoints(request.getPoints());
                     question.setMode(request.getMode());

@@ -32,6 +32,9 @@ public class Question {
     private UUID questionId;
 
     @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
     private String text;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -95,6 +98,7 @@ public class Question {
 
         return QuestionResponse.builder()
                 .questionId(this.questionId)
+                .title(this.title)
                 .text(this.text)
                 .points(this.points)
                 .mode(this.mode)
