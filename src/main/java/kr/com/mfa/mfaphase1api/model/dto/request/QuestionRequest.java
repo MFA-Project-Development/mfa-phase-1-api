@@ -46,7 +46,7 @@ public class QuestionRequest {
 
     public Question toEntity(Integer questionOrder, Assessment assessment){
         return Question.builder()
-                .title(this.text)
+                .title(this.title)
                 .text(this.text)
                 .points(this.points)
                 .mode(this.mode)
