@@ -26,7 +26,7 @@ public class Feedback {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID feedbackId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String comment;
 
     @CreationTimestamp
@@ -48,7 +48,7 @@ public class Feedback {
     private UUID authorId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "annotation_id", nullable = false, foreignKey = @ForeignKey(name = "fk_feedback_annotation"))
+    @JoinColumn(name = "annotation_id", foreignKey = @ForeignKey(name = "fk_feedback_annotation"))
     @ToString.Exclude
     private Annotation annotation;
 
