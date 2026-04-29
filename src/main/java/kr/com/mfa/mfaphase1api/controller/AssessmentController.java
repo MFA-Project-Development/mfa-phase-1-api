@@ -321,6 +321,21 @@ public class AssessmentController {
         );
     }
 
+    @GetMapping("/instructor/assessments/summary")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(
+            summary = "Get instructor assessment summary",
+            description = "Returns summary statistics of assessments for the current instructor.",
+            tags = {"Assessment"}
+    )
+    public ResponseEntity<APIResponse<InstructorAssessmentSummary>> getInstructorAssessmentSummary() {
+        return buildResponse(
+                "Instructor assessment summary retrieved successfully",
+                assessmentService.getInstructorAssessmentSummary(),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/assessments/recent/{studentId}")
     @Operation(
             summary = "List recent assessments without class",

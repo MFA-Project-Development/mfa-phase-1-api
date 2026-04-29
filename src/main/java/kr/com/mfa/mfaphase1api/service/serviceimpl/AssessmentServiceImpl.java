@@ -9,6 +9,7 @@ import kr.com.mfa.mfaphase1api.model.dto.request.AssessmentScheduleRequest;
 import kr.com.mfa.mfaphase1api.model.dto.request.ResourceRequest;
 import kr.com.mfa.mfaphase1api.model.dto.response.*;
 import kr.com.mfa.mfaphase1api.model.entity.*;
+import kr.com.mfa.mfaphase1api.model.entity.Class;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentProperty;
 import kr.com.mfa.mfaphase1api.model.enums.AssessmentStatus;
 import kr.com.mfa.mfaphase1api.model.enums.ResourceKind;
@@ -31,6 +32,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static kr.com.mfa.mfaphase1api.utils.ResponseUtil.pageResponse;
 
@@ -787,6 +789,81 @@ public class AssessmentServiceImpl implements AssessmentService {
                             .build();
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InstructorAssessmentSummary getInstructorAssessmentSummary() {
+        UUID instructorId = extractCurrentUserId();
+
+        List<Assessment> allAssessments = assessmentRepository.findAllByCreatedBy(instructorId);
+
+        long totalAssessments = allAssessments.size();
+        long totalInProgress = allAssessments.stream()
+                .filter(a -> a.getStatus() == AssessmentStatus.STARTED)
+                .count();
+        long totalInReview = allAssessments.stream()
+                .filter(a -> a.getStatus() == AssessmentStatus.FINISHED)
+                .count();
+        long totalPublished = allAssessments.stream()
+                .filter(a -> a.getStatus() == AssessmentStatus.SCHEDULED)
+                .count();
+
+        Map<UUID, Long> assessmentCountByClass = allAssessments.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getClassSubSubjectInstructor().getClassSubSubject().getClazz().getClassId(),
+                        Collectors.counting()
+                ));
+
+        // Deduplicate classes (an instructor may teach multiple sub-subjects in the same class)
+        List<Class> classes = classRepository
+                .findAllByClassSubSubjects_ClassSubSubjectInstructors_InstructorId(instructorId)
+                .stream()
+                .collect(Collectors.toMap(
+                        Class::getClassId,
+                        c -> c,
+                        (c1, c2) -> c1
+                ))
+                .values()
+                .stream()
+                .toList();
+
+        List<UUID> classIds = classes.stream()
+                .map(kr.com.mfa.mfaphase1api.model.entity.Class::getClassId)
+                .toList();
+
+        Map<UUID, Long> studentCountByClass = classRepository.countStudentsByClassIds(classIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        List<InstructorClassSummary> classSummaries = classes.stream()
+                .map(clazz -> {
+                    String subjectName = clazz.getClassSubSubjects().stream()
+                            .flatMap(css -> css.getClassSubSubjectInstructors().stream())
+                            .filter(csi -> instructorId.equals(csi.getInstructorId()))
+                            .map(csi -> csi.getClassSubSubject().getSubSubject().getName())
+                            .findFirst()
+                            .orElse(null);
+
+                    return InstructorClassSummary.builder()
+                            .className(clazz.getName())
+                            .subjectName(subjectName)
+                            .totalStudents(studentCountByClass.getOrDefault(clazz.getClassId(), 0L))
+                            .totalAssessments(assessmentCountByClass.getOrDefault(clazz.getClassId(), 0L))
+                            .build();
+                })
+                .toList();
+
+        return InstructorAssessmentSummary.builder()
+                .totalAssessments(totalAssessments)
+                .totalAssessmentsInProgress(totalInProgress)
+                .totalAssessmentsInReview(totalInReview)
+                .totalAssessmentPublished(totalPublished)
+                .classes(classSummaries)
+                .build();
     }
 
     private Assessment getOrThrow(UUID classId, UUID assessmentId) {

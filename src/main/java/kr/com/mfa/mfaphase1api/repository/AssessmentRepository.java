@@ -138,4 +138,6 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
             """)
     Optional<Assessment> findByIdWithClassInfo(UUID assessmentId);
 
+    List<Assessment> findAllByCreatedBy(UUID instructorId);
+
 }
